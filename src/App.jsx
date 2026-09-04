@@ -169,10 +169,24 @@ export default function Margshri() {
   };
 
   const respond = (id, status) => {
+    const req = requests.find((r) => r.id === id);
     setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     updateDoc(doc(db, REQUESTS_COLLECTION, id), { status }).catch(() => {
       setErrorMsg("Status save nahi ho paya, dubara try karo.");
     });
+
+    // On acceptance, deduct the booked seats from the vehicle's available seats
+    if (status === "accepted" && req) {
+      const seatsBooked = req.seats || 1;
+      const vehicle = vehicles.find((v) => v.id === req.vehicleId);
+      if (vehicle) {
+        const newSeats = Math.max((vehicle.seats || 0) - seatsBooked, 0);
+        setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? { ...v, seats: newSeats } : v)));
+        updateDoc(doc(db, VEHICLES_COLLECTION, vehicle.id), { seats: newSeats }).catch(() => {
+          setErrorMsg("Seats update nahi ho paya.");
+        });
+      }
+    }
   };
 
   const postVehicle = () =>
@@ -233,6 +247,7 @@ export default function Margshri() {
     (v) =>
       v.mode === mode &&
       v.type === search.type &&
+      v.seats > 0 &&
       (search.from === "" || v.from.toLowerCase().includes(search.from.toLowerCase())) &&
       (search.to === "" || v.to.toLowerCase().includes(search.to.toLowerCase()))
   );
