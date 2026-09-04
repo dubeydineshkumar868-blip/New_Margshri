@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck } from "lucide-react";
-import { db } from "./firebase.js";
-import { collection, onSnapshot, addDoc, updateDoc, doc } from "firebase/firestore";
+import { db, auth, googleProvider } from "./firebase.js";
+import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 
 const COLORS = {
   night: "#1B2A4A",
@@ -25,7 +26,6 @@ const REQUESTS_COLLECTION = "requests";
 const RIDER_POSTS_COLLECTION = "riderPosts";
 const MESSAGES_COLLECTION = "messages";
 const REVIEWS_COLLECTION = "reviews";
-const PROFILE_STORAGE_KEY = "marghee-profile-name";
 
 const seedVehicles = [
   { owner: "Ramesh", type: "car", from: "Rohini", to: "Connaught Place", mode: "local", seats: 3, time: "Today, 9:00 AM", price: 60 },
@@ -117,6 +117,7 @@ function Badge({ status }) {
     matched: { bg: "#E4F3EF", fg: COLORS.teal, label: "Matched" },
     completed: { bg: "#E4F3EF", fg: COLORS.teal, label: "Completed" },
     noshow: { bg: "#FBE9E7", fg: COLORS.coral, label: "No-show" },
+    cancelled: { bg: "#EFEFEF", fg: COLORS.muted, label: "Cancelled" },
   };
   const s = map[status];
   return (
@@ -144,7 +145,9 @@ export default function Margshri() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [screen, setScreen] = useState("landing");
-  const [name, setName] = useState("");
+  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const name = user?.displayName || user?.email || "";
   const [vehicles, setVehicles] = useState([]);
   const [requests, setRequests] = useState([]);
   const [riderPosts, setRiderPosts] = useState([]);
@@ -174,10 +177,13 @@ export default function Margshri() {
 
   const seededRef = React.useRef(false);
 
-  // Name loads instantly from this device's storage — landing screen never waits on the network.
+  // Real login state from Firebase Auth — persists automatically across visits.
   useEffect(() => {
-    const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (saved) setName(saved);
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthLoading(false);
+    });
+    return unsub;
   }, []);
 
   // Real-time listeners start immediately in the background. Landing screen doesn't
@@ -230,9 +236,19 @@ export default function Margshri() {
     };
   }, []);
 
+  const signInWithGoogle = () => {
+    signInWithPopup(auth, googleProvider).catch(() => {
+      setErrorMsg("Login nahi ho paya, dubara try karo.");
+    });
+  };
+
+  const logOut = () => {
+    signOut(auth);
+    setScreen("landing");
+  };
+
   const enter = (chosenRole) => {
-    if (!name.trim()) return;
-    localStorage.setItem(PROFILE_STORAGE_KEY, name.trim());
+    if (!user) return;
     setScreen(chosenRole === "rider" ? "rider" : "owner");
   };
 
@@ -355,6 +371,38 @@ export default function Margshri() {
     });
   };
 
+  const cancelRequest = (id) => {
+    const req = requests.find((r) => r.id === id);
+    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: "cancelled" } : r)));
+    updateDoc(doc(db, REQUESTS_COLLECTION, id), { status: "cancelled" }).catch(() => {
+      setErrorMsg("Cancel nahi ho paya, dubara try karo.");
+    });
+    // If it was already accepted, give the seats back to the vehicle
+    if (req && req.status === "accepted") {
+      const seatsToRestore = req.seats || 1;
+      const vehicle = vehicles.find((v) => v.id === req.vehicleId);
+      if (vehicle) {
+        const newSeats = (vehicle.seats || 0) + seatsToRestore;
+        setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? { ...v, seats: newSeats } : v)));
+        updateDoc(doc(db, VEHICLES_COLLECTION, vehicle.id), { seats: newSeats }).catch(() => {});
+      }
+    }
+  };
+
+  const deleteVehicle = (id) => {
+    setVehicles((prev) => prev.filter((v) => v.id !== id));
+    deleteDoc(doc(db, VEHICLES_COLLECTION, id)).catch(() => {
+      setErrorMsg("Vehicle remove nahi ho paya, dubara try karo.");
+    });
+  };
+
+  const cancelRiderPost = (id) => {
+    setRiderPosts((prev) => prev.filter((p) => p.id !== id));
+    deleteDoc(doc(db, RIDER_POSTS_COLLECTION, id)).catch(() => {
+      setErrorMsg("Request cancel nahi ho paya, dubara try karo.");
+    });
+  };
+
   const submitReview = () => {
     if (!activeReview) return;
     const newReview = {
@@ -433,6 +481,14 @@ export default function Margshri() {
     </div>
   );
 
+  if (authLoading) {
+    return (
+      <div style={{ background: COLORS.sand, minHeight: 560 }} className="w-full flex items-center justify-center">
+        <Loader2 size={24} className="animate-spin" color={COLORS.muted} />
+      </div>
+    );
+  }
+
   if (screen === "landing") {
     return (
       <div style={{ background: COLORS.sand, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }} className="w-full flex items-center justify-center p-6">
@@ -444,34 +500,59 @@ export default function Margshri() {
           <div className="mb-5">
             <RouteLine />
           </div>
-          <label style={{ color: COLORS.charcoal }} className="text-sm font-semibold mb-1 block">Your name</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Priya Sharma"
-            style={{ borderColor: COLORS.line }}
-            className="w-full border rounded-xl px-4 py-3 mb-4 outline-none text-sm"
-          />
-          <div className="grid grid-cols-2 gap-3">
+
+          {!user ? (
             <button
-              onClick={() => enter("rider")}
-              style={{ background: name.trim() ? COLORS.amber : "#EAE5D8", color: COLORS.night }}
-              disabled={!name.trim()}
-              className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
+              onClick={signInWithGoogle}
+              style={{ borderColor: COLORS.line, color: COLORS.charcoal }}
+              className="w-full flex items-center justify-center gap-2 border rounded-xl py-3 font-bold text-sm bg-white"
             >
-              <UsersIcon size={18} />
-              I'm a Rider
+              <svg width="18" height="18" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" />
+                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+                <path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.4C29.7 35.4 27 36.3 24 36.3c-5.2 0-9.6-3.3-11.3-7.9l-6.6 5.1C9.6 39.6 16.2 44 24 44z" />
+                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.6l6.6 5.4C41.4 36.3 44 30.7 44 24c0-1.3-.1-2.7-.4-3.5z" />
+              </svg>
+              Continue with Google
             </button>
-            <button
-              onClick={() => enter("owner")}
-              style={{ background: name.trim() ? COLORS.night : "#EAE5D8", color: "white" }}
-              disabled={!name.trim()}
-              className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
-            >
-              <Car size={18} />
-              I'm a Vehicle Owner
-            </button>
-          </div>
+          ) : (
+            <>
+              <div style={{ background: "white", borderColor: COLORS.line }} className="flex items-center gap-3 border rounded-xl px-4 py-3 mb-4">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt="" className="w-9 h-9 rounded-full" />
+                ) : (
+                  <div style={{ background: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center">
+                    <User size={16} color="white" />
+                  </div>
+                )}
+                <div>
+                  <p style={{ color: COLORS.charcoal }} className="text-sm font-bold">{name}</p>
+                  <button onClick={logOut} style={{ color: COLORS.muted }} className="text-xs underline">
+                    Sign out
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => enter("rider")}
+                  style={{ background: COLORS.amber, color: COLORS.night }}
+                  className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
+                >
+                  <UsersIcon size={18} />
+                  I'm a Rider
+                </button>
+                <button
+                  onClick={() => enter("owner")}
+                  style={{ background: COLORS.night, color: "white" }}
+                  className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
+                >
+                  <Car size={18} />
+                  I'm a Vehicle Owner
+                </button>
+              </div>
+            </>
+          )}
+
           <p style={{ color: COLORS.muted }} className="text-xs text-center mt-4">
             Ye data sabhi Margshri users ke saath live share hota hai.
           </p>
@@ -490,6 +571,9 @@ export default function Margshri() {
             <User size={14} color={COLORS.muted} />
             <span style={{ color: COLORS.charcoal }} className="font-medium">{name}</span>
           </div>
+          <button onClick={logOut} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full px-3 py-1.5 text-xs font-semibold">
+            Sign out
+          </button>
         </div>
       </div>
 
@@ -652,6 +736,11 @@ export default function Margshri() {
                       <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.owner })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
                         <MessageCircle size={14} />
                       </button>
+                      {(r.status === "pending" || r.status === "accepted") && (
+                        <button onClick={() => cancelRequest(r.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                          Cancel
+                        </button>
+                      )}
                       {r.status === "completed" && !hasReviewed(r.id) ? (
                         <button onClick={() => setActiveReview({ requestId: r.id, revieweeName: r.owner })} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
                           Rate Owner
@@ -676,7 +765,14 @@ export default function Margshri() {
                       {p.from} <ArrowRight size={12} className="inline" /> {p.to} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}
                       {p.status === "matched" && p.ownerName ? ` · ${p.ownerName} ready hai!` : ""}
                     </span>
-                    <Badge status={p.status} />
+                    <div className="flex items-center gap-2">
+                      {p.status === "open" && (
+                        <button onClick={() => cancelRiderPost(p.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                          Cancel
+                        </button>
+                      )}
+                      <Badge status={p.status} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -820,9 +916,14 @@ export default function Margshri() {
           <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">My posted vehicles</h3>
           <div className="space-y-2">
             {vehicles.filter((v) => v.owner === name).map((v) => (
-              <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 text-sm flex justify-between">
+              <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 text-sm flex justify-between items-center">
                 <span style={{ color: COLORS.charcoal }}>{v.from} → {v.to} · {v.time}</span>
-                <span style={{ color: COLORS.muted }}>{v.seats} seats · ₹{v.price}</span>
+                <div className="flex items-center gap-3">
+                  <span style={{ color: COLORS.muted }}>{v.seats} seats · ₹{v.price}</span>
+                  <button onClick={() => deleteVehicle(v.id)} style={{ color: COLORS.coral }} className="text-xs font-semibold">
+                    Remove
+                  </button>
+                </div>
               </div>
             ))}
           </div>
