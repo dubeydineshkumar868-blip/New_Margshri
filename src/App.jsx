@@ -22,6 +22,7 @@ const VEHICLE_META = {
 
 const VEHICLES_COLLECTION = "vehicles";
 const REQUESTS_COLLECTION = "requests";
+const RIDER_POSTS_COLLECTION = "riderPosts";
 const PROFILE_STORAGE_KEY = "marghee-profile-name";
 
 const seedVehicles = [
@@ -45,6 +46,8 @@ function Badge({ status }) {
     pending: { bg: "#FDF1DE", fg: "#B4700C", label: "Pending" },
     accepted: { bg: "#E4F3EF", fg: COLORS.teal, label: "Accepted" },
     rejected: { bg: "#FBE9E7", fg: COLORS.coral, label: "Declined" },
+    open: { bg: "#FDF1DE", fg: "#B4700C", label: "Waiting" },
+    matched: { bg: "#E4F3EF", fg: COLORS.teal, label: "Matched" },
   };
   const s = map[status];
   return (
@@ -54,7 +57,7 @@ function Badge({ status }) {
   );
 }
 
-export default function Marghee() {
+export default function Margshri() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -63,10 +66,22 @@ export default function Marghee() {
   const [name, setName] = useState("");
   const [vehicles, setVehicles] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [riderPosts, setRiderPosts] = useState([]);
   const [mode, setMode] = useState("local");
 
   const [search, setSearch] = useState({ from: "", to: "", type: "car" });
   const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, time: "", price: "" });
+  const [rform, setRform] = useState({ from: "", to: "", time: "", seatsNeeded: 1 });
+  const [seatCounts, setSeatCounts] = useState({});
+
+  const getSeatCount = (vehicleId, max) => Math.min(seatCounts[vehicleId] || 1, max);
+  const adjustSeats = (vehicleId, delta, max) => {
+    setSeatCounts((prev) => {
+      const current = prev[vehicleId] || 1;
+      const next = Math.min(Math.max(current + delta, 1), max);
+      return { ...prev, [vehicleId]: next };
+    });
+  };
 
   const seededRef = React.useRef(false);
 
@@ -102,9 +117,15 @@ export default function Marghee() {
       (snap) => setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => setErrorMsg("Requests load nahi ho paaye.")
     );
+    const unsubRiderPosts = onSnapshot(
+      collection(db, RIDER_POSTS_COLLECTION),
+      (snap) => setRiderPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      () => setErrorMsg("Rider requests load nahi ho paaye.")
+    );
     return () => {
       unsubVehicles();
       unsubRequests();
+      unsubRiderPosts();
     };
   }, []);
 
@@ -126,8 +147,9 @@ export default function Marghee() {
     }
   };
 
-  const sendRequest = (vehicle) =>
-    withSync(async () => {
+  const sendRequest = (vehicle) => {
+    const seatsRequested = getSeatCount(vehicle.id, vehicle.seats);
+    return withSync(async () => {
       const newReq = {
         riderName: name,
         vehicleId: vehicle.id,
@@ -137,12 +159,14 @@ export default function Marghee() {
         type: vehicle.type,
         owner: vehicle.owner,
         status: "pending",
+        seats: seatsRequested,
       };
       setRequests((prev) => [...prev, { id: "temp-" + Date.now(), ...newReq }]);
       addDoc(collection(db, REQUESTS_COLLECTION), newReq).catch(() => {
         setErrorMsg("Request save nahi ho paya, dubara try karo.");
       });
     });
+  };
 
   const respond = (id, status) => {
     setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
@@ -172,9 +196,39 @@ export default function Marghee() {
       });
     });
 
+  const postRiderRequest = () =>
+    withSync(async () => {
+      if (!rform.from.trim() || !rform.to.trim() || !rform.time.trim()) return;
+      const newPost = {
+        riderName: name,
+        from: rform.from,
+        to: rform.to,
+        time: rform.time,
+        mode,
+        type: search.type,
+        seatsNeeded: Number(rform.seatsNeeded) || 1,
+        status: "open",
+        ownerName: null,
+      };
+      setRiderPosts((prev) => [...prev, { id: "temp-" + Date.now(), ...newPost }]);
+      setRform({ from: "", to: "", time: "", seatsNeeded: 1 });
+      addDoc(collection(db, RIDER_POSTS_COLLECTION), newPost).catch(() => {
+        setErrorMsg("Request save nahi ho paya, dubara try karo.");
+      });
+    });
+
+  const offerRide = (postId) => {
+    setRiderPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, status: "matched", ownerName: name } : p)));
+    updateDoc(doc(db, RIDER_POSTS_COLLECTION, postId), { status: "matched", ownerName: name }).catch(() => {
+      setErrorMsg("Status save nahi ho paya, dubara try karo.");
+    });
+  };
+
   const myVehicleIds = vehicles.filter((v) => v.owner === name).map((v) => v.id);
   const incoming = requests.filter((r) => myVehicleIds.includes(r.vehicleId));
   const myRequests = requests.filter((r) => r.riderName === name);
+  const myRiderPosts = riderPosts.filter((p) => p.riderName === name);
+  const openRiderPostsForOwner = riderPosts.filter((p) => p.mode === mode && (p.status === "open" || p.ownerName === name));
   const filteredVehicles = vehicles.filter(
     (v) =>
       v.mode === mode &&
@@ -189,7 +243,7 @@ export default function Marghee() {
         <MapPin size={18} color={COLORS.night} strokeWidth={2.5} />
       </div>
       <span style={{ color: COLORS.night, letterSpacing: "-0.02em" }} className="text-xl font-bold">
-        Marghee
+        Margshri
       </span>
     </div>
   );
@@ -249,7 +303,7 @@ export default function Marghee() {
             </button>
           </div>
           <p style={{ color: COLORS.muted }} className="text-xs text-center mt-4">
-            Ye data sabhi Marghee users ke saath live share hota hai.
+            Ye data sabhi Margshri users ke saath live share hota hai.
           </p>
         </div>
       </div>
@@ -306,7 +360,21 @@ export default function Marghee() {
 
           <div className="space-y-3 mb-8">
             {filteredVehicles.length === 0 && (
-              <p style={{ color: COLORS.muted }} className="text-sm text-center py-6">Is route par abhi koi vehicle open nahi hai. Baad mein check karo.</p>
+              <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 text-center mb-3">
+                <p style={{ color: COLORS.muted }} className="text-sm mb-3">Is route par abhi koi vehicle open nahi hai.</p>
+                <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">Apna request post kar do — jab koi owner match kare to aapko dikh jayega.</p>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <input placeholder="From" value={rform.from} onChange={(e) => setRform({ ...rform, from: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+                  <input placeholder="To" value={rform.to} onChange={(e) => setRform({ ...rform, to: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <input placeholder="Date & time" value={rform.time} onChange={(e) => setRform({ ...rform, time: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+                  <input type="number" min="1" placeholder="Seats chahiye" value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+                </div>
+                <button onClick={postRiderRequest} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
+                  Post my request
+                </button>
+              </div>
             )}
             {filteredVehicles.map((v) => {
               const Icon = VEHICLE_META[v.type].icon;
@@ -335,9 +403,30 @@ export default function Marghee() {
                     {already ? (
                       <Badge status={already.status} />
                     ) : (
-                      <button onClick={() => sendRequest(v)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
-                        Send Request
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <div style={{ borderColor: COLORS.line }} className="flex items-center border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => adjustSeats(v.id, -1, v.seats)}
+                            style={{ color: COLORS.charcoal }}
+                            className="px-2 py-1 text-sm font-bold"
+                          >
+                            −
+                          </button>
+                          <span style={{ color: COLORS.charcoal, borderColor: COLORS.line }} className="px-2 text-xs font-bold border-l border-r">
+                            {getSeatCount(v.id, v.seats)}
+                          </span>
+                          <button
+                            onClick={() => adjustSeats(v.id, 1, v.seats)}
+                            style={{ color: COLORS.charcoal }}
+                            className="px-2 py-1 text-sm font-bold"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <button onClick={() => sendRequest(v)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
+                          Send Request
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -348,11 +437,28 @@ export default function Marghee() {
           {myRequests.length > 0 && (
             <>
               <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">My requests</h3>
-              <div className="space-y-2">
+              <div className="space-y-2 mb-8">
                 {myRequests.map((r) => (
                   <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
-                    <span style={{ color: COLORS.charcoal }} className="text-sm">{r.from} <ArrowRight size={12} className="inline" /> {r.to} · {r.owner}</span>
+                    <span style={{ color: COLORS.charcoal }} className="text-sm">{r.from} <ArrowRight size={12} className="inline" /> {r.to} · {r.owner} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</span>
                     <Badge status={r.status} />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {myRiderPosts.length > 0 && (
+            <>
+              <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">My posted requests (open search)</h3>
+              <div className="space-y-2">
+                {myRiderPosts.map((p) => (
+                  <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                    <span style={{ color: COLORS.charcoal }} className="text-sm">
+                      {p.from} <ArrowRight size={12} className="inline" /> {p.to} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}
+                      {p.status === "matched" && p.ownerName ? ` · ${p.ownerName} ready hai!` : ""}
+                    </span>
+                    <Badge status={p.status} />
                   </div>
                 ))}
               </div>
@@ -397,6 +503,34 @@ export default function Marghee() {
             </button>
           </div>
 
+          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">Riders looking for a ride</h3>
+          <div className="space-y-2 mb-8">
+            {openRiderPostsForOwner.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Abhi koi rider search nahi kar raha.</p>}
+            {openRiderPostsForOwner.map((p) => {
+              const Icon = VEHICLE_META[p.type]?.icon || Car;
+              return (
+                <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div style={{ background: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+                      <Icon size={14} color="white" />
+                    </div>
+                    <div>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{p.riderName}</p>
+                      <p style={{ color: COLORS.muted }} className="text-xs">{p.from} <ArrowRight size={11} className="inline" /> {p.to} · {p.time} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}</p>
+                    </div>
+                  </div>
+                  {p.status === "open" ? (
+                    <button onClick={() => offerRide(p.id)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
+                      Offer Ride
+                    </button>
+                  ) : (
+                    <Badge status={p.status} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
           <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">Incoming requests</h3>
           <div className="space-y-2 mb-8">
             {incoming.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Abhi koi request nahi aayi.</p>}
@@ -404,7 +538,7 @@ export default function Marghee() {
               <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
                 <div>
                   <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName}</p>
-                  <p style={{ color: COLORS.muted }} className="text-xs">{r.from} <ArrowRight size={11} className="inline" /> {r.to}</p>
+                  <p style={{ color: COLORS.muted }} className="text-xs">{r.from} <ArrowRight size={11} className="inline" /> {r.to} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</p>
                 </div>
                 {r.status === "pending" ? (
                   <div className="flex gap-2">
