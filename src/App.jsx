@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck } from "lucide-react";
 import { db } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc } from "firebase/firestore";
 
@@ -24,6 +24,7 @@ const VEHICLES_COLLECTION = "vehicles";
 const REQUESTS_COLLECTION = "requests";
 const RIDER_POSTS_COLLECTION = "riderPosts";
 const MESSAGES_COLLECTION = "messages";
+const REVIEWS_COLLECTION = "reviews";
 const PROFILE_STORAGE_KEY = "marghee-profile-name";
 
 const seedVehicles = [
@@ -114,12 +115,26 @@ function Badge({ status }) {
     rejected: { bg: "#FBE9E7", fg: COLORS.coral, label: "Declined" },
     open: { bg: "#FDF1DE", fg: "#B4700C", label: "Waiting" },
     matched: { bg: "#E4F3EF", fg: COLORS.teal, label: "Matched" },
+    completed: { bg: "#E4F3EF", fg: COLORS.teal, label: "Completed" },
+    noshow: { bg: "#FBE9E7", fg: COLORS.coral, label: "No-show" },
   };
   const s = map[status];
   return (
     <span style={{ background: s.bg, color: s.fg }} className="text-xs font-semibold px-2.5 py-1 rounded-full tracking-wide uppercase">
       {s.label}
     </span>
+  );
+}
+
+function StarRating({ value, onChange, size = 20 }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button key={n} type="button" onClick={() => onChange(n)}>
+          <Star size={size} fill={n <= value ? COLORS.amber : "none"} color={n <= value ? COLORS.amber : COLORS.line} />
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -134,12 +149,17 @@ export default function Margshri() {
   const [requests, setRequests] = useState([]);
   const [riderPosts, setRiderPosts] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [activeChat, setActiveChat] = useState(null); // { requestId, otherName }
   const [messageText, setMessageText] = useState("");
+  const [activeReview, setActiveReview] = useState(null); // { requestId, revieweeName }
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
   const [mode, setMode] = useState("local");
 
   const [search, setSearch] = useState({ from: "", to: "", type: "car" });
-  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, time: "", price: "" });
+  const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
+  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, time: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false } });
   const [rform, setRform] = useState({ from: "", to: "", time: "", seatsNeeded: 1 });
   const [seatCounts, setSeatCounts] = useState({});
 
@@ -196,11 +216,17 @@ export default function Margshri() {
       (snap) => setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => setErrorMsg("Messages load nahi ho paaye.")
     );
+    const unsubReviews = onSnapshot(
+      collection(db, REVIEWS_COLLECTION),
+      (snap) => setReviews(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      () => setErrorMsg("Reviews load nahi ho paaye.")
+    );
     return () => {
       unsubVehicles();
       unsubRequests();
       unsubRiderPosts();
       unsubMessages();
+      unsubReviews();
     };
   }, []);
 
@@ -276,10 +302,11 @@ export default function Margshri() {
         seats: Number(vform.seats) || 1,
         time: vform.time,
         price: Number(vform.price) || 0,
+        tags: vform.tags,
       };
       // Show it immediately — don't make the user wait for the network round-trip
       setVehicles((prev) => [...prev, { id: "temp-" + Date.now(), ...newVehicle }]);
-      setVform({ type: "car", from: "", to: "", seats: 2, time: "", price: "" });
+      setVform({ type: "car", from: "", to: "", seats: 2, time: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false } });
       addDoc(collection(db, VEHICLES_COLLECTION), newVehicle).catch(() => {
         setErrorMsg("Vehicle save nahi ho paya, dubara try karo.");
       });
@@ -328,18 +355,56 @@ export default function Margshri() {
     });
   };
 
+  const submitReview = () => {
+    if (!activeReview) return;
+    const newReview = {
+      requestId: activeReview.requestId,
+      raterName: name,
+      revieweeName: activeReview.revieweeName,
+      rating: reviewRating,
+      comment: reviewComment.trim(),
+      createdAt: Date.now(),
+    };
+    setReviews((prev) => [...prev, { id: "temp-" + Date.now(), ...newReview }]);
+    addDoc(collection(db, REVIEWS_COLLECTION), newReview).catch(() => {
+      setErrorMsg("Review save nahi hua, dubara try karo.");
+    });
+    setActiveReview(null);
+    setReviewRating(5);
+    setReviewComment("");
+  };
+
+  const getAvgRating = (personName) => {
+    const forPerson = reviews.filter((r) => r.revieweeName === personName);
+    if (forPerson.length === 0) return null;
+    const avg = forPerson.reduce((sum, r) => sum + (r.rating || 0), 0) / forPerson.length;
+    return { avg: Math.round(avg * 10) / 10, count: forPerson.length };
+  };
+
+  const getReliability = (ownerName) => {
+    const ownerVehicleIds = vehicles.filter((v) => v.owner === ownerName).map((v) => v.id);
+    const finished = requests.filter((r) => ownerVehicleIds.includes(r.vehicleId) && (r.status === "completed" || r.status === "noshow"));
+    if (finished.length === 0) return null;
+    const completedCount = finished.filter((r) => r.status === "completed").length;
+    return { pct: Math.round((completedCount / finished.length) * 100), total: finished.length };
+  };
+
+  const hasReviewed = (requestId) => reviews.some((r) => r.requestId === requestId && r.raterName === name);
+
   const myVehicleIds = vehicles.filter((v) => v.owner === name).map((v) => v.id);
   const incoming = requests.filter((r) => myVehicleIds.includes(r.vehicleId));
   const myRequests = requests.filter((r) => r.riderName === name);
   const myRiderPosts = riderPosts.filter((p) => p.riderName === name);
   const openRiderPostsForOwner = riderPosts.filter((p) => p.mode === mode && (p.status === "open" || p.ownerName === name));
+  const activeTagFilters = Object.entries(filterTags).filter(([, v]) => v).map(([k]) => k);
   const filteredVehicles = vehicles.filter(
     (v) =>
       v.mode === mode &&
       v.type === search.type &&
       v.seats > 0 &&
       (search.from === "" || v.from.toLowerCase().includes(search.from.toLowerCase())) &&
-      (search.to === "" || v.to.toLowerCase().includes(search.to.toLowerCase()))
+      (search.to === "" || v.to.toLowerCase().includes(search.to.toLowerCase())) &&
+      activeTagFilters.every((tag) => v.tags && v.tags[tag])
   );
 
   const Logo = () => (
@@ -448,7 +513,7 @@ export default function Margshri() {
               <LocationInput placeholder="From" value={search.from} onChange={(v) => setSearch({ ...search, from: v })} />
               <LocationInput placeholder="To" value={search.to} onChange={(v) => setSearch({ ...search, to: v })} />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-3">
               {Object.entries(VEHICLE_META).map(([key, m]) => {
                 const Icon = m.icon;
                 const active = search.type === key;
@@ -460,6 +525,23 @@ export default function Margshri() {
                   </button>
                 );
               })}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: "womenOnly", label: "Women-only" },
+                { key: "nonSmoker", label: "Non-smoker" },
+                { key: "ac", label: "AC" },
+                { key: "luggage", label: "Luggage space" },
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setFilterTags({ ...filterTags, [t.key]: !filterTags[t.key] })}
+                  style={filterTags[t.key] ? { background: COLORS.teal, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                  className="text-xs font-semibold px-2.5 py-1.5 rounded-full"
+                >
+                  {t.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -492,12 +574,32 @@ export default function Margshri() {
                         <Icon size={16} color="white" />
                       </div>
                       <div>
-                        <p style={{ color: COLORS.charcoal }} className="text-sm font-bold">{v.owner}</p>
+                        <p style={{ color: COLORS.charcoal }} className="text-sm font-bold flex items-center gap-1">
+                          {v.owner}
+                          {getAvgRating(v.owner) && (
+                            <span style={{ color: COLORS.muted }} className="text-xs font-normal flex items-center gap-0.5">
+                              <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {getAvgRating(v.owner).avg}
+                            </span>
+                          )}
+                        </p>
                         <p style={{ color: COLORS.muted }} className="text-xs flex items-center gap-1"><Clock size={11} /> {v.time}</p>
+                        {getReliability(v.owner) && (
+                          <p style={{ color: getReliability(v.owner).pct >= 80 ? COLORS.teal : COLORS.coral }} className="text-xs font-semibold flex items-center gap-1 mt-0.5">
+                            <ShieldCheck size={11} /> {getReliability(v.owner).pct}% reliable ({getReliability(v.owner).total} rides)
+                          </p>
+                        )}
                       </div>
                     </div>
                     <p style={{ color: COLORS.night }} className="text-sm font-bold">₹{v.price}</p>
                   </div>
+                  {v.tags && Object.values(v.tags).some(Boolean) && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {v.tags.womenOnly && <span style={{ background: "#FBE9F0", color: "#C2185B" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">Women-only</span>}
+                      {v.tags.nonSmoker && <span style={{ background: "#E4F3EF", color: COLORS.teal }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">Non-smoker</span>}
+                      {v.tags.ac && <span style={{ background: "#E7EEFB", color: "#3355AA" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">AC</span>}
+                      {v.tags.luggage && <span style={{ background: "#FDF1DE", color: "#B4700C" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">Luggage space</span>}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-xs mb-2" style={{ color: COLORS.charcoal }}>
                     <span className="font-semibold">{v.from}</span>
                     <span className="font-semibold">{v.to}</span>
@@ -550,7 +652,13 @@ export default function Margshri() {
                       <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.owner })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
                         <MessageCircle size={14} />
                       </button>
-                      <Badge status={r.status} />
+                      {r.status === "completed" && !hasReviewed(r.id) ? (
+                        <button onClick={() => setActiveReview({ requestId: r.id, revieweeName: r.owner })} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                          Rate Owner
+                        </button>
+                      ) : (
+                        <Badge status={r.status} />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -608,6 +716,24 @@ export default function Margshri() {
               <input type="number" placeholder="Price per seat (₹)" value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
             </div>
             <p style={{ color: COLORS.muted }} className="text-xs mb-3">Posting for: <b style={{ color: COLORS.charcoal }}>{mode === "local" ? "Local" : "Long Distance"}</b> mode (change from top toggle)</p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {[
+                { key: "womenOnly", label: "Women-only" },
+                { key: "nonSmoker", label: "Non-smoker" },
+                { key: "ac", label: "AC" },
+                { key: "luggage", label: "Luggage space" },
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setVform({ ...vform, tags: { ...vform.tags, [t.key]: !vform.tags[t.key] } })}
+                  style={vform.tags[t.key] ? { background: COLORS.teal, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                  className="text-xs font-semibold px-2.5 py-1.5 rounded-full"
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
             <button onClick={postVehicle} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
               {syncing ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Post Vehicle
             </button>
@@ -657,6 +783,27 @@ export default function Margshri() {
                     </button>
                     <button onClick={() => respond(r.id, "accepted")} disabled={syncing} style={{ background: COLORS.teal }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><Check size={15} color="white" /></button>
                     <button onClick={() => respond(r.id, "rejected")} disabled={syncing} style={{ background: COLORS.coral }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><X size={15} color="white" /></button>
+                  </div>
+                ) : r.status === "accepted" ? (
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.riderName })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                      <MessageCircle size={14} />
+                    </button>
+                    <button onClick={() => respond(r.id, "completed")} disabled={syncing} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
+                      Ride Done
+                    </button>
+                    <button onClick={() => respond(r.id, "noshow")} disabled={syncing} style={{ background: COLORS.coral, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
+                      No-show
+                    </button>
+                  </div>
+                ) : r.status === "completed" && !hasReviewed(r.id) ? (
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.riderName })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                      <MessageCircle size={14} />
+                    </button>
+                    <button onClick={() => setActiveReview({ requestId: r.id, revieweeName: r.riderName })} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                      Rate Rider
+                    </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -720,6 +867,34 @@ export default function Margshri() {
               />
               <button onClick={sendMessage} style={{ background: COLORS.amber, color: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
                 <Send size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeReview && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setActiveReview(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
+            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">Rate {activeReview.revieweeName}</p>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-4">Aapka feedback doosron ko sahi decision lene mein madad karta hai.</p>
+            <div className="flex justify-center mb-4">
+              <StarRating value={reviewRating} onChange={setReviewRating} size={28} />
+            </div>
+            <textarea
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              placeholder="Kuch likhna chahenge? (optional)"
+              style={{ borderColor: COLORS.line }}
+              className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-4 resize-none"
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setActiveReview(null)} style={{ borderColor: COLORS.line, color: COLORS.muted }} className="flex-1 border rounded-lg py-2.5 text-sm font-bold">
+                Cancel
+              </button>
+              <button onClick={submitReview} style={{ background: COLORS.amber, color: COLORS.night }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
+                Submit Rating
               </button>
             </div>
           </div>
