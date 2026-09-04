@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2 } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send } from "lucide-react";
 import { db } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc } from "firebase/firestore";
 
@@ -23,6 +23,7 @@ const VEHICLE_META = {
 const VEHICLES_COLLECTION = "vehicles";
 const REQUESTS_COLLECTION = "requests";
 const RIDER_POSTS_COLLECTION = "riderPosts";
+const MESSAGES_COLLECTION = "messages";
 const PROFILE_STORAGE_KEY = "marghee-profile-name";
 
 const seedVehicles = [
@@ -38,6 +39,71 @@ function RouteLine({ compact }) {
       <circle cx="4" cy="10" r="4" fill={COLORS.amber} />
       <circle cx="196" cy="10" r="4" fill={COLORS.coral} />
     </svg>
+  );
+}
+
+function LocationInput({ value, onChange, placeholder }) {
+  const [suggestions, setSuggestions] = useState([]);
+  const [open, setOpen] = useState(false);
+  const timeoutRef = React.useRef(null);
+
+  const handleChange = (e) => {
+    const val = e.target.value;
+    onChange(val);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (val.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=in&q=${encodeURIComponent(val)}`
+        );
+        const data = await res.json();
+        setSuggestions(data);
+        setOpen(true);
+      } catch {
+        setSuggestions([]);
+      }
+    }, 400);
+  };
+
+  const selectSuggestion = (s) => {
+    const parts = s.display_name.split(",");
+    const short = parts.length > 1 ? `${parts[0].trim()}, ${parts[1].trim()}` : parts[0].trim();
+    onChange(short);
+    setOpen(false);
+    setSuggestions([]);
+  };
+
+  return (
+    <div className="relative">
+      <input
+        value={value}
+        onChange={handleChange}
+        onFocus={() => suggestions.length && setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder={placeholder}
+        style={{ borderColor: COLORS.line }}
+        className="border rounded-lg px-3 py-2 text-sm outline-none w-full"
+      />
+      {open && suggestions.length > 0 && (
+        <div style={{ borderColor: COLORS.line }} className="absolute z-20 top-full left-0 right-0 bg-white border rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              onMouseDown={() => selectSuggestion(s)}
+              style={{ color: COLORS.charcoal, borderColor: COLORS.line }}
+              className="block w-full text-left px-3 py-2 text-xs border-b last:border-b-0 hover:bg-gray-50"
+            >
+              {s.display_name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -67,6 +133,9 @@ export default function Margshri() {
   const [vehicles, setVehicles] = useState([]);
   const [requests, setRequests] = useState([]);
   const [riderPosts, setRiderPosts] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [activeChat, setActiveChat] = useState(null); // { requestId, otherName }
+  const [messageText, setMessageText] = useState("");
   const [mode, setMode] = useState("local");
 
   const [search, setSearch] = useState({ from: "", to: "", type: "car" });
@@ -122,10 +191,16 @@ export default function Margshri() {
       (snap) => setRiderPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => setErrorMsg("Rider requests load nahi ho paaye.")
     );
+    const unsubMessages = onSnapshot(
+      collection(db, MESSAGES_COLLECTION),
+      (snap) => setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      () => setErrorMsg("Messages load nahi ho paaye.")
+    );
     return () => {
       unsubVehicles();
       unsubRequests();
       unsubRiderPosts();
+      unsubMessages();
     };
   }, []);
 
@@ -235,6 +310,21 @@ export default function Margshri() {
     setRiderPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, status: "matched", ownerName: name } : p)));
     updateDoc(doc(db, RIDER_POSTS_COLLECTION, postId), { status: "matched", ownerName: name }).catch(() => {
       setErrorMsg("Status save nahi ho paya, dubara try karo.");
+    });
+  };
+
+  const sendMessage = () => {
+    if (!messageText.trim() || !activeChat) return;
+    const newMsg = {
+      requestId: activeChat.requestId,
+      senderName: name,
+      text: messageText.trim(),
+      createdAt: Date.now(),
+    };
+    setMessages((prev) => [...prev, { id: "temp-" + Date.now(), ...newMsg }]);
+    setMessageText("");
+    addDoc(collection(db, MESSAGES_COLLECTION), newMsg).catch(() => {
+      setErrorMsg("Message send nahi hua, dubara try karo.");
     });
   };
 
@@ -355,8 +445,8 @@ export default function Margshri() {
           <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">Find a ride</h2>
           <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 mb-6">
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <input placeholder="From" value={search.from} onChange={(e) => setSearch({ ...search, from: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <input placeholder="To" value={search.to} onChange={(e) => setSearch({ ...search, to: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+              <LocationInput placeholder="From" value={search.from} onChange={(v) => setSearch({ ...search, from: v })} />
+              <LocationInput placeholder="To" value={search.to} onChange={(v) => setSearch({ ...search, to: v })} />
             </div>
             <div className="flex gap-2">
               {Object.entries(VEHICLE_META).map(([key, m]) => {
@@ -379,8 +469,8 @@ export default function Margshri() {
                 <p style={{ color: COLORS.muted }} className="text-sm mb-3">Is route par abhi koi vehicle open nahi hai.</p>
                 <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">Apna request post kar do — jab koi owner match kare to aapko dikh jayega.</p>
                 <div className="grid grid-cols-2 gap-2 mb-2">
-                  <input placeholder="From" value={rform.from} onChange={(e) => setRform({ ...rform, from: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-                  <input placeholder="To" value={rform.to} onChange={(e) => setRform({ ...rform, to: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+                  <LocationInput placeholder="From" value={rform.from} onChange={(v) => setRform({ ...rform, from: v })} />
+                  <LocationInput placeholder="To" value={rform.to} onChange={(v) => setRform({ ...rform, to: v })} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <input placeholder="Date & time" value={rform.time} onChange={(e) => setRform({ ...rform, time: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
@@ -456,7 +546,12 @@ export default function Margshri() {
                 {myRequests.map((r) => (
                   <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
                     <span style={{ color: COLORS.charcoal }} className="text-sm">{r.from} <ArrowRight size={12} className="inline" /> {r.to} · {r.owner} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</span>
-                    <Badge status={r.status} />
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.owner })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                        <MessageCircle size={14} />
+                      </button>
+                      <Badge status={r.status} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -506,8 +601,8 @@ export default function Margshri() {
               })}
             </div>
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <input placeholder="From" value={vform.from} onChange={(e) => setVform({ ...vform, from: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <input placeholder="To" value={vform.to} onChange={(e) => setVform({ ...vform, to: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+              <LocationInput placeholder="From" value={vform.from} onChange={(v) => setVform({ ...vform, from: v })} />
+              <LocationInput placeholder="To" value={vform.to} onChange={(v) => setVform({ ...vform, to: v })} />
               <input placeholder="Date & time e.g. Today, 5 PM" value={vform.time} onChange={(e) => setVform({ ...vform, time: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
               <input type="number" placeholder="Seats" value={vform.seats} onChange={(e) => setVform({ ...vform, seats: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
               <input type="number" placeholder="Price per seat (₹)" value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
@@ -557,11 +652,19 @@ export default function Margshri() {
                 </div>
                 {r.status === "pending" ? (
                   <div className="flex gap-2">
+                    <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.riderName })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                      <MessageCircle size={14} />
+                    </button>
                     <button onClick={() => respond(r.id, "accepted")} disabled={syncing} style={{ background: COLORS.teal }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><Check size={15} color="white" /></button>
                     <button onClick={() => respond(r.id, "rejected")} disabled={syncing} style={{ background: COLORS.coral }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><X size={15} color="white" /></button>
                   </div>
                 ) : (
-                  <Badge status={r.status} />
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.riderName })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                      <MessageCircle size={14} />
+                    </button>
+                    <Badge status={r.status} />
+                  </div>
                 )}
               </div>
             ))}
@@ -575,6 +678,50 @@ export default function Margshri() {
                 <span style={{ color: COLORS.muted }}>{v.seats} seats · ₹{v.price}</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {activeChat && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setActiveChat(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl flex flex-col">
+            <div style={{ background: COLORS.night }} className="flex items-center justify-between px-4 py-3 rounded-t-2xl">
+              <p className="text-white text-sm font-bold">{activeChat.otherName}</p>
+              <button onClick={() => setActiveChat(null)} className="text-white">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-2 p-4 overflow-y-auto" style={{ maxHeight: 320, minHeight: 160 }}>
+              {messages.filter((m) => m.requestId === activeChat.requestId).length === 0 && (
+                <p style={{ color: COLORS.muted }} className="text-xs text-center py-6">Koi message nahi hai abhi. Baat shuru karo!</p>
+              )}
+              {messages
+                .filter((m) => m.requestId === activeChat.requestId)
+                .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+                .map((m) => (
+                  <div key={m.id} className={`flex ${m.senderName === name ? "justify-end" : "justify-start"}`}>
+                    <div
+                      style={m.senderName === name ? { background: COLORS.amber, color: COLORS.night } : { background: "white", color: COLORS.charcoal, borderColor: COLORS.line }}
+                      className="max-w-[75%] px-3 py-2 rounded-2xl text-sm border"
+                    >
+                      {m.text}
+                    </div>
+                  </div>
+                ))}
+            </div>
+            <div style={{ borderColor: COLORS.line }} className="flex items-center gap-2 p-3 border-t">
+              <input
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                placeholder="Message likho..."
+                style={{ borderColor: COLORS.line }}
+                className="flex-1 border rounded-full px-4 py-2 text-sm outline-none"
+              />
+              <button onClick={sendMessage} style={{ background: COLORS.amber, color: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
+                <Send size={15} />
+              </button>
+            </div>
           </div>
         </div>
       )}
