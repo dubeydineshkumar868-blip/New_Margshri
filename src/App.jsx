@@ -247,8 +247,28 @@ export default function Margshri() {
     setScreen("landing");
   };
 
+  const pendingActionRef = React.useRef(null);
+
+  // If a pending action was queued because the person wasn't logged in,
+  // run it automatically the moment login succeeds.
+  useEffect(() => {
+    if (user && pendingActionRef.current) {
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+      action();
+    }
+  }, [user]);
+
+  const requireAuth = (action) => {
+    if (!user) {
+      pendingActionRef.current = action;
+      signInWithGoogle();
+      return;
+    }
+    action();
+  };
+
   const enter = (chosenRole) => {
-    if (!user) return;
     setScreen(chosenRole === "rider" ? "rider" : "owner");
   };
 
@@ -501,60 +521,27 @@ export default function Margshri() {
             <RouteLine />
           </div>
 
-          {!user ? (
+          <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={signInWithGoogle}
-              style={{ borderColor: COLORS.line, color: COLORS.charcoal }}
-              className="w-full flex items-center justify-center gap-2 border rounded-xl py-3 font-bold text-sm bg-white"
+              onClick={() => enter("rider")}
+              style={{ background: COLORS.amber, color: COLORS.night }}
+              className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
             >
-              <svg width="18" height="18" viewBox="0 0 48 48">
-                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" />
-                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
-                <path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.4C29.7 35.4 27 36.3 24 36.3c-5.2 0-9.6-3.3-11.3-7.9l-6.6 5.1C9.6 39.6 16.2 44 24 44z" />
-                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.6l6.6 5.4C41.4 36.3 44 30.7 44 24c0-1.3-.1-2.7-.4-3.5z" />
-              </svg>
-              Continue with Google
+              <UsersIcon size={18} />
+              I'm a Rider
             </button>
-          ) : (
-            <>
-              <div style={{ background: "white", borderColor: COLORS.line }} className="flex items-center gap-3 border rounded-xl px-4 py-3 mb-4">
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="" className="w-9 h-9 rounded-full" />
-                ) : (
-                  <div style={{ background: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center">
-                    <User size={16} color="white" />
-                  </div>
-                )}
-                <div>
-                  <p style={{ color: COLORS.charcoal }} className="text-sm font-bold">{name}</p>
-                  <button onClick={logOut} style={{ color: COLORS.muted }} className="text-xs underline">
-                    Sign out
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => enter("rider")}
-                  style={{ background: COLORS.amber, color: COLORS.night }}
-                  className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
-                >
-                  <UsersIcon size={18} />
-                  I'm a Rider
-                </button>
-                <button
-                  onClick={() => enter("owner")}
-                  style={{ background: COLORS.night, color: "white" }}
-                  className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
-                >
-                  <Car size={18} />
-                  I'm a Vehicle Owner
-                </button>
-              </div>
-            </>
-          )}
+            <button
+              onClick={() => enter("owner")}
+              style={{ background: COLORS.night, color: "white" }}
+              className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
+            >
+              <Car size={18} />
+              I'm a Vehicle Owner
+            </button>
+          </div>
 
           <p style={{ color: COLORS.muted }} className="text-xs text-center mt-4">
-            Ye data sabhi Margshri users ke saath live share hota hai.
+            Sab kuch dekhne ke liye login zaroori nahi. Booking ya post karte waqt Google se login karne ko kaha jayega.
           </p>
         </div>
       </div>
@@ -567,13 +554,21 @@ export default function Margshri() {
         <Logo />
         <div className="flex items-center gap-3">
           <ModeToggle />
-          <div style={{ background: "white", borderColor: COLORS.line }} className="flex items-center gap-2 border rounded-full px-3 py-1.5 text-sm">
-            <User size={14} color={COLORS.muted} />
-            <span style={{ color: COLORS.charcoal }} className="font-medium">{name}</span>
-          </div>
-          <button onClick={logOut} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full px-3 py-1.5 text-xs font-semibold">
-            Sign out
-          </button>
+          {user ? (
+            <>
+              <div style={{ background: "white", borderColor: COLORS.line }} className="flex items-center gap-2 border rounded-full px-3 py-1.5 text-sm">
+                <User size={14} color={COLORS.muted} />
+                <span style={{ color: COLORS.charcoal }} className="font-medium">{name}</span>
+              </div>
+              <button onClick={logOut} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full px-3 py-1.5 text-xs font-semibold">
+                Sign out
+              </button>
+            </>
+          ) : (
+            <button onClick={signInWithGoogle} style={{ background: COLORS.night, color: "white" }} className="rounded-full px-4 py-1.5 text-xs font-bold">
+              Login
+            </button>
+          )}
         </div>
       </div>
 
@@ -642,7 +637,7 @@ export default function Margshri() {
                   <input placeholder="Date & time" value={rform.time} onChange={(e) => setRform({ ...rform, time: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
                   <input type="number" min="1" placeholder="Seats chahiye" value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
                 </div>
-                <button onClick={postRiderRequest} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
+                <button onClick={() => requireAuth(postRiderRequest)} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
                   Post my request
                 </button>
               </div>
@@ -714,7 +709,7 @@ export default function Margshri() {
                             +
                           </button>
                         </div>
-                        <button onClick={() => sendRequest(v)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
+                        <button onClick={() => requireAuth(() => sendRequest(v))} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
                           Send Request
                         </button>
                       </div>
@@ -733,16 +728,16 @@ export default function Margshri() {
                   <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
                     <span style={{ color: COLORS.charcoal }} className="text-sm">{r.from} <ArrowRight size={12} className="inline" /> {r.to} · {r.owner} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.owner })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                      <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.owner }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
                         <MessageCircle size={14} />
                       </button>
                       {(r.status === "pending" || r.status === "accepted") && (
-                        <button onClick={() => cancelRequest(r.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                        <button onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
                           Cancel
                         </button>
                       )}
                       {r.status === "completed" && !hasReviewed(r.id) ? (
-                        <button onClick={() => setActiveReview({ requestId: r.id, revieweeName: r.owner })} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                        <button onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.owner }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
                           Rate Owner
                         </button>
                       ) : (
@@ -767,7 +762,7 @@ export default function Margshri() {
                     </span>
                     <div className="flex items-center gap-2">
                       {p.status === "open" && (
-                        <button onClick={() => cancelRiderPost(p.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                        <button onClick={() => requireAuth(() => cancelRiderPost(p.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
                           Cancel
                         </button>
                       )}
@@ -830,7 +825,7 @@ export default function Margshri() {
                 </button>
               ))}
             </div>
-            <button onClick={postVehicle} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
+            <button onClick={() => requireAuth(postVehicle)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
               {syncing ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Post Vehicle
             </button>
           </div>
@@ -852,7 +847,7 @@ export default function Margshri() {
                     </div>
                   </div>
                   {p.status === "open" ? (
-                    <button onClick={() => offerRide(p.id)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
+                    <button onClick={() => requireAuth(() => offerRide(p.id))} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
                       Offer Ride
                     </button>
                   ) : (
@@ -874,36 +869,36 @@ export default function Margshri() {
                 </div>
                 {r.status === "pending" ? (
                   <div className="flex gap-2">
-                    <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.riderName })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                    <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.riderName }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
                       <MessageCircle size={14} />
                     </button>
-                    <button onClick={() => respond(r.id, "accepted")} disabled={syncing} style={{ background: COLORS.teal }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><Check size={15} color="white" /></button>
-                    <button onClick={() => respond(r.id, "rejected")} disabled={syncing} style={{ background: COLORS.coral }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><X size={15} color="white" /></button>
+                    <button onClick={() => requireAuth(() => respond(r.id, "accepted"))} disabled={syncing} style={{ background: COLORS.teal }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><Check size={15} color="white" /></button>
+                    <button onClick={() => requireAuth(() => respond(r.id, "rejected"))} disabled={syncing} style={{ background: COLORS.coral }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><X size={15} color="white" /></button>
                   </div>
                 ) : r.status === "accepted" ? (
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.riderName })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                    <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.riderName }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
                       <MessageCircle size={14} />
                     </button>
-                    <button onClick={() => respond(r.id, "completed")} disabled={syncing} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
+                    <button onClick={() => requireAuth(() => respond(r.id, "completed"))} disabled={syncing} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
                       Ride Done
                     </button>
-                    <button onClick={() => respond(r.id, "noshow")} disabled={syncing} style={{ background: COLORS.coral, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
+                    <button onClick={() => requireAuth(() => respond(r.id, "noshow"))} disabled={syncing} style={{ background: COLORS.coral, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
                       No-show
                     </button>
                   </div>
                 ) : r.status === "completed" && !hasReviewed(r.id) ? (
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.riderName })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                    <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.riderName }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
                       <MessageCircle size={14} />
                     </button>
-                    <button onClick={() => setActiveReview({ requestId: r.id, revieweeName: r.riderName })} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                    <button onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.riderName }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
                       Rate Rider
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setActiveChat({ requestId: r.id, otherName: r.riderName })} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                    <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.riderName }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
                       <MessageCircle size={14} />
                     </button>
                     <Badge status={r.status} />
@@ -920,7 +915,7 @@ export default function Margshri() {
                 <span style={{ color: COLORS.charcoal }}>{v.from} → {v.to} · {v.time}</span>
                 <div className="flex items-center gap-3">
                   <span style={{ color: COLORS.muted }}>{v.seats} seats · ₹{v.price}</span>
-                  <button onClick={() => deleteVehicle(v.id)} style={{ color: COLORS.coral }} className="text-xs font-semibold">
+                  <button onClick={() => requireAuth(() => deleteVehicle(v.id))} style={{ color: COLORS.coral }} className="text-xs font-semibold">
                     Remove
                   </button>
                 </div>
