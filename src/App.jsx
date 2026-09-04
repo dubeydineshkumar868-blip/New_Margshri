@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2 } from "lucide-react";
 import { db } from "./firebase.js";
-import { collection, onSnapshot, addDoc, updateDoc, doc, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, doc } from "firebase/firestore";
 
 const COLORS = {
   night: "#1B2A4A",
@@ -55,7 +55,7 @@ function Badge({ status }) {
 }
 
 export default function Marghee() {
-  const [booting, setBooting] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -68,40 +68,38 @@ export default function Marghee() {
   const [search, setSearch] = useState({ from: "", to: "", type: "car" });
   const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, time: "", price: "" });
 
+  const seededRef = React.useRef(false);
+
+  // Name loads instantly from this device's storage — landing screen never waits on the network.
   useEffect(() => {
     const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (saved) setName(saved);
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const snap = await getDocs(collection(db, VEHICLES_COLLECTION));
-        if (snap.empty) {
-          for (const v of seedVehicles) {
-            await addDoc(collection(db, VEHICLES_COLLECTION), v);
-          }
-        }
-      } catch {
-        setErrorMsg("Firebase se connect nahi ho paya. Config aur Firestore setup check karo.");
-      }
-    })();
-  }, []);
-
+  // Real-time listeners start immediately in the background. Landing screen doesn't
+  // wait for this — only the Rider/Owner dashboards need vehicles/requests.
   useEffect(() => {
     const unsubVehicles = onSnapshot(
       collection(db, VEHICLES_COLLECTION),
-      (snap) => {
+      async (snap) => {
         setVehicles(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        setBooting(false);
+        setDataLoaded(true);
+        // One-time seed, done inline instead of a separate extra network round-trip
+        if (snap.empty && !seededRef.current) {
+          seededRef.current = true;
+          for (const v of seedVehicles) {
+            addDoc(collection(db, VEHICLES_COLLECTION), v).catch(() => {});
+          }
+        }
       },
-      () => setErrorMsg("Vehicles load nahi ho paaye.")
+      () => {
+        setErrorMsg("Firebase se connect nahi ho paya. Config aur Firestore setup check karo.");
+        setDataLoaded(true);
+      }
     );
     const unsubRequests = onSnapshot(
       collection(db, REQUESTS_COLLECTION),
-      (snap) => {
-        setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
+      (snap) => setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => setErrorMsg("Requests load nahi ho paaye.")
     );
     return () => {
@@ -129,8 +127,8 @@ export default function Marghee() {
   };
 
   const sendRequest = (vehicle) =>
-    withSync(() =>
-      addDoc(collection(db, REQUESTS_COLLECTION), {
+    withSync(async () => {
+      const newReq = {
         riderName: name,
         vehicleId: vehicle.id,
         from: vehicle.from,
@@ -139,15 +137,24 @@ export default function Marghee() {
         type: vehicle.type,
         owner: vehicle.owner,
         status: "pending",
-      })
-    );
+      };
+      setRequests((prev) => [...prev, { id: "temp-" + Date.now(), ...newReq }]);
+      addDoc(collection(db, REQUESTS_COLLECTION), newReq).catch(() => {
+        setErrorMsg("Request save nahi ho paya, dubara try karo.");
+      });
+    });
 
-  const respond = (id, status) => withSync(() => updateDoc(doc(db, REQUESTS_COLLECTION, id), { status }));
+  const respond = (id, status) => {
+    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    updateDoc(doc(db, REQUESTS_COLLECTION, id), { status }).catch(() => {
+      setErrorMsg("Status save nahi ho paya, dubara try karo.");
+    });
+  };
 
   const postVehicle = () =>
     withSync(async () => {
       if (!vform.from.trim() || !vform.to.trim() || !vform.time.trim()) return;
-      await addDoc(collection(db, VEHICLES_COLLECTION), {
+      const newVehicle = {
         owner: name,
         type: vform.type,
         from: vform.from,
@@ -156,8 +163,13 @@ export default function Marghee() {
         seats: Number(vform.seats) || 1,
         time: vform.time,
         price: Number(vform.price) || 0,
-      });
+      };
+      // Show it immediately — don't make the user wait for the network round-trip
+      setVehicles((prev) => [...prev, { id: "temp-" + Date.now(), ...newVehicle }]);
       setVform({ type: "car", from: "", to: "", seats: 2, time: "", price: "" });
+      addDoc(collection(db, VEHICLES_COLLECTION), newVehicle).catch(() => {
+        setErrorMsg("Vehicle save nahi ho paya, dubara try karo.");
+      });
     });
 
   const myVehicleIds = vehicles.filter((v) => v.owner === name).map((v) => v.id);
@@ -196,18 +208,6 @@ export default function Marghee() {
       ))}
     </div>
   );
-
-  if (booting) {
-    return (
-      <div style={{ background: COLORS.sand, minHeight: 560 }} className="w-full flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 size={26} className="animate-spin" color={COLORS.night} />
-          <p style={{ color: COLORS.muted }} className="text-sm">Marghee load ho raha hai...</p>
-          {errorMsg && <p style={{ color: COLORS.coral }} className="text-xs max-w-xs text-center">{errorMsg}</p>}
-        </div>
-      </div>
-    );
-  }
 
   if (screen === "landing") {
     return (
@@ -275,7 +275,13 @@ export default function Marghee() {
         </div>
       )}
 
-      {screen === "rider" && (
+      {screen === "rider" && !dataLoaded && (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={22} className="animate-spin" color={COLORS.muted} />
+        </div>
+      )}
+
+      {screen === "rider" && dataLoaded && (
         <div className="p-6 max-w-2xl mx-auto">
           <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">Find a ride</h2>
           <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 mb-6">
@@ -355,7 +361,13 @@ export default function Marghee() {
         </div>
       )}
 
-      {screen === "owner" && (
+      {screen === "owner" && !dataLoaded && (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={22} className="animate-spin" color={COLORS.muted} />
+        </div>
+      )}
+
+      {screen === "owner" && dataLoaded && (
         <div className="p-6 max-w-2xl mx-auto">
           <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">Post your vehicle</h2>
           <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 mb-8">
