@@ -33,11 +33,17 @@ const seedVehicles = [
   { owner: "Ankit", type: "bike", from: "Saket", to: "Hauz Khas", mode: "local", seats: 1, time: "Today, 6:15 PM", price: 25 },
 ];
 
-function RouteLine({ compact }) {
+function RouteLine({ compact, stopCount = 0 }) {
+  const dots = [];
+  for (let i = 1; i <= stopCount; i++) {
+    const x = 4 + (192 * i) / (stopCount + 1);
+    dots.push(<circle key={i} cx={x} cy="10" r="3" fill={COLORS.night} />);
+  }
   return (
     <svg width="100%" height={compact ? 18 : 28} viewBox="0 0 200 20" preserveAspectRatio="none" style={{ display: "block" }}>
       <line x1="4" y1="10" x2="196" y2="10" stroke={COLORS.line} strokeWidth="2" strokeDasharray="1 7" strokeLinecap="round" />
       <circle cx="4" cy="10" r="4" fill={COLORS.amber} />
+      {dots}
       <circle cx="196" cy="10" r="4" fill={COLORS.coral} />
     </svg>
   );
@@ -169,7 +175,7 @@ export default function Margshri() {
 
   const [search, setSearch] = useState({ from: "", to: "", type: "car" });
   const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
-  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, time: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false } });
+  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, time: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
   const [rform, setRform] = useState({ from: "", to: "", time: "", seatsNeeded: 1 });
   const [seatCounts, setSeatCounts] = useState({});
 
@@ -181,6 +187,11 @@ export default function Margshri() {
       return { ...prev, [vehicleId]: next };
     });
   };
+
+  const addStop = () => setVform((prev) => ({ ...prev, stops: [...prev.stops, { name: "", price: "" }] }));
+  const updateStop = (idx, field, value) =>
+    setVform((prev) => ({ ...prev, stops: prev.stops.map((s, i) => (i === idx ? { ...s, [field]: value } : s)) }));
+  const removeStop = (idx) => setVform((prev) => ({ ...prev, stops: prev.stops.filter((_, i) => i !== idx) }));
 
   const seededRef = React.useRef(false);
 
@@ -348,10 +359,12 @@ export default function Margshri() {
         time: vform.time,
         price: Number(vform.price) || 0,
         tags: vform.tags,
+        routeType: vform.routeType,
+        stops: vform.routeType === "multi" ? vform.stops.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), price: Number(s.price) || 0 })) : [],
       };
       // Show it immediately — don't make the user wait for the network round-trip
       setVehicles((prev) => [...prev, { id: "temp-" + Date.now(), ...newVehicle }]);
-      setVform({ type: "car", from: "", to: "", seats: 2, time: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false } });
+      setVform({ type: "car", from: "", to: "", seats: 2, time: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
       addDoc(collection(db, VEHICLES_COLLECTION), newVehicle).catch(() => {
         setErrorMsg("Vehicle save nahi ho paya, dubara try karo.");
       });
@@ -492,7 +505,9 @@ export default function Margshri() {
       v.type === search.type &&
       v.seats > 0 &&
       (search.from === "" || v.from.toLowerCase().includes(search.from.toLowerCase())) &&
-      (search.to === "" || v.to.toLowerCase().includes(search.to.toLowerCase())) &&
+      (search.to === "" ||
+        v.to.toLowerCase().includes(search.to.toLowerCase()) ||
+        (v.stops || []).some((s) => s.name.toLowerCase().includes(search.to.toLowerCase()))) &&
       activeTagFilters.every((tag) => v.tags && v.tags[tag])
   );
 
@@ -704,7 +719,16 @@ export default function Margshri() {
                     <span className="font-semibold">{v.from}</span>
                     <span className="font-semibold">{v.to}</span>
                   </div>
-                  <RouteLine compact />
+                  <RouteLine compact stopCount={(v.stops || []).length} />
+                  {v.stops && v.stops.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {v.stops.map((s, i) => (
+                        <span key={i} style={{ background: "#F3EFE6", color: COLORS.charcoal }} className="text-[10px] px-2 py-0.5 rounded-full">
+                          {s.name} · ₹{s.price}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex justify-between items-center mt-3">
                     <span style={{ color: COLORS.muted }} className="text-xs">{v.seats} seat(s) open</span>
                     {already ? (
@@ -829,6 +853,58 @@ export default function Margshri() {
               <input type="number" placeholder="Price per seat (₹)" value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
             </div>
             <p style={{ color: COLORS.muted }} className="text-xs mb-3">Posting for: <b style={{ color: COLORS.charcoal }}>{mode === "local" ? "Local" : "Long Distance"}</b> mode (change from top toggle)</p>
+
+            <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold mb-1.5">Route type</p>
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setVform({ ...vform, routeType: "direct" })}
+                style={vform.routeType === "direct" ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+              >
+                Direct (no stops)
+              </button>
+              <button
+                type="button"
+                onClick={() => setVform({ ...vform, routeType: "multi" })}
+                style={vform.routeType === "multi" ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+              >
+                Multi-stop route
+              </button>
+            </div>
+
+            {vform.routeType === "multi" && (
+              <div className="mb-4">
+                <p style={{ color: COLORS.muted }} className="text-xs mb-2">
+                  {vform.from || "From"} se {vform.to || "To"} ke beech ke stops add karo, order mein, apna fare ke saath.
+                </p>
+                <div className="space-y-2 mb-2">
+                  {vform.stops.map((s, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <div className="flex-1">
+                        <LocationInput placeholder={`Stop ${i + 1} naam`} value={s.name} onChange={(v) => updateStop(i, "name", v)} />
+                      </div>
+                      <input
+                        type="number"
+                        placeholder="₹ fare"
+                        value={s.price}
+                        onChange={(e) => updateStop(i, "price", e.target.value)}
+                        style={{ borderColor: COLORS.line }}
+                        className="w-20 border rounded-lg px-2 py-2 text-sm outline-none"
+                      />
+                      <button type="button" onClick={() => removeStop(i)} style={{ color: COLORS.coral }}>
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={addStop} style={{ color: COLORS.night, borderColor: COLORS.line }} className="text-xs font-semibold border rounded-lg px-3 py-1.5">
+                  + Add Stop
+                </button>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2 mb-3">
               {[
                 { key: "womenOnly", label: "Women-only" },
