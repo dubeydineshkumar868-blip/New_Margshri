@@ -155,6 +155,13 @@ export default function Margshri() {
   const [reviews, setReviews] = useState([]);
   const [activeChat, setActiveChat] = useState(null); // { requestId, otherName }
   const [messageText, setMessageText] = useState("");
+  const [chatSeen, setChatSeen] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("marghee-chat-seen") || "{}");
+    } catch {
+      return {};
+    }
+  });
   const [activeReview, setActiveReview] = useState(null); // { requestId, revieweeName }
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -237,8 +244,8 @@ export default function Margshri() {
   }, []);
 
   const signInWithGoogle = () => {
-    signInWithPopup(auth, googleProvider).catch(() => {
-      setErrorMsg("Login nahi ho paya, dubara try karo.");
+    signInWithPopup(auth, googleProvider).catch((err) => {
+      setErrorMsg(`Login error: ${err.code || err.message}`);
     });
   };
 
@@ -289,6 +296,7 @@ export default function Margshri() {
     return withSync(async () => {
       const newReq = {
         riderName: name,
+        riderPhoto: user?.photoURL || null,
         vehicleId: vehicle.id,
         from: vehicle.from,
         to: vehicle.to,
@@ -331,6 +339,7 @@ export default function Margshri() {
       if (!vform.from.trim() || !vform.to.trim() || !vform.time.trim()) return;
       const newVehicle = {
         owner: name,
+        ownerPhoto: user?.photoURL || null,
         type: vform.type,
         from: vform.from,
         to: vform.to,
@@ -375,6 +384,18 @@ export default function Margshri() {
       setErrorMsg("Status save nahi ho paya, dubara try karo.");
     });
   };
+
+  const openChat = (requestId, otherName) => {
+    setChatSeen((prev) => {
+      const updated = { ...prev, [requestId]: Date.now() };
+      localStorage.setItem("marghee-chat-seen", JSON.stringify(updated));
+      return updated;
+    });
+    setActiveChat({ requestId, otherName });
+  };
+
+  const hasUnreadMessages = (requestId) =>
+    messages.some((m) => m.requestId === requestId && m.senderName !== name && (m.createdAt || 0) > (chatSeen[requestId] || 0));
 
   const sendMessage = () => {
     if (!messageText.trim() || !activeChat) return;
@@ -644,13 +665,13 @@ export default function Margshri() {
             )}
             {filteredVehicles.map((v) => {
               const Icon = VEHICLE_META[v.type].icon;
-              const already = requests.find((r) => r.vehicleId === v.id && r.riderName === name);
+              const already = requests.find((r) => r.vehicleId === v.id && r.riderName === name && !["cancelled", "rejected"].includes(r.status));
               return (
                 <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <div style={{ background: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center">
-                        <Icon size={16} color="white" />
+                      <div style={{ background: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                        {v.ownerPhoto ? <img src={v.ownerPhoto} alt="" className="w-full h-full object-cover" /> : <Icon size={16} color="white" />}
                       </div>
                       <div>
                         <p style={{ color: COLORS.charcoal }} className="text-sm font-bold flex items-center gap-1">
@@ -728,8 +749,9 @@ export default function Margshri() {
                   <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
                     <span style={{ color: COLORS.charcoal }} className="text-sm">{r.from} <ArrowRight size={12} className="inline" /> {r.to} · {r.owner} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.owner }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                      <button onClick={() => requireAuth(() => openChat(r.id, r.owner))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
                         <MessageCircle size={14} />
+                        {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                       </button>
                       {(r.status === "pending" || r.status === "accepted") && (
                         <button onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
@@ -863,22 +885,29 @@ export default function Margshri() {
             {incoming.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Abhi koi request nahi aayi.</p>}
             {incoming.map((r) => (
               <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
-                <div>
-                  <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName}</p>
-                  <p style={{ color: COLORS.muted }} className="text-xs">{r.from} <ArrowRight size={11} className="inline" /> {r.to} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</p>
+                <div className="flex items-center gap-2">
+                  <div style={{ background: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                    {r.riderPhoto ? <img src={r.riderPhoto} alt="" className="w-full h-full object-cover" /> : <User size={14} color="white" />}
+                  </div>
+                  <div>
+                    <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName}</p>
+                    <p style={{ color: COLORS.muted }} className="text-xs">{r.from} <ArrowRight size={11} className="inline" /> {r.to} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</p>
+                  </div>
                 </div>
                 {r.status === "pending" ? (
                   <div className="flex gap-2">
-                    <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.riderName }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                    <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
                       <MessageCircle size={14} />
+                      {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                     </button>
                     <button onClick={() => requireAuth(() => respond(r.id, "accepted"))} disabled={syncing} style={{ background: COLORS.teal }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><Check size={15} color="white" /></button>
                     <button onClick={() => requireAuth(() => respond(r.id, "rejected"))} disabled={syncing} style={{ background: COLORS.coral }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><X size={15} color="white" /></button>
                   </div>
                 ) : r.status === "accepted" ? (
                   <div className="flex items-center gap-2">
-                    <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.riderName }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                    <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
                       <MessageCircle size={14} />
+                      {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                     </button>
                     <button onClick={() => requireAuth(() => respond(r.id, "completed"))} disabled={syncing} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
                       Ride Done
@@ -889,8 +918,9 @@ export default function Margshri() {
                   </div>
                 ) : r.status === "completed" && !hasReviewed(r.id) ? (
                   <div className="flex items-center gap-2">
-                    <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.riderName }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                    <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
                       <MessageCircle size={14} />
+                      {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                     </button>
                     <button onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.riderName }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
                       Rate Rider
@@ -898,8 +928,9 @@ export default function Margshri() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <button onClick={() => requireAuth(() => setActiveChat({ requestId: r.id, otherName: r.riderName }))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full p-1.5">
+                    <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
                       <MessageCircle size={14} />
+                      {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                     </button>
                     <Badge status={r.status} />
                   </div>
