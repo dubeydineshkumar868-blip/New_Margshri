@@ -33,6 +33,16 @@ const seedVehicles = [
   { owner: "Ankit", type: "bike", from: "Saket", to: "Hauz Khas", mode: "local", seats: 1, time: "Today, 6:15 PM", price: 25 },
 ];
 
+function formatDateTime(dateStr, timeStr) {
+  if (!dateStr || !timeStr) return "";
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const [hour, minute] = timeStr.split(":").map(Number);
+  const d = new Date(year, month - 1, day, hour, minute);
+  const dateLabel = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const timeLabel = d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+  return `${dateLabel}, ${timeLabel}`;
+}
+
 function RouteLine({ compact, stopCount = 0 }) {
   const dots = [];
   for (let i = 1; i <= stopCount; i++) {
@@ -175,8 +185,8 @@ export default function Margshri() {
 
   const [search, setSearch] = useState({ from: "", to: "", type: "car" });
   const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
-  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, time: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
-  const [rform, setRform] = useState({ from: "", to: "", time: "", seatsNeeded: 1 });
+  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+  const [rform, setRform] = useState({ from: "", to: "", date: "", clock: "", seatsNeeded: 1 });
   const [seatCounts, setSeatCounts] = useState({});
   const [destSelections, setDestSelections] = useState({});
 
@@ -360,7 +370,10 @@ export default function Margshri() {
 
   const postVehicle = () =>
     withSync(async () => {
-      if (!vform.from.trim() || !vform.to.trim() || !vform.time.trim()) return;
+      if (!vform.from.trim() || !vform.to.trim() || !vform.date || !vform.clock) {
+        setErrorMsg("From, To, Date, aur Time — sab bharna zaroori hai.");
+        return;
+      }
       const newVehicle = {
         owner: name,
         ownerPhoto: user?.photoURL || null,
@@ -369,7 +382,7 @@ export default function Margshri() {
         to: vform.to,
         mode,
         seats: Number(vform.seats) || 1,
-        time: vform.time,
+        time: formatDateTime(vform.date, vform.clock),
         price: Number(vform.price) || 0,
         tags: vform.tags,
         routeType: vform.routeType,
@@ -377,7 +390,7 @@ export default function Margshri() {
       };
       // Show it immediately — don't make the user wait for the network round-trip
       setVehicles((prev) => [...prev, { id: "temp-" + Date.now(), ...newVehicle }]);
-      setVform({ type: "car", from: "", to: "", seats: 2, time: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+      setVform({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
       addDoc(collection(db, VEHICLES_COLLECTION), newVehicle).catch(() => {
         setErrorMsg("Vehicle save nahi ho paya, dubara try karo.");
       });
@@ -385,12 +398,15 @@ export default function Margshri() {
 
   const postRiderRequest = () =>
     withSync(async () => {
-      if (!rform.from.trim() || !rform.to.trim() || !rform.time.trim()) return;
+      if (!rform.from.trim() || !rform.to.trim() || !rform.date || !rform.clock) {
+        setErrorMsg("From, To, Date, aur Time — sab bharna zaroori hai.");
+        return;
+      }
       const newPost = {
         riderName: name,
         from: rform.from,
         to: rform.to,
-        time: rform.time,
+        time: formatDateTime(rform.date, rform.clock),
         mode,
         type: search.type,
         seatsNeeded: Number(rform.seatsNeeded) || 1,
@@ -398,7 +414,7 @@ export default function Margshri() {
         ownerName: null,
       };
       setRiderPosts((prev) => [...prev, { id: "temp-" + Date.now(), ...newPost }]);
-      setRform({ from: "", to: "", time: "", seatsNeeded: 1 });
+      setRform({ from: "", to: "", date: "", clock: "", seatsNeeded: 1 });
       addDoc(collection(db, RIDER_POSTS_COLLECTION), newPost).catch(() => {
         setErrorMsg("Request save nahi ho paya, dubara try karo.");
       });
@@ -683,8 +699,9 @@ export default function Margshri() {
                   <LocationInput placeholder="To" value={rform.to} onChange={(v) => setRform({ ...rform, to: v })} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-3">
-                  <input placeholder="Date & time" value={rform.time} onChange={(e) => setRform({ ...rform, time: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-                  <input type="number" min="1" placeholder="Seats chahiye" value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+                  <input type="date" value={rform.date} onChange={(e) => setRform({ ...rform, date: e.target.value })} style={{ borderColor: COLORS.line, color: rform.date ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+                  <input type="time" value={rform.clock} onChange={(e) => setRform({ ...rform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: rform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+                  <input type="number" min="1" placeholder="Seats chahiye" value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
                 </div>
                 <button onClick={() => requireAuth(postRiderRequest)} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
                   Post my request
@@ -888,7 +905,8 @@ export default function Margshri() {
             <div className="grid grid-cols-2 gap-3 mb-3">
               <LocationInput placeholder="From" value={vform.from} onChange={(v) => setVform({ ...vform, from: v })} />
               <LocationInput placeholder="To" value={vform.to} onChange={(v) => setVform({ ...vform, to: v })} />
-              <input placeholder="Date & time e.g. Today, 5 PM" value={vform.time} onChange={(e) => setVform({ ...vform, time: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
+              <input type="date" value={vform.date} onChange={(e) => setVform({ ...vform, date: e.target.value })} style={{ borderColor: COLORS.line, color: vform.date ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+              <input type="time" value={vform.clock} onChange={(e) => setVform({ ...vform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: vform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
               <input type="number" placeholder="Seats" value={vform.seats} onChange={(e) => setVform({ ...vform, seats: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
               <input type="number" placeholder="Price per seat (₹)" value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
             </div>
