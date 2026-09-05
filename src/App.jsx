@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
-import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 
 const COLORS = {
@@ -26,6 +26,7 @@ const REQUESTS_COLLECTION = "requests";
 const RIDER_POSTS_COLLECTION = "riderPosts";
 const MESSAGES_COLLECTION = "messages";
 const REVIEWS_COLLECTION = "reviews";
+const PROFILES_COLLECTION = "profiles";
 
 const seedVehicles = [
   { owner: "Ramesh", type: "car", from: "Rohini", to: "Connaught Place", mode: "local", seats: 3, time: "Today, 9:00 AM", price: 60 },
@@ -164,6 +165,9 @@ export default function Margshri() {
   const [authLoading, setAuthLoading] = useState(true);
   const [user, setUser] = useState(null);
   const name = user?.displayName || user?.email || "";
+  const [myPhone, setMyPhone] = useState("");
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
   const [vehicles, setVehicles] = useState([]);
   const [requests, setRequests] = useState([]);
   const [riderPosts, setRiderPosts] = useState([]);
@@ -224,6 +228,28 @@ export default function Margshri() {
     });
     return unsub;
   }, []);
+
+  // Load this person's saved phone number once they're logged in
+  useEffect(() => {
+    if (!user) {
+      setMyPhone("");
+      return;
+    }
+    const unsub = onSnapshot(doc(db, PROFILES_COLLECTION, user.uid), (snap) => {
+      setMyPhone(snap.exists() ? snap.data().phone || "" : "");
+    });
+    return unsub;
+  }, [user]);
+
+  const savePhone = () => {
+    if (!user || !phoneInput.trim()) return;
+    setMyPhone(phoneInput.trim());
+    setDoc(doc(db, PROFILES_COLLECTION, user.uid), { phone: phoneInput.trim() }, { merge: true }).catch(() => {
+      setErrorMsg("Phone number save nahi hua, dubara try karo.");
+    });
+    setShowPhoneModal(false);
+    setPhoneInput("");
+  };
 
   // Real-time listeners start immediately in the background. Landing screen doesn't
   // wait for this — only the Rider/Owner dashboards need vehicles/requests.
@@ -330,6 +356,7 @@ export default function Margshri() {
       const newReq = {
         riderName: name,
         riderPhoto: user?.photoURL || null,
+        riderPhone: myPhone || null,
         vehicleId: vehicle.id,
         from: vehicle.from,
         to: dest.name,
@@ -377,11 +404,13 @@ export default function Margshri() {
       const newVehicle = {
         owner: name,
         ownerPhoto: user?.photoURL || null,
+        ownerPhone: myPhone || null,
         type: vform.type,
         from: vform.from,
         to: vform.to,
         mode,
         seats: Number(vform.seats) || 1,
+        totalSeats: Number(vform.seats) || 1,
         time: formatDateTime(vform.date, vform.clock),
         price: Number(vform.price) || 0,
         tags: vform.tags,
@@ -625,6 +654,16 @@ export default function Margshri() {
                 <User size={14} color={COLORS.muted} />
                 <span style={{ color: COLORS.charcoal }} className="font-medium">{name}</span>
               </div>
+              <button
+                onClick={() => {
+                  setPhoneInput(myPhone);
+                  setShowPhoneModal(true);
+                }}
+                style={{ color: myPhone ? COLORS.teal : COLORS.coral, borderColor: COLORS.line }}
+                className="border rounded-full px-3 py-1.5 text-xs font-semibold"
+              >
+                {myPhone ? `📞 ${myPhone}` : "+ Add phone"}
+              </button>
               <button onClick={logOut} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full px-3 py-1.5 text-xs font-semibold">
                 Sign out
               </button>
@@ -826,29 +865,40 @@ export default function Margshri() {
             <>
               <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">My requests</h3>
               <div className="space-y-2 mb-8">
-                {myRequests.map((r) => (
-                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
-                    <span style={{ color: COLORS.charcoal }} className="text-sm">{r.from} <ArrowRight size={12} className="inline" /> {r.to} · {r.owner} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</span>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => requireAuth(() => openChat(r.id, r.owner))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
-                        <MessageCircle size={14} />
-                        {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
-                      </button>
-                      {(r.status === "pending" || r.status === "accepted") && (
-                        <button onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                          Cancel
+                {myRequests.map((r) => {
+                  const bookedVehicle = vehicles.find((v) => v.id === r.vehicleId);
+                  const showContact = ["accepted", "completed"].includes(r.status) && bookedVehicle?.ownerPhone;
+                  return (
+                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3">
+                    <div className="flex justify-between items-center">
+                      <span style={{ color: COLORS.charcoal }} className="text-sm">{r.from} <ArrowRight size={12} className="inline" /> {r.to} · {r.owner} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</span>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => requireAuth(() => openChat(r.id, r.owner))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
+                          <MessageCircle size={14} />
+                          {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                         </button>
-                      )}
-                      {r.status === "completed" && !hasReviewed(r.id) ? (
-                        <button onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.owner }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
-                          Rate Owner
-                        </button>
-                      ) : (
-                        <Badge status={r.status} />
-                      )}
+                        {(r.status === "pending" || r.status === "accepted") && (
+                          <button onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                            Cancel
+                          </button>
+                        )}
+                        {r.status === "completed" && !hasReviewed(r.id) ? (
+                          <button onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.owner }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                            Rate Owner
+                          </button>
+                        ) : (
+                          <Badge status={r.status} />
+                        )}
+                      </div>
                     </div>
+                    {showContact && (
+                      <a href={`tel:${bookedVehicle.ownerPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
+                        📞 Call owner: {bookedVehicle.ownerPhone}
+                      </a>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
@@ -1018,16 +1068,17 @@ export default function Margshri() {
           <div className="space-y-2 mb-8">
             {incoming.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Abhi koi request nahi aayi.</p>}
             {incoming.map((r) => (
-              <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div style={{ background: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0">
-                    {r.riderPhoto ? <img src={r.riderPhoto} alt="" className="w-full h-full object-cover" /> : <User size={14} color="white" />}
+              <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div style={{ background: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                      {r.riderPhoto ? <img src={r.riderPhoto} alt="" className="w-full h-full object-cover" /> : <User size={14} color="white" />}
+                    </div>
+                    <div>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName}</p>
+                      <p style={{ color: COLORS.muted }} className="text-xs">{r.from} <ArrowRight size={11} className="inline" /> {r.to} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName}</p>
-                    <p style={{ color: COLORS.muted }} className="text-xs">{r.from} <ArrowRight size={11} className="inline" /> {r.to} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</p>
-                  </div>
-                </div>
                 {r.status === "pending" ? (
                   <div className="flex gap-2">
                     <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
@@ -1069,6 +1120,12 @@ export default function Margshri() {
                     <Badge status={r.status} />
                   </div>
                 )}
+                </div>
+                {["accepted", "completed"].includes(r.status) && r.riderPhone && (
+                  <a href={`tel:${r.riderPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
+                    📞 Call rider: {r.riderPhone}
+                  </a>
+                )}
               </div>
             ))}
           </div>
@@ -1079,7 +1136,9 @@ export default function Margshri() {
               <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 text-sm flex justify-between items-center">
                 <span style={{ color: COLORS.charcoal }}>{v.from} → {v.to} · {v.time}</span>
                 <div className="flex items-center gap-3">
-                  <span style={{ color: COLORS.muted }}>{v.seats} seats · ₹{v.price}</span>
+                  <span style={{ color: v.seats === 0 ? COLORS.coral : COLORS.muted }} className="font-semibold">
+                    {v.seats} of {v.totalSeats || v.seats} seats left · ₹{v.price}
+                  </span>
                   <button onClick={() => requireAuth(() => deleteVehicle(v.id))} style={{ color: COLORS.coral }} className="text-xs font-semibold">
                     Remove
                   </button>
@@ -1156,6 +1215,31 @@ export default function Margshri() {
               </button>
               <button onClick={submitReview} style={{ background: COLORS.amber, color: COLORS.night }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
                 Submit Rating
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPhoneModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowPhoneModal(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
+            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">Apna mobile number add karo</p>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-4">Ye sirf tab dikhega jab aapki booking confirm (accepted) ho jaaye — taaki dono log seedha baat kar sakein.</p>
+            <input
+              type="tel"
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value)}
+              placeholder="e.g. 98765 43210"
+              style={{ borderColor: COLORS.line }}
+              className="w-full border rounded-lg px-3 py-2.5 text-sm outline-none mb-4"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowPhoneModal(false)} style={{ borderColor: COLORS.line, color: COLORS.muted }} className="flex-1 border rounded-lg py-2.5 text-sm font-bold">
+                Cancel
+              </button>
+              <button onClick={savePhone} style={{ background: COLORS.amber, color: COLORS.night }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
+                Save
               </button>
             </div>
           </div>
