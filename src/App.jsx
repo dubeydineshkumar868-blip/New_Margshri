@@ -178,6 +178,17 @@ export default function Margshri() {
   const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, time: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
   const [rform, setRform] = useState({ from: "", to: "", time: "", seatsNeeded: 1 });
   const [seatCounts, setSeatCounts] = useState({});
+  const [destSelections, setDestSelections] = useState({});
+
+  const getSelectedDest = (v) => {
+    if (destSelections[v.id]) return destSelections[v.id];
+    // Auto-pick a matching intermediate stop if the rider searched for it specifically
+    if (v.stops && v.stops.length > 0 && search.to && !v.to.toLowerCase().includes(search.to.toLowerCase())) {
+      const matchedStop = v.stops.find((s) => s.name.toLowerCase().includes(search.to.toLowerCase()));
+      if (matchedStop) return { name: matchedStop.name, price: matchedStop.price };
+    }
+    return { name: v.to, price: v.price };
+  };
 
   const getSeatCount = (vehicleId, max) => Math.min(seatCounts[vehicleId] || 1, max);
   const adjustSeats = (vehicleId, delta, max) => {
@@ -304,13 +315,15 @@ export default function Margshri() {
 
   const sendRequest = (vehicle) => {
     const seatsRequested = getSeatCount(vehicle.id, vehicle.seats);
+    const dest = getSelectedDest(vehicle);
     return withSync(async () => {
       const newReq = {
         riderName: name,
         riderPhoto: user?.photoURL || null,
         vehicleId: vehicle.id,
         from: vehicle.from,
-        to: vehicle.to,
+        to: dest.name,
+        fare: dest.price,
         mode: vehicle.mode,
         type: vehicle.type,
         owner: vehicle.owner,
@@ -717,9 +730,36 @@ export default function Margshri() {
                   )}
                   <div className="flex items-center justify-between text-xs mb-2" style={{ color: COLORS.charcoal }}>
                     <span className="font-semibold">{v.from}</span>
-                    <span className="font-semibold">{v.to}</span>
+                    <span className="font-semibold">{v.to} <span style={{ color: COLORS.muted, fontWeight: 400 }}>(full route)</span></span>
                   </div>
                   <RouteLine compact stopCount={(v.stops || []).length} />
+                  {v.stops && v.stops.length > 0 && !already && (
+                    <div className="mt-2">
+                      <label style={{ color: COLORS.muted }} className="text-[10px] font-semibold block mb-1">Aap kahan utrenge? (apna stop chuno)</label>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={getSelectedDest(v).name}
+                          onChange={(e) => {
+                            const stop = v.stops.find((s) => s.name === e.target.value);
+                            const dest = stop ? { name: stop.name, price: stop.price } : { name: v.to, price: v.price };
+                            setDestSelections((prev) => ({ ...prev, [v.id]: dest }));
+                          }}
+                          style={{ borderColor: COLORS.line, color: COLORS.charcoal }}
+                          className="flex-1 border rounded-lg px-2 py-1.5 text-xs outline-none"
+                        >
+                          <option value={v.to}>{v.to} (Full route)</option>
+                          {v.stops.map((s, i) => (
+                            <option key={i} value={s.name}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                        <span style={{ background: "#FDF1DE", color: "#B4700C" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap">
+                          Aapka fare: ₹{getSelectedDest(v).price}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   {v.stops && v.stops.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {v.stops.map((s, i) => (
