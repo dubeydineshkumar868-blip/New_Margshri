@@ -1007,8 +1007,8 @@ export default function Margshri() {
   }
 
   return (
-    <div style={{ background: COLORS.sand, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }} className="w-full">
-      <div style={{ borderColor: COLORS.line }} className="flex items-center justify-between px-6 py-4 border-b flex-wrap gap-3">
+    <div style={{ background: `linear-gradient(180deg, ${COLORS.sand} 0%, #F2E9D8 100%)`, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }} className="w-full">
+      <div style={{ background: "white" }} className="flex items-center justify-between px-6 py-4 flex-wrap gap-3 shadow-sm relative z-10">
         <Logo />
         <div className="flex items-center gap-3">
           <button onClick={() => setScreen("landing")} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full p-2">
@@ -1066,7 +1066,7 @@ export default function Margshri() {
       {screen === "rider" && dataLoaded && (
         <div className="p-6 max-w-2xl mx-auto">
           <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">{t("findRide")}</h2>
-          <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 mb-6">
+          <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-6">
             <div className="grid grid-cols-2 gap-3 mb-3">
               <LocationInput placeholder={t("from")} value={search.from} onChange={(v) => setSearch({ ...search, from: v })} />
               <LocationInput placeholder={t("to")} value={search.to} onChange={(v) => setSearch({ ...search, to: v })} />
@@ -1105,7 +1105,7 @@ export default function Margshri() {
 
           <div className="space-y-3 mb-8">
             {filteredVehicles.length === 0 && (
-              <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 text-center mb-3">
+              <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 text-center mb-3">
                 <p style={{ color: COLORS.muted }} className="text-sm mb-3">{t("noVehiclesFound")}</p>
                 <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">{t("postOwnRequestPrompt")}</p>
                 <div className="grid grid-cols-2 gap-2 mb-2">
@@ -1117,7 +1117,7 @@ export default function Margshri() {
                   <input type="time" value={rform.clock} onChange={(e) => setRform({ ...rform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: rform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
                   <input type="number" min="1" placeholder={t("seatsWanted")} value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
                 </div>
-                <button onClick={() => requireAuth(postRiderRequest)} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
+                <button onClick={() => requireAuth(postRiderRequest)} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50 shadow-md">
                   {t("postMyRequest")}
                 </button>
               </div>
@@ -1244,7 +1244,7 @@ export default function Margshri() {
                   const bookedVehicle = vehicles.find((v) => v.id === r.vehicleId);
                   const showContact = ["accepted", "completed"].includes(r.status) && bookedVehicle?.ownerPhone;
                   return (
-                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3">
+                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
                     <div className="flex justify-between items-center">
                       <span style={{ color: COLORS.charcoal }} className="text-sm">{r.from} <ArrowRight size={12} className="inline" /> {r.to} · {r.owner} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</span>
                       <div className="flex items-center gap-2">
@@ -1283,7 +1283,7 @@ export default function Margshri() {
               <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("myPostedRequests")}</h3>
               <div className="space-y-2">
                 {myRiderPosts.map((p) => (
-                  <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                  <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
                     <span style={{ color: COLORS.charcoal }} className="text-sm">
                       {p.from} <ArrowRight size={12} className="inline" /> {p.to} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}
                       {p.status === "matched" && p.ownerName ? ` · ${p.ownerName} ready hai!` : ""}
@@ -1313,7 +1313,7 @@ export default function Margshri() {
       {screen === "owner" && dataLoaded && (
         <div className="p-6 max-w-2xl mx-auto">
           <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">{t("postYourVehicle")}</h2>
-          <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 mb-8">
+          <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-8">
             <div className="flex gap-2 mb-3">
               {Object.entries(VEHICLE_META).map(([key, m]) => {
                 const Icon = m.icon;
@@ -1406,7 +1406,7 @@ export default function Margshri() {
                 </button>
               ))}
             </div>
-            <button onClick={() => requireAuth(postVehicle)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
+            <button onClick={() => requireAuth(postVehicle)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold disabled:opacity-50 shadow-md">
               {syncing ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} {t("postVehicle")}
             </button>
           </div>
@@ -1417,7 +1417,7 @@ export default function Margshri() {
             {openRiderPostsForOwner.map((p) => {
               const Icon = VEHICLE_META[p.type]?.icon || Car;
               return (
-                <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <div style={{ background: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
                       <Icon size={14} color="white" />
@@ -1450,7 +1450,7 @@ export default function Margshri() {
           <div className="space-y-2 mb-8">
             {incoming.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noRequestsYet")}</p>}
             {incoming.map((r) => (
-              <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3">
+              <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <div style={{ background: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0">
@@ -1522,7 +1522,7 @@ export default function Margshri() {
           <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("myPostedVehicles")}</h3>
           <div className="space-y-2">
             {vehicles.filter((v) => v.owner === name).map((v) => (
-              <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 text-sm flex justify-between items-center">
+              <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 text-sm flex justify-between items-center">
                 <span style={{ color: COLORS.charcoal }}>{v.from} → {v.to} · {v.time}</span>
                 <div className="flex items-center gap-3">
                   <span style={{ color: v.seats === 0 ? COLORS.coral : COLORS.muted }} className="font-semibold">
@@ -1702,7 +1702,7 @@ export default function Margshri() {
                 { label: "Blocked users", value: blockedUsers.length },
                 { label: "Total reviews", value: reviews.length },
               ].map((s, i) => (
-                <div key={i} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl p-4 text-center">
+                <div key={i} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl p-4 text-center">
                   <p style={{ color: COLORS.night }} className="text-2xl font-bold">{s.value}</p>
                   <p style={{ color: COLORS.muted }} className="text-xs mt-1">{s.label}</p>
                 </div>
@@ -1720,7 +1720,7 @@ export default function Margshri() {
               <div className="space-y-2">
                 {vehicles.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi vehicle nahi hai.</p>}
                 {vehicles.map((v) => (
-                  <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                  <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
                     <div>
                       <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{v.owner} {v.ownerPhone && <span style={{ color: COLORS.muted }} className="font-normal">· {v.ownerPhone}</span>}</p>
                       <p style={{ color: COLORS.muted }} className="text-xs">{v.from} → {v.to} · {v.time} · {v.seats} of {v.totalSeats || v.seats} seats · {v.mode}</p>
@@ -1744,7 +1744,7 @@ export default function Margshri() {
               <div className="space-y-2">
                 {requests.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi booking nahi hai.</p>}
                 {requests.map((r) => (
-                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
                     <div>
                       <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName} → {r.owner}</p>
                       <p style={{ color: COLORS.muted }} className="text-xs">{r.from} → {r.to} · {r.seats || 1} seat(s)</p>
@@ -1778,7 +1778,7 @@ export default function Margshri() {
                 .slice()
                 .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
                 .map((c) => (
-                  <div key={c.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3">
+                  <div key={c.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
                     <div className="flex justify-between items-start mb-1">
                       <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{c.reporterName} ne {c.aboutName} ke baare mein report kiya</p>
                       <span
@@ -1859,7 +1859,7 @@ export default function Margshri() {
 
           {adminTab === "blocked" && (
             <div>
-              <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 mb-5">
+              <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-5">
                 <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">Naya user block karo</p>
                 <input
                   type="email"
@@ -1883,7 +1883,7 @@ export default function Margshri() {
               <div className="space-y-2">
                 {blockedUsers.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi bhi block nahi hai.</p>}
                 {blockedUsers.map((b) => (
-                  <div key={b.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                  <div key={b.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
                     <div>
                       <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{b.id}</p>
                       <p style={{ color: COLORS.muted }} className="text-xs">{b.reason}</p>
@@ -2070,7 +2070,7 @@ export default function Margshri() {
                 .filter((r) => r.revieweeName === viewingReviewsFor)
                 .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
                 .map((r) => (
-                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl p-3">
+                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl p-3">
                     <div className="flex justify-between items-center mb-1">
                       <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.raterName}</p>
                       <div className="flex">
