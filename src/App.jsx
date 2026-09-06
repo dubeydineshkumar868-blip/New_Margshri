@@ -956,6 +956,16 @@ export default function Margshri() {
             {t("safetyLink")}
           </button>
 
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <button onClick={() => setScreen("privacy")} style={{ color: COLORS.muted }} className="text-xs underline">
+              Privacy Policy
+            </button>
+            <span style={{ color: COLORS.line }}>|</span>
+            <button onClick={() => setScreen("terms")} style={{ color: COLORS.muted }} className="text-xs underline">
+              Terms of Service
+            </button>
+          </div>
+
           {isAdmin && (
             <button
               onClick={() => setScreen("admin")}
@@ -1498,6 +1508,134 @@ export default function Margshri() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {screen === "privacy" && (
+        <div className="p-6 max-w-2xl mx-auto">
+          <button onClick={() => setScreen("landing")} style={{ color: COLORS.muted }} className="text-sm mb-4">← Back</button>
+          <h2 style={{ color: COLORS.night }} className="text-xl font-bold mb-1">Privacy Policy</h2>
+          <p style={{ color: COLORS.muted }} className="text-xs mb-6">Last updated: September 2026</p>
+
+          <div style={{ color: COLORS.charcoal }} className="text-sm space-y-4 leading-relaxed">
+            <p>
+              Margshri ("we", "the app") connects riders and vehicle owners so they can share rides. This policy explains
+              what information we collect, why, and how you can control it.
+            </p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">What we collect</h3>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li><b>From Google Sign-In:</b> your name, email address, and profile photo.</li>
+              <li><b>Phone number:</b> only if you choose to add one — it's shown to the other party only after a booking is accepted.</li>
+              <li><b>Ride/vehicle details:</b> pickup and drop locations, dates, times, prices, and seats you post or search for.</li>
+              <li><b>Chat messages</b> you send within the app to coordinate a ride.</li>
+              <li><b>Ratings, reviews, and complaints</b> you submit about other users.</li>
+              <li><b>Location text</b> you type is sent to OpenStreetMap's free search service (Nominatim) to show address suggestions — no background location tracking happens; we only use what you type.</li>
+            </ul>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">How we use it</h3>
+            <p>
+              Solely to run the app's core purpose: matching riders with vehicle owners, letting you communicate, and
+              building trust through ratings/reliability scores. We do not sell your data, and we do not show ads.
+            </p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Where it's stored</h3>
+            <p>
+              All data is stored on Google Firebase (Firestore Database and Firebase Authentication), a cloud service
+              operated by Google. Firebase applies its own security and infrastructure protections. We do not run our
+              own separate servers.
+            </p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Who can see what</h3>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>Your name, photo, and posted rides/requests are visible to anyone browsing the app (this is needed for the ride-matching feature to work).</li>
+              <li>Your phone number is only revealed to the specific rider/owner once a booking between you is accepted.</li>
+              <li>The app's admin can view all bookings, vehicles, and complaints to resolve disputes and keep the platform safe.</li>
+            </ul>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Your choices</h3>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>You can remove your own vehicle listings or open ride requests at any time from your dashboard.</li>
+              <li>You can cancel a booking you made.</li>
+              <li>To request full deletion of your account and associated data, email the admin (see Contact below) from the same email you used to log in.</li>
+            </ul>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Children</h3>
+            <p>This app is not intended for anyone under 18 without a parent or guardian's involvement.</p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Changes</h3>
+            <p>We may update this policy as the app evolves. Continuing to use the app after a change means you accept the update.</p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Contact</h3>
+            <p>Questions or deletion requests: <a href={`mailto:${ADMIN_EMAILS[0]}`} style={{ color: COLORS.teal }} className="font-semibold">{ADMIN_EMAILS[0]}</a></p>
+          </div>
+        </div>
+      )}
+
+      {screen === "terms" && (
+        <div className="p-6 max-w-2xl mx-auto">
+          <button onClick={() => setScreen("landing")} style={{ color: COLORS.muted }} className="text-sm mb-4">← Back</button>
+          <h2 style={{ color: COLORS.night }} className="text-xl font-bold mb-1">Terms of Service</h2>
+          <p style={{ color: COLORS.muted }} className="text-xs mb-6">Last updated: September 2026</p>
+
+          <div style={{ color: COLORS.charcoal }} className="text-sm space-y-4 leading-relaxed">
+            <p>
+              By using Margshri, you agree to these terms. Please read them along with our Privacy Policy and Safety
+              Disclaimer.
+            </p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">What Margshri is</h3>
+            <p>
+              Margshri is a platform that lets vehicle owners post rides (bike, car, or bus — local or long-distance)
+              and lets riders find and request seats, or post their own ride requests. We only provide the matching,
+              chat, and rating tools — the actual ride, any payment, and the arrangement between rider and owner
+              happens entirely outside the app, directly between the two of you.
+            </p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">No identity verification</h3>
+            <p>
+              We do not verify anyone's government ID, driving license, vehicle documents, or background. Names,
+              phone numbers, and photos are exactly as the user entered them. Always verify who you're meeting
+              yourself before a ride.
+            </p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Payments</h3>
+            <p>
+              Margshri does not process, hold, or guarantee any payment. Any fare shown in the app is only what the
+              vehicle owner has stated — the actual payment (cash, UPI, etc.) is a private matter between rider and
+              owner.
+            </p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Your responsibilities</h3>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>Give accurate information when posting a vehicle, a request, or your profile.</li>
+              <li>Behave respectfully towards other users — harassment, abuse, or unsafe driving is not tolerated.</li>
+              <li>Do not use the app for any illegal purpose.</li>
+              <li>You must be 18 or older, or use the app with a parent/guardian's involvement.</li>
+            </ul>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Reporting & enforcement</h3>
+            <p>
+              You can report a user via the flag icon in chat. The admin may investigate, warn, or permanently block
+              any account found violating these terms or behaving unsafely, at their sole discretion.
+            </p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Limitation of liability</h3>
+            <p>
+              Margshri is provided "as is". We are not liable for any accident, injury, loss, theft, dispute,
+              financial loss, or damage arising from a ride, a payment, or any interaction between users. You use
+              this app, and any ride arranged through it, entirely at your own risk.
+            </p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Changes to the service</h3>
+            <p>We may add, change, or remove features at any time, and may suspend the service without notice.</p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Governing law</h3>
+            <p>These terms are governed by the laws of India.</p>
+
+            <h3 style={{ color: COLORS.night }} className="font-bold text-base mt-5">Contact</h3>
+            <p>Questions about these terms: <a href={`mailto:${ADMIN_EMAILS[0]}`} style={{ color: COLORS.teal }} className="font-semibold">{ADMIN_EMAILS[0]}</a></p>
           </div>
         </div>
       )}
