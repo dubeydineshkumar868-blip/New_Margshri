@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -27,6 +27,12 @@ const RIDER_POSTS_COLLECTION = "riderPosts";
 const MESSAGES_COLLECTION = "messages";
 const REVIEWS_COLLECTION = "reviews";
 const PROFILES_COLLECTION = "profiles";
+const COMPLAINTS_COLLECTION = "complaints";
+const BLOCKS_COLLECTION = "blockedUsers";
+
+// Only these Google account emails can see the Admin Panel.
+// To add or change admins, just edit this list and redeploy.
+const ADMIN_EMAILS = ["dubeydineshkumar868@gmail.com"];
 
 const seedVehicles = [
   { owner: "Ramesh", type: "car", from: "Rohini", to: "Connaught Place", mode: "local", seats: 3, time: "Today, 9:00 AM", price: 60 },
@@ -201,6 +207,13 @@ export default function Margshri() {
   const [riderPosts, setRiderPosts] = useState([]);
   const [messages, setMessages] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [complaints, setComplaints] = useState([]);
+  const [blockedUsers, setBlockedUsers] = useState([]);
+  const [adminTab, setAdminTab] = useState("overview");
+  const [activeReport, setActiveReport] = useState(null); // { requestId, aboutName }
+  const [reportText, setReportText] = useState("");
+  const [blockEmailInput, setBlockEmailInput] = useState("");
+  const [blockReasonInput, setBlockReasonInput] = useState("");
   const [activeChat, setActiveChat] = useState(null); // { requestId, otherName }
   const [messageText, setMessageText] = useState("");
   const [chatSeen, setChatSeen] = useState(() => {
@@ -320,12 +333,24 @@ export default function Margshri() {
       (snap) => setReviews(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => setErrorMsg("Reviews load nahi ho paaye.")
     );
+    const unsubComplaints = onSnapshot(
+      collection(db, COMPLAINTS_COLLECTION),
+      (snap) => setComplaints(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      () => {}
+    );
+    const unsubBlocks = onSnapshot(
+      collection(db, BLOCKS_COLLECTION),
+      (snap) => setBlockedUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      () => {}
+    );
     return () => {
       unsubVehicles();
       unsubRequests();
       unsubRiderPosts();
       unsubMessages();
       unsubReviews();
+      unsubComplaints();
+      unsubBlocks();
     };
   }, []);
 
@@ -543,6 +568,47 @@ export default function Margshri() {
     });
   };
 
+  const isAdmin = !!(user && ADMIN_EMAILS.includes(user.email));
+  const isBlocked = !!(user && blockedUsers.some((b) => b.id === user.email));
+
+  const submitReport = () => {
+    if (!activeReport || !reportText.trim()) return;
+    const newReport = {
+      reporterName: name,
+      reporterEmail: user?.email || null,
+      aboutName: activeReport.aboutName,
+      requestId: activeReport.requestId || null,
+      message: reportText.trim(),
+      status: "open",
+      createdAt: Date.now(),
+    };
+    setComplaints((prev) => [...prev, { id: "temp-" + Date.now(), ...newReport }]);
+    addDoc(collection(db, COMPLAINTS_COLLECTION), newReport).catch(() => {
+      setErrorMsg("Complaint submit nahi hui, dubara try karo.");
+    });
+    setActiveReport(null);
+    setReportText("");
+  };
+
+  const resolveComplaint = (id) => {
+    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, status: "resolved" } : c)));
+    updateDoc(doc(db, COMPLAINTS_COLLECTION, id), { status: "resolved" }).catch(() => {});
+  };
+
+  const blockUserByEmail = () => {
+    if (!blockEmailInput.trim()) return;
+    const email = blockEmailInput.trim().toLowerCase();
+    setDoc(doc(db, BLOCKS_COLLECTION, email), { reason: blockReasonInput.trim() || "Koi reason nahi diya gaya", blockedAt: Date.now() }).catch(() => {
+      setErrorMsg("Block nahi ho paya, dubara try karo.");
+    });
+    setBlockEmailInput("");
+    setBlockReasonInput("");
+  };
+
+  const unblockUser = (email) => {
+    deleteDoc(doc(db, BLOCKS_COLLECTION, email)).catch(() => {});
+  };
+
   const submitReview = () => {
     if (!activeReview) return;
     const newReview = {
@@ -598,14 +664,14 @@ export default function Margshri() {
   );
 
   const Logo = () => (
-    <div className="flex items-center gap-2">
+    <button onClick={() => setScreen("landing")} className="flex items-center gap-2">
       <div style={{ background: COLORS.amber }} className="w-8 h-8 rounded-lg flex items-center justify-center">
         <MapPin size={18} color={COLORS.night} strokeWidth={2.5} />
       </div>
       <span style={{ color: COLORS.night, letterSpacing: "-0.02em" }} className="text-xl font-bold">
         Margshri
       </span>
-    </div>
+    </button>
   );
 
   const ModeToggle = () => (
@@ -627,6 +693,22 @@ export default function Margshri() {
     return (
       <div style={{ background: COLORS.sand, minHeight: 560 }} className="w-full flex items-center justify-center">
         <Loader2 size={24} className="animate-spin" color={COLORS.muted} />
+      </div>
+    );
+  }
+
+  if (isBlocked) {
+    const myBlock = blockedUsers.find((b) => b.id === user.email);
+    return (
+      <div style={{ background: COLORS.sand, minHeight: 560 }} className="w-full flex items-center justify-center p-6">
+        <div className="text-center max-w-sm">
+          <Ban size={40} color={COLORS.coral} className="mx-auto mb-3" />
+          <p style={{ color: COLORS.night }} className="text-lg font-bold mb-2">Aapka account block kar diya gaya hai</p>
+          <p style={{ color: COLORS.muted }} className="text-sm mb-4">Reason: {myBlock?.reason || "Diya nahi gaya"}</p>
+          <button onClick={logOut} style={{ background: COLORS.night, color: "white" }} className="rounded-lg px-5 py-2.5 text-sm font-bold">
+            Sign out
+          </button>
+        </div>
       </div>
     );
   }
@@ -675,6 +757,16 @@ export default function Margshri() {
           <p style={{ color: COLORS.muted }} className="text-xs text-center mt-4">
             Sab kuch dekhne ke liye login zaroori nahi. Booking ya post karte waqt Google se login karne ko kaha jayega.
           </p>
+
+          {isAdmin && (
+            <button
+              onClick={() => setScreen("admin")}
+              style={{ background: COLORS.night, color: "white" }}
+              className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm mt-4"
+            >
+              <LayoutDashboard size={16} /> Admin Panel
+            </button>
+          )}
         </div>
       </div>
     );
@@ -685,7 +777,12 @@ export default function Margshri() {
       <div style={{ borderColor: COLORS.line }} className="flex items-center justify-between px-6 py-4 border-b flex-wrap gap-3">
         <Logo />
         <div className="flex items-center gap-3">
-          <ModeToggle />
+          {screen !== "admin" && <ModeToggle />}
+          {isAdmin && screen !== "admin" && (
+            <button onClick={() => setScreen("admin")} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full p-2">
+              <LayoutDashboard size={14} />
+            </button>
+          )}
           {user ? (
             <>
               <div style={{ background: "white", borderColor: COLORS.line }} className="flex items-center gap-2 border rounded-full px-3 py-1.5 text-sm">
@@ -1187,14 +1284,172 @@ export default function Margshri() {
         </div>
       )}
 
+      {screen === "admin" && isAdmin && (
+        <div className="p-6 max-w-3xl mx-auto">
+          <div className="flex items-center gap-2 mb-5">
+            <LayoutDashboard size={20} color={COLORS.night} />
+            <h2 style={{ color: COLORS.night }} className="text-lg font-bold">Admin Panel</h2>
+          </div>
+
+          <div className="flex gap-2 mb-5 flex-wrap">
+            {[
+              { key: "overview", label: "Overview" },
+              { key: "vehicles", label: `Vehicles (${vehicles.length})` },
+              { key: "bookings", label: `Bookings (${requests.length})` },
+              { key: "complaints", label: `Complaints (${complaints.filter((c) => c.status === "open").length})` },
+              { key: "blocked", label: `Blocked (${blockedUsers.length})` },
+            ].map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setAdminTab(t.key)}
+                style={adminTab === t.key ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {adminTab === "overview" && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[
+                { label: "Total vehicles", value: vehicles.length },
+                { label: "Total bookings", value: requests.length },
+                { label: "Open rider requests", value: riderPosts.filter((p) => p.status === "open").length },
+                { label: "Open complaints", value: complaints.filter((c) => c.status === "open").length },
+                { label: "Blocked users", value: blockedUsers.length },
+                { label: "Total reviews", value: reviews.length },
+              ].map((s, i) => (
+                <div key={i} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl p-4 text-center">
+                  <p style={{ color: COLORS.night }} className="text-2xl font-bold">{s.value}</p>
+                  <p style={{ color: COLORS.muted }} className="text-xs mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {adminTab === "vehicles" && (
+            <div className="space-y-2">
+              {vehicles.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi vehicle nahi hai.</p>}
+              {vehicles.map((v) => (
+                <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                  <div>
+                    <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{v.owner} {v.ownerPhone && <span style={{ color: COLORS.muted }} className="font-normal">· {v.ownerPhone}</span>}</p>
+                    <p style={{ color: COLORS.muted }} className="text-xs">{v.from} → {v.to} · {v.time} · {v.seats} of {v.totalSeats || v.seats} seats · {v.mode}</p>
+                  </div>
+                  <button onClick={() => deleteVehicle(v.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold shrink-0">
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {adminTab === "bookings" && (
+            <div className="space-y-2">
+              {requests.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi booking nahi hai.</p>}
+              {requests.map((r) => (
+                <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                  <div>
+                    <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName} → {r.owner}</p>
+                    <p style={{ color: COLORS.muted }} className="text-xs">{r.from} → {r.to} · {r.seats || 1} seat(s)</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge status={r.status} />
+                    {(r.status === "pending" || r.status === "accepted") && (
+                      <button onClick={() => cancelRequest(r.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2 py-1 text-xs font-semibold">
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {adminTab === "complaints" && (
+            <div className="space-y-2">
+              {complaints.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi complaint nahi hai.</p>}
+              {complaints
+                .slice()
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+                .map((c) => (
+                  <div key={c.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3">
+                    <div className="flex justify-between items-start mb-1">
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{c.reporterName} ne {c.aboutName} ke baare mein report kiya</p>
+                      <span
+                        style={c.status === "open" ? { background: "#FBE9E7", color: COLORS.coral } : { background: "#E4F3EF", color: COLORS.teal }}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shrink-0"
+                      >
+                        {c.status}
+                      </span>
+                    </div>
+                    <p style={{ color: COLORS.muted }} className="text-xs mb-2">{c.message}</p>
+                    {c.status === "open" && (
+                      <button onClick={() => resolveComplaint(c.id)} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                        Mark Resolved
+                      </button>
+                    )}
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {adminTab === "blocked" && (
+            <div>
+              <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 mb-5">
+                <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">Naya user block karo</p>
+                <input
+                  type="email"
+                  placeholder="user@email.com"
+                  value={blockEmailInput}
+                  onChange={(e) => setBlockEmailInput(e.target.value)}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-2"
+                />
+                <input
+                  placeholder="Reason (optional)"
+                  value={blockReasonInput}
+                  onChange={(e) => setBlockReasonInput(e.target.value)}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-3"
+                />
+                <button onClick={blockUserByEmail} style={{ background: COLORS.coral, color: "white" }} className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold">
+                  <Ban size={14} /> Block user
+                </button>
+              </div>
+              <div className="space-y-2">
+                {blockedUsers.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi bhi block nahi hai.</p>}
+                {blockedUsers.map((b) => (
+                  <div key={b.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                    <div>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{b.id}</p>
+                      <p style={{ color: COLORS.muted }} className="text-xs">{b.reason}</p>
+                    </div>
+                    <button onClick={() => unblockUser(b.id)} style={{ color: COLORS.teal, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                      Unblock
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {activeChat && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setActiveChat(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl flex flex-col">
             <div style={{ background: COLORS.night }} className="flex items-center justify-between px-4 py-3 rounded-t-2xl">
               <p className="text-white text-sm font-bold">{activeChat.otherName}</p>
-              <button onClick={() => setActiveChat(null)} className="text-white">
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setActiveReport({ requestId: activeChat.requestId, aboutName: activeChat.otherName })} className="text-white" title="Report / Complaint">
+                  <Flag size={16} />
+                </button>
+                <button onClick={() => setActiveChat(null)} className="text-white">
+                  <X size={18} />
+                </button>
+              </div>
             </div>
             <div className="flex flex-col gap-2 p-4 overflow-y-auto" style={{ maxHeight: 320, minHeight: 160 }}>
               {messages.filter((m) => m.requestId === activeChat.requestId).length === 0 && (
@@ -1305,6 +1560,31 @@ export default function Margshri() {
             <button onClick={() => setShowIOSHint(false)} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold">
               Samajh gaya
             </button>
+          </div>
+        </div>
+      )}
+
+      {activeReport && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setActiveReport(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
+            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">Report / Complaint: {activeReport.aboutName}</p>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-4">Kya problem hui, bataiye. Admin isko dekhega aur zaroorat pade to action lega.</p>
+            <textarea
+              value={reportText}
+              onChange={(e) => setReportText(e.target.value)}
+              placeholder="Apni complaint likhiye..."
+              style={{ borderColor: COLORS.line }}
+              className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-4 resize-none"
+              rows={4}
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setActiveReport(null)} style={{ borderColor: COLORS.line, color: COLORS.muted }} className="flex-1 border rounded-lg py-2.5 text-sm font-bold">
+                Cancel
+              </button>
+              <button onClick={submitReport} style={{ background: COLORS.coral, color: "white" }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
+                Submit Complaint
+              </button>
+            </div>
           </div>
         </div>
       )}
