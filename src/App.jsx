@@ -904,26 +904,52 @@ export default function Margshri() {
 
   if (screen === "landing") {
     return (
-      <div style={{ background: COLORS.sand, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }} className="w-full flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
-          <div className="flex justify-between items-center mb-6">
-            <Logo />
-            <button onClick={toggleLang} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full px-3 py-1 text-xs font-bold">
+      <div
+        style={{ background: `linear-gradient(180deg, ${COLORS.sand} 0%, #F2E9D8 100%)`, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }}
+        className="w-full flex items-center justify-center p-6 relative overflow-hidden"
+      >
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{ width: 300, height: 300, background: COLORS.amber, opacity: 0.18, filter: "blur(70px)", top: -100, left: -100 }}
+        />
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{ width: 260, height: 260, background: COLORS.teal, opacity: 0.15, filter: "blur(70px)", bottom: -80, right: -80 }}
+        />
+
+        <div className="w-full max-w-sm relative animate-fade-up">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-2.5">
+              <div style={{ background: COLORS.amber }} className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg">
+                <MapPin size={22} color={COLORS.night} strokeWidth={2.5} />
+              </div>
+              <span style={{ color: COLORS.night, letterSpacing: "-0.03em" }} className="text-2xl font-bold">
+                Margshri
+              </span>
+            </div>
+            <button onClick={toggleLang} style={{ borderColor: COLORS.line, color: COLORS.night, background: "white" }} className="border rounded-full px-3 py-1.5 text-xs font-bold shadow-sm">
               {lang === "en" ? "हिं" : "EN"}
             </button>
           </div>
-          <p style={{ color: COLORS.muted }} className="text-center text-sm mb-8">
+
+          <p style={{ color: COLORS.charcoal }} className="text-center text-base font-medium mb-8 px-2">
             {t("tagline")}
           </p>
-          <div className="mb-5">
+
+          <div className="relative mb-9" style={{ height: 32 }}>
             <RouteLine />
+            <div className="absolute animate-travel" style={{ top: "50%", marginTop: -14 }}>
+              <div style={{ background: COLORS.night }} className="w-7 h-7 rounded-full flex items-center justify-center shadow-lg">
+                <Car size={13} color="white" />
+              </div>
+            </div>
           </div>
 
           {!isStandalone && (installPrompt || isIOS) && (
             <button
               onClick={handleInstallClick}
               style={{ background: COLORS.night, color: "white" }}
-              className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm mb-4"
+              className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm mb-4 shadow-md"
             >
               {t("installApp")}
             </button>
@@ -933,22 +959,22 @@ export default function Margshri() {
             <button
               onClick={() => enter("rider")}
               style={{ background: COLORS.amber, color: COLORS.night }}
-              className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
+              className="rounded-xl py-4 font-bold text-sm flex flex-col items-center gap-1.5 shadow-md"
             >
-              <UsersIcon size={18} />
+              <UsersIcon size={20} />
               {t("imRider")}
             </button>
             <button
               onClick={() => enter("owner")}
               style={{ background: COLORS.night, color: "white" }}
-              className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
+              className="rounded-xl py-4 font-bold text-sm flex flex-col items-center gap-1.5 shadow-md"
             >
-              <Car size={18} />
+              <Car size={20} />
               {t("imOwner")}
             </button>
           </div>
 
-          <p style={{ color: COLORS.muted }} className="text-xs text-center mt-4">
+          <p style={{ color: COLORS.muted }} className="text-xs text-center mt-5">
             {t("loginNote")}
           </p>
 
@@ -1100,7 +1126,7 @@ export default function Margshri() {
               const Icon = VEHICLE_META[v.type].icon;
               const already = requests.find((r) => r.vehicleId === v.id && r.riderName === name && !["cancelled", "rejected"].includes(r.status));
               return (
-                <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4">
+                <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 shadow-sm">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <div style={{ background: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0">
