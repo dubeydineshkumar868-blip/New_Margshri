@@ -409,6 +409,7 @@ export default function Margshri() {
     return withSync(async () => {
       const newReq = {
         riderName: name,
+        riderId: user?.uid || null,
         riderPhoto: user?.photoURL || null,
         riderPhone: myPhone || null,
         vehicleId: vehicle.id,
@@ -457,6 +458,7 @@ export default function Margshri() {
       }
       const newVehicle = {
         owner: name,
+        ownerId: user?.uid || null,
         ownerPhoto: user?.photoURL || null,
         ownerPhone: myPhone || null,
         type: vform.type,
@@ -487,6 +489,7 @@ export default function Margshri() {
       }
       const newPost = {
         riderName: name,
+        riderId: user?.uid || null,
         from: rform.from,
         to: rform.to,
         time: formatDateTime(rform.date, rform.clock),
@@ -504,8 +507,8 @@ export default function Margshri() {
     });
 
   const offerRide = (postId) => {
-    setRiderPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, status: "matched", ownerName: name } : p)));
-    updateDoc(doc(db, RIDER_POSTS_COLLECTION, postId), { status: "matched", ownerName: name }).catch(() => {
+    setRiderPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, status: "matched", ownerName: name, ownerId: user?.uid || null } : p)));
+    updateDoc(doc(db, RIDER_POSTS_COLLECTION, postId), { status: "matched", ownerName: name, ownerId: user?.uid || null }).catch(() => {
       setErrorMsg("Status save nahi ho paya, dubara try karo.");
     });
   };
@@ -527,6 +530,7 @@ export default function Margshri() {
     const newMsg = {
       requestId: activeChat.requestId,
       senderName: name,
+      senderId: user?.uid || null,
       text: messageText.trim(),
       createdAt: Date.now(),
     };
@@ -586,6 +590,7 @@ export default function Margshri() {
     }
     const newReport = {
       reporterName: name,
+      reporterId: user?.uid || null,
       reporterEmail: user?.email || null,
       reporterPhone: myPhone || null,
       aboutName: activeReport.aboutName,
@@ -628,6 +633,7 @@ export default function Margshri() {
     const newReview = {
       requestId: activeReview.requestId,
       raterName: name,
+      raterId: user?.uid || null,
       revieweeName: activeReview.revieweeName,
       rating: reviewRating,
       comment: reviewComment.trim(),
