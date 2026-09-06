@@ -227,6 +227,7 @@ export default function Margshri() {
   const [activeReview, setActiveReview] = useState(null); // { requestId, revieweeName }
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [viewingReviewsFor, setViewingReviewsFor] = useState(null);
   const [mode, setMode] = useState("local");
 
   const [search, setSearch] = useState({ from: "", to: "", type: "car" });
@@ -628,6 +629,38 @@ export default function Margshri() {
     deleteDoc(doc(db, BLOCKS_COLLECTION, email)).catch(() => {});
   };
 
+  const deleteRequestAdmin = (id) => {
+    setRequests((prev) => prev.filter((r) => r.id !== id));
+    deleteDoc(doc(db, REQUESTS_COLLECTION, id)).catch(() => {
+      setErrorMsg("Booking delete nahi hui, dubara try karo.");
+    });
+  };
+
+  const deleteComplaint = (id) => {
+    setComplaints((prev) => prev.filter((c) => c.id !== id));
+    deleteDoc(doc(db, COMPLAINTS_COLLECTION, id)).catch(() => {
+      setErrorMsg("Complaint delete nahi hui, dubara try karo.");
+    });
+  };
+
+  const clearAllVehicles = () => {
+    if (!window.confirm(`Sach mein saare ${vehicles.length} vehicles delete karne hain? Ye undo nahi ho sakta.`)) return;
+    vehicles.forEach((v) => deleteDoc(doc(db, VEHICLES_COLLECTION, v.id)).catch(() => {}));
+    setVehicles([]);
+  };
+
+  const clearAllBookings = () => {
+    if (!window.confirm(`Sach mein saari ${requests.length} bookings delete karni hain? Ye undo nahi ho sakta.`)) return;
+    requests.forEach((r) => deleteDoc(doc(db, REQUESTS_COLLECTION, r.id)).catch(() => {}));
+    setRequests([]);
+  };
+
+  const clearAllComplaints = () => {
+    if (!window.confirm(`Sach mein saari ${complaints.length} complaints delete karni hain? Ye undo nahi ho sakta.`)) return;
+    complaints.forEach((c) => deleteDoc(doc(db, COMPLAINTS_COLLECTION, c.id)).catch(() => {}));
+    setComplaints([]);
+  };
+
   const submitReview = () => {
     if (!activeReview) return;
     const newReview = {
@@ -919,9 +952,9 @@ export default function Margshri() {
                         <p style={{ color: COLORS.charcoal }} className="text-sm font-bold flex items-center gap-1">
                           {v.owner}
                           {getAvgRating(v.owner) && (
-                            <span style={{ color: COLORS.muted }} className="text-xs font-normal flex items-center gap-0.5">
-                              <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {getAvgRating(v.owner).avg}
-                            </span>
+                            <button onClick={() => setViewingReviewsFor(v.owner)} style={{ color: COLORS.muted }} className="text-xs font-normal flex items-center gap-0.5">
+                              <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {getAvgRating(v.owner).avg} ({getAvgRating(v.owner).count})
+                            </button>
                           )}
                         </p>
                         <p style={{ color: COLORS.muted }} className="text-xs flex items-center gap-1"><Clock size={11} /> {v.time}</p>
@@ -1206,7 +1239,14 @@ export default function Margshri() {
                       <Icon size={14} color="white" />
                     </div>
                     <div>
-                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{p.riderName}</p>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold flex items-center gap-1">
+                        {p.riderName}
+                        {getAvgRating(p.riderName) && (
+                          <button onClick={() => setViewingReviewsFor(p.riderName)} style={{ color: COLORS.muted }} className="text-xs font-normal flex items-center gap-0.5">
+                            <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {getAvgRating(p.riderName).avg}
+                          </button>
+                        )}
+                      </p>
                       <p style={{ color: COLORS.muted }} className="text-xs">{p.from} <ArrowRight size={11} className="inline" /> {p.to} · {p.time} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}</p>
                     </div>
                   </div>
@@ -1233,7 +1273,14 @@ export default function Margshri() {
                       {r.riderPhoto ? <img src={r.riderPhoto} alt="" className="w-full h-full object-cover" /> : <User size={14} color="white" />}
                     </div>
                     <div>
-                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName}</p>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold flex items-center gap-1">
+                        {r.riderName}
+                        {getAvgRating(r.riderName) && (
+                          <button onClick={() => setViewingReviewsFor(r.riderName)} style={{ color: COLORS.muted }} className="text-xs font-normal flex items-center gap-0.5">
+                            <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {getAvgRating(r.riderName).avg}
+                          </button>
+                        )}
+                      </p>
                       <p style={{ color: COLORS.muted }} className="text-xs">{r.from} <ArrowRight size={11} className="inline" /> {r.to} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</p>
                     </div>
                   </div>
@@ -1352,46 +1399,68 @@ export default function Margshri() {
           )}
 
           {adminTab === "vehicles" && (
-            <div className="space-y-2">
-              {vehicles.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi vehicle nahi hai.</p>}
-              {vehicles.map((v) => (
-                <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
-                  <div>
-                    <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{v.owner} {v.ownerPhone && <span style={{ color: COLORS.muted }} className="font-normal">· {v.ownerPhone}</span>}</p>
-                    <p style={{ color: COLORS.muted }} className="text-xs">{v.from} → {v.to} · {v.time} · {v.seats} of {v.totalSeats || v.seats} seats · {v.mode}</p>
+            <div>
+              {vehicles.length > 0 && (
+                <button onClick={clearAllVehicles} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-3 py-1.5 text-xs font-semibold mb-3">
+                  🗑 Clear All Vehicles
+                </button>
+              )}
+              <div className="space-y-2">
+                {vehicles.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi vehicle nahi hai.</p>}
+                {vehicles.map((v) => (
+                  <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                    <div>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{v.owner} {v.ownerPhone && <span style={{ color: COLORS.muted }} className="font-normal">· {v.ownerPhone}</span>}</p>
+                      <p style={{ color: COLORS.muted }} className="text-xs">{v.from} → {v.to} · {v.time} · {v.seats} of {v.totalSeats || v.seats} seats · {v.mode}</p>
+                    </div>
+                    <button onClick={() => deleteVehicle(v.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold shrink-0">
+                      Remove
+                    </button>
                   </div>
-                  <button onClick={() => deleteVehicle(v.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold shrink-0">
-                    Remove
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
           {adminTab === "bookings" && (
-            <div className="space-y-2">
-              {requests.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi booking nahi hai.</p>}
-              {requests.map((r) => (
-                <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
-                  <div>
-                    <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName} → {r.owner}</p>
-                    <p style={{ color: COLORS.muted }} className="text-xs">{r.from} → {r.to} · {r.seats || 1} seat(s)</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge status={r.status} />
-                    {(r.status === "pending" || r.status === "accepted") && (
-                      <button onClick={() => cancelRequest(r.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2 py-1 text-xs font-semibold">
-                        Cancel
+            <div>
+              {requests.length > 0 && (
+                <button onClick={clearAllBookings} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-3 py-1.5 text-xs font-semibold mb-3">
+                  🗑 Clear All Bookings
+                </button>
+              )}
+              <div className="space-y-2">
+                {requests.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi booking nahi hai.</p>}
+                {requests.map((r) => (
+                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
+                    <div>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.riderName} → {r.owner}</p>
+                      <p style={{ color: COLORS.muted }} className="text-xs">{r.from} → {r.to} · {r.seats || 1} seat(s)</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge status={r.status} />
+                      {(r.status === "pending" || r.status === "accepted") && (
+                        <button onClick={() => cancelRequest(r.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2 py-1 text-xs font-semibold">
+                          Cancel
+                        </button>
+                      )}
+                      <button onClick={() => deleteRequestAdmin(r.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2 py-1 text-xs font-semibold">
+                        Delete
                       </button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
           {adminTab === "complaints" && (
             <div className="space-y-2">
+              {complaints.length > 0 && (
+                <button onClick={clearAllComplaints} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-3 py-1.5 text-xs font-semibold mb-1">
+                  🗑 Clear All Complaints
+                </button>
+              )}
               {complaints.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi complaint nahi hai.</p>}
               {complaints
                 .slice()
@@ -1454,14 +1523,22 @@ export default function Margshri() {
                               Block karne jaao →
                             </button>
                           )}
+                          <button onClick={() => deleteComplaint(c.id)} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                            Delete
+                          </button>
                         </div>
                       </>
                     ) : (
-                      c.resolutionNote && (
-                        <p style={{ color: COLORS.charcoal, background: "#E4F3EF" }} className="text-xs rounded-lg px-3 py-2">
-                          <b>Resolution:</b> {c.resolutionNote}
-                        </p>
-                      )
+                      <div>
+                        {c.resolutionNote && (
+                          <p style={{ color: COLORS.charcoal, background: "#E4F3EF" }} className="text-xs rounded-lg px-3 py-2 mb-2">
+                            <b>Resolution:</b> {c.resolutionNote}
+                          </p>
+                        )}
+                        <button onClick={() => deleteComplaint(c.id)} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                          Delete
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -1657,6 +1734,42 @@ export default function Margshri() {
               <button onClick={submitReport} style={{ background: COLORS.coral, color: "white" }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
                 Submit Complaint
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingReviewsFor && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setViewingReviewsFor(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl flex flex-col">
+            <div style={{ background: COLORS.night }} className="flex items-center justify-between px-4 py-3 rounded-t-2xl">
+              <p className="text-white text-sm font-bold">
+                {viewingReviewsFor}'s reviews {getAvgRating(viewingReviewsFor) && `· ⭐ ${getAvgRating(viewingReviewsFor).avg} (${getAvgRating(viewingReviewsFor).count})`}
+              </p>
+              <button onClick={() => setViewingReviewsFor(null)} className="text-white">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-3 p-4 overflow-y-auto" style={{ maxHeight: 400, minHeight: 120 }}>
+              {reviews.filter((r) => r.revieweeName === viewingReviewsFor).length === 0 && (
+                <p style={{ color: COLORS.muted }} className="text-xs text-center py-6">Abhi koi review nahi hai.</p>
+              )}
+              {reviews
+                .filter((r) => r.revieweeName === viewingReviewsFor)
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+                .map((r) => (
+                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl p-3">
+                    <div className="flex justify-between items-center mb-1">
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{r.raterName}</p>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star key={n} size={12} fill={n <= r.rating ? COLORS.amber : "none"} color={n <= r.rating ? COLORS.amber : COLORS.line} />
+                        ))}
+                      </div>
+                    </div>
+                    {r.comment && <p style={{ color: COLORS.muted }} className="text-xs">{r.comment}</p>}
+                  </div>
+                ))}
             </div>
           </div>
         </div>
