@@ -214,6 +214,7 @@ export default function Margshri() {
   const [reportText, setReportText] = useState("");
   const [blockEmailInput, setBlockEmailInput] = useState("");
   const [blockReasonInput, setBlockReasonInput] = useState("");
+  const [resolutionDrafts, setResolutionDrafts] = useState({});
   const [activeChat, setActiveChat] = useState(null); // { requestId, otherName }
   const [messageText, setMessageText] = useState("");
   const [chatSeen, setChatSeen] = useState(() => {
@@ -573,13 +574,26 @@ export default function Margshri() {
 
   const submitReport = () => {
     if (!activeReport || !reportText.trim()) return;
+    const relatedReq = requests.find((r) => r.id === activeReport.requestId);
+    let aboutPhone = null;
+    if (relatedReq) {
+      if (relatedReq.riderName === activeReport.aboutName) {
+        aboutPhone = relatedReq.riderPhone || null;
+      } else {
+        const veh = vehicles.find((v) => v.id === relatedReq.vehicleId);
+        aboutPhone = veh?.ownerPhone || null;
+      }
+    }
     const newReport = {
       reporterName: name,
       reporterEmail: user?.email || null,
+      reporterPhone: myPhone || null,
       aboutName: activeReport.aboutName,
+      aboutPhone,
       requestId: activeReport.requestId || null,
       message: reportText.trim(),
       status: "open",
+      resolutionNote: "",
       createdAt: Date.now(),
     };
     setComplaints((prev) => [...prev, { id: "temp-" + Date.now(), ...newReport }]);
@@ -590,9 +604,9 @@ export default function Margshri() {
     setReportText("");
   };
 
-  const resolveComplaint = (id) => {
-    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, status: "resolved" } : c)));
-    updateDoc(doc(db, COMPLAINTS_COLLECTION, id), { status: "resolved" }).catch(() => {});
+  const resolveComplaint = (id, note) => {
+    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, status: "resolved", resolutionNote: note || "" } : c)));
+    updateDoc(doc(db, COMPLAINTS_COLLECTION, id), { status: "resolved", resolutionNote: note || "" }).catch(() => {});
   };
 
   const blockUserByEmail = () => {
@@ -1388,10 +1402,60 @@ export default function Margshri() {
                       </span>
                     </div>
                     <p style={{ color: COLORS.muted }} className="text-xs mb-2">{c.message}</p>
-                    {c.status === "open" && (
-                      <button onClick={() => resolveComplaint(c.id)} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
-                        Mark Resolved
-                      </button>
+
+                    <div className="flex flex-wrap gap-3 mb-2">
+                      <div style={{ background: "#F3EFE6" }} className="rounded-lg px-2.5 py-1.5">
+                        <p style={{ color: COLORS.muted }} className="text-[10px] font-semibold mb-0.5">Reporter: {c.reporterName}</p>
+                        <div className="flex gap-2">
+                          {c.reporterPhone && <a href={`tel:${c.reporterPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold">📞 {c.reporterPhone}</a>}
+                          {c.reporterEmail && <a href={`mailto:${c.reporterEmail}`} style={{ color: COLORS.teal }} className="text-xs font-bold">✉️ Email</a>}
+                          {!c.reporterPhone && !c.reporterEmail && <span style={{ color: COLORS.muted }} className="text-xs">Contact nahi diya</span>}
+                        </div>
+                      </div>
+                      <div style={{ background: "#F3EFE6" }} className="rounded-lg px-2.5 py-1.5">
+                        <p style={{ color: COLORS.muted }} className="text-[10px] font-semibold mb-0.5">Jiski complaint hai: {c.aboutName}</p>
+                        {c.aboutPhone ? (
+                          <a href={`tel:${c.aboutPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold">📞 {c.aboutPhone}</a>
+                        ) : (
+                          <span style={{ color: COLORS.muted }} className="text-xs">Phone number nahi mila</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {c.status === "open" ? (
+                      <>
+                        <textarea
+                          value={resolutionDrafts[c.id] ?? ""}
+                          onChange={(e) => setResolutionDrafts((prev) => ({ ...prev, [c.id]: e.target.value }))}
+                          placeholder="Resolution note likho (kya kiya gaya, optional)..."
+                          style={{ borderColor: COLORS.line }}
+                          className="w-full border rounded-lg px-3 py-2 text-xs outline-none mb-2 resize-none"
+                          rows={2}
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={() => resolveComplaint(c.id, resolutionDrafts[c.id])} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                            Mark Resolved
+                          </button>
+                          {c.aboutPhone && (
+                            <button
+                              onClick={() => {
+                                setBlockEmailInput("");
+                                setAdminTab("blocked");
+                              }}
+                              style={{ color: COLORS.coral, borderColor: COLORS.line }}
+                              className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                            >
+                              Block karne jaao →
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      c.resolutionNote && (
+                        <p style={{ color: COLORS.charcoal, background: "#E4F3EF" }} className="text-xs rounded-lg px-3 py-2">
+                          <b>Resolution:</b> {c.resolutionNote}
+                        </p>
+                      )
                     )}
                   </div>
                 ))}
