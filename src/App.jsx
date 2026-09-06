@@ -163,6 +163,34 @@ export default function Margshri() {
 
   const [screen, setScreen] = useState("landing");
   const [authLoading, setAuthLoading] = useState(true);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [showIOSHint, setShowIOSHint] = useState(false);
+
+  useEffect(() => {
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+    setIsStandalone(!!standalone);
+    setIsIOS(/iphone|ipad|ipod/i.test(window.navigator.userAgent));
+
+    const handler = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", () => setInstallPrompt(null));
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      setInstallPrompt(null);
+    } else if (isIOS) {
+      setShowIOSHint(true);
+    }
+  };
   const [user, setUser] = useState(null);
   const name = user?.displayName || user?.email || "";
   const [myPhone, setMyPhone] = useState("");
@@ -614,6 +642,16 @@ export default function Margshri() {
           <div className="mb-5">
             <RouteLine />
           </div>
+
+          {!isStandalone && (installPrompt || isIOS) && (
+            <button
+              onClick={handleInstallClick}
+              style={{ background: COLORS.night, color: "white" }}
+              className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm mb-4"
+            >
+              📲 App install karo (Home screen par)
+            </button>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -1242,6 +1280,31 @@ export default function Margshri() {
                 Save
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showIOSHint && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowIOSHint(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
+            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-3">iPhone par install karne ke liye</p>
+            <div className="space-y-3 mb-4">
+              <div className="flex items-start gap-2">
+                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
+                <p style={{ color: COLORS.charcoal }} className="text-sm">Neeche Share icon (⬆️ box) par tap karo</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>
+                <p style={{ color: COLORS.charcoal }} className="text-sm">Scroll karke "Add to Home Screen" dhundo aur tap karo</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</span>
+                <p style={{ color: COLORS.charcoal }} className="text-sm">Top-right "Add" dabao — Margshri icon home screen par aa jayega</p>
+              </div>
+            </div>
+            <button onClick={() => setShowIOSHint(false)} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold">
+              Samajh gaya
+            </button>
           </div>
         </div>
       )}
