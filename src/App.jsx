@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -777,6 +777,9 @@ export default function Margshri() {
       <div style={{ borderColor: COLORS.line }} className="flex items-center justify-between px-6 py-4 border-b flex-wrap gap-3">
         <Logo />
         <div className="flex items-center gap-3">
+          <button onClick={() => setScreen("landing")} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full p-2">
+            <Home size={16} />
+          </button>
           {screen !== "admin" && <ModeToggle />}
           {isAdmin && screen !== "admin" && (
             <button onClick={() => setScreen("admin")} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full p-2">
