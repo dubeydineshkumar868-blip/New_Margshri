@@ -21,6 +21,119 @@ const VEHICLE_META = {
   bus: { icon: Bus, label: "Bus" },
 };
 
+const TRANSLATIONS = {
+  en: {
+    tagline: "One route, everyone together. From bike to bus — share your route.",
+    continueGoogle: "Continue with Google",
+    signOut: "Sign out",
+    login: "Login",
+    imRider: "I'm a Rider",
+    imOwner: "I'm a Vehicle Owner",
+    loginNote: "You don't need to log in to browse. You'll be asked to log in with Google when you book or post.",
+    safetyLink: "Read Safety & Disclaimer",
+    installApp: "📲 Install App (Home Screen)",
+    adminPanel: "Admin Panel",
+    addPhone: "+ Add phone",
+    local: "Local",
+    longDistance: "Long Distance",
+    findRide: "Find a ride",
+    from: "From",
+    to: "To",
+    noVehiclesFound: "No vehicle is open on this route right now.",
+    postOwnRequestPrompt: "Post your own request — you'll be notified when an owner matches you.",
+    dateTimePlaceholder: "Date & time",
+    seatsWanted: "Seats needed",
+    postMyRequest: "Post my request",
+    seatsOpen: "seat(s) open",
+    sendRequest: "Send Request",
+    myRequests: "My requests",
+    myPostedRequests: "My posted requests (open search)",
+    cancel: "Cancel",
+    rateOwner: "Rate Owner",
+    postYourVehicle: "Post your vehicle",
+    dateTimeExample: "Date & time e.g. Today, 5 PM",
+    seats: "Seats",
+    pricePerSeat: "Price per seat (₹)",
+    postingFor: "Posting for:",
+    modeChangeNote: "mode (change from top toggle)",
+    routeType: "Route type",
+    direct: "Direct (no stops)",
+    multiStop: "Multi-stop route",
+    addStop: "+ Add Stop",
+    postVehicle: "Post Vehicle",
+    ridersLookingForRide: "Riders looking for a ride",
+    noRidersSearching: "No rider is searching right now.",
+    offerRide: "Offer Ride",
+    incomingRequests: "Incoming requests",
+    noRequestsYet: "No requests yet.",
+    rideDone: "Ride Done",
+    noShow: "No-show",
+    rateRider: "Rate Rider",
+    myPostedVehicles: "My posted vehicles",
+    remove: "Remove",
+    seatsLeft: "seats left",
+    save: "Save",
+    submit: "Submit",
+    close: "Close",
+    understood: "Understood, let's go",
+  },
+  hi: {
+    tagline: "एक रास्ता, सब साथ। बाइक से बस तक — अपना रूट शेयर करो।",
+    continueGoogle: "Google से जारी रखें",
+    signOut: "साइन आउट",
+    login: "लॉगिन",
+    imRider: "मैं यात्री हूँ",
+    imOwner: "मैं वाहन मालिक हूँ",
+    loginNote: "सब कुछ देखने के लिए लॉगिन ज़रूरी नहीं। बुकिंग या पोस्ट करते समय Google से लॉगिन करने को कहा जाएगा।",
+    safetyLink: "सुरक्षा व अस्वीकरण पढ़ें",
+    installApp: "📲 ऐप इंस्टॉल करें (होम स्क्रीन पर)",
+    adminPanel: "एडमिन पैनल",
+    addPhone: "+ फ़ोन नंबर जोड़ें",
+    local: "लोकल",
+    longDistance: "लॉन्ग डिस्टेंस",
+    findRide: "राइड खोजें",
+    from: "कहाँ से",
+    to: "कहाँ तक",
+    noVehiclesFound: "इस रूट पर अभी कोई वाहन उपलब्ध नहीं है।",
+    postOwnRequestPrompt: "अपनी खुद की रिक्वेस्ट पोस्ट करें — कोई मालिक मैच होते ही आपको पता चल जाएगा।",
+    dateTimePlaceholder: "तारीख़ और समय",
+    seatsWanted: "कितनी सीट चाहिए",
+    postMyRequest: "मेरी रिक्वेस्ट पोस्ट करें",
+    seatsOpen: "सीट खाली हैं",
+    sendRequest: "रिक्वेस्ट भेजें",
+    myRequests: "मेरी रिक्वेस्ट्स",
+    myPostedRequests: "मेरी पोस्ट की गई रिक्वेस्ट्स (ओपन सर्च)",
+    cancel: "रद्द करें",
+    rateOwner: "मालिक को रेट करें",
+    postYourVehicle: "अपना वाहन पोस्ट करें",
+    dateTimeExample: "तारीख़ और समय जैसे आज, शाम 5 बजे",
+    seats: "सीटें",
+    pricePerSeat: "प्रति सीट किराया (₹)",
+    postingFor: "पोस्ट कर रहे हैं:",
+    modeChangeNote: "मोड के लिए (ऊपर से बदलें)",
+    routeType: "रूट का प्रकार",
+    direct: "सीधा (कोई स्टॉप नहीं)",
+    multiStop: "मल्टी-स्टॉप रूट",
+    addStop: "+ स्टॉप जोड़ें",
+    postVehicle: "वाहन पोस्ट करें",
+    ridersLookingForRide: "राइड ढूंढ रहे यात्री",
+    noRidersSearching: "अभी कोई यात्री खोज नहीं रहा है।",
+    offerRide: "राइड ऑफर करें",
+    incomingRequests: "आने वाली रिक्वेस्ट्स",
+    noRequestsYet: "अभी कोई रिक्वेस्ट नहीं आई।",
+    rideDone: "राइड पूरी हुई",
+    noShow: "नहीं आया",
+    rateRider: "यात्री को रेट करें",
+    myPostedVehicles: "मेरे पोस्ट किए वाहन",
+    remove: "हटाएं",
+    seatsLeft: "सीटें बची हैं",
+    save: "सेव करें",
+    submit: "सबमिट करें",
+    close: "बंद करें",
+    understood: "समझ गया, आगे बढ़ते हैं",
+  },
+};
+
 const VEHICLES_COLLECTION = "vehicles";
 const REQUESTS_COLLECTION = "requests";
 const RIDER_POSTS_COLLECTION = "riderPosts";
@@ -131,21 +244,26 @@ function LocationInput({ value, onChange, placeholder }) {
   );
 }
 
-function Badge({ status }) {
+function Badge({ status, lang = "en" }) {
+  const labels = {
+    en: { pending: "Pending", accepted: "Accepted", rejected: "Declined", open: "Waiting", matched: "Matched", completed: "Completed", noshow: "No-show", cancelled: "Cancelled" },
+    hi: { pending: "लंबित", accepted: "स्वीकृत", rejected: "अस्वीकृत", open: "प्रतीक्षा में", matched: "मैच हुआ", completed: "पूरा हुआ", noshow: "नहीं आया", cancelled: "रद्द" },
+  };
   const map = {
-    pending: { bg: "#FDF1DE", fg: "#B4700C", label: "Pending" },
-    accepted: { bg: "#E4F3EF", fg: COLORS.teal, label: "Accepted" },
-    rejected: { bg: "#FBE9E7", fg: COLORS.coral, label: "Declined" },
-    open: { bg: "#FDF1DE", fg: "#B4700C", label: "Waiting" },
-    matched: { bg: "#E4F3EF", fg: COLORS.teal, label: "Matched" },
-    completed: { bg: "#E4F3EF", fg: COLORS.teal, label: "Completed" },
-    noshow: { bg: "#FBE9E7", fg: COLORS.coral, label: "No-show" },
-    cancelled: { bg: "#EFEFEF", fg: COLORS.muted, label: "Cancelled" },
+    pending: { bg: "#FDF1DE", fg: "#B4700C" },
+    accepted: { bg: "#E4F3EF", fg: COLORS.teal },
+    rejected: { bg: "#FBE9E7", fg: COLORS.coral },
+    open: { bg: "#FDF1DE", fg: "#B4700C" },
+    matched: { bg: "#E4F3EF", fg: COLORS.teal },
+    completed: { bg: "#E4F3EF", fg: COLORS.teal },
+    noshow: { bg: "#FBE9E7", fg: COLORS.coral },
+    cancelled: { bg: "#EFEFEF", fg: COLORS.muted },
   };
   const s = map[status];
+  const label = (labels[lang] || labels.en)[status] || status;
   return (
     <span style={{ background: s.bg, color: s.fg }} className="text-xs font-semibold px-2.5 py-1 rounded-full tracking-wide uppercase">
-      {s.label}
+      {label}
     </span>
   );
 }
@@ -200,6 +318,15 @@ export default function Margshri() {
   const [user, setUser] = useState(null);
   const name = user?.displayName || user?.email || "";
   const [myPhone, setMyPhone] = useState("");
+  const [safetyAcknowledged, setSafetyAcknowledged] = useState(true);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [lang, setLang] = useState(() => localStorage.getItem("marghee-lang") || "en");
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key;
+  const toggleLang = () => {
+    const next = lang === "en" ? "hi" : "en";
+    setLang(next);
+    localStorage.setItem("marghee-lang", next);
+  };
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phoneInput, setPhoneInput] = useState("");
   const [vehicles, setVehicles] = useState([]);
@@ -272,17 +399,26 @@ export default function Margshri() {
     return unsub;
   }, []);
 
-  // Load this person's saved phone number once they're logged in
+  // Load this person's saved phone number + safety acknowledgment once they're logged in
   useEffect(() => {
     if (!user) {
       setMyPhone("");
+      setSafetyAcknowledged(true);
       return;
     }
     const unsub = onSnapshot(doc(db, PROFILES_COLLECTION, user.uid), (snap) => {
-      setMyPhone(snap.exists() ? snap.data().phone || "" : "");
+      const data = snap.exists() ? snap.data() : {};
+      setMyPhone(data.phone || "");
+      setSafetyAcknowledged(!!data.safetyAcknowledged);
     });
     return unsub;
   }, [user]);
+
+  const acknowledgeSafety = () => {
+    if (!user) return;
+    setSafetyAcknowledged(true);
+    setDoc(doc(db, PROFILES_COLLECTION, user.uid), { safetyAcknowledged: true }, { merge: true }).catch(() => {});
+  };
 
   const savePhone = () => {
     if (!user || !phoneInput.trim()) return;
@@ -736,7 +872,7 @@ export default function Margshri() {
           style={mode === m ? { background: COLORS.night, color: "white" } : { color: COLORS.muted }}
           className="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
         >
-          {m === "local" ? "Local" : "Long Distance"}
+          {m === "local" ? t("local") : t("longDistance")}
         </button>
       ))}
     </div>
@@ -770,9 +906,14 @@ export default function Margshri() {
     return (
       <div style={{ background: COLORS.sand, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }} className="w-full flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <div className="flex justify-center mb-6"><Logo /></div>
+          <div className="flex justify-between items-center mb-6">
+            <Logo />
+            <button onClick={toggleLang} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full px-3 py-1 text-xs font-bold">
+              {lang === "en" ? "हिं" : "EN"}
+            </button>
+          </div>
           <p style={{ color: COLORS.muted }} className="text-center text-sm mb-8">
-            Ek raasta, sab saath. Bike se bus tak — apna route share karo.
+            {t("tagline")}
           </p>
           <div className="mb-5">
             <RouteLine />
@@ -784,7 +925,7 @@ export default function Margshri() {
               style={{ background: COLORS.night, color: "white" }}
               className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm mb-4"
             >
-              📲 App install karo (Home screen par)
+              {t("installApp")}
             </button>
           )}
 
@@ -795,7 +936,7 @@ export default function Margshri() {
               className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
             >
               <UsersIcon size={18} />
-              I'm a Rider
+              {t("imRider")}
             </button>
             <button
               onClick={() => enter("owner")}
@@ -803,13 +944,17 @@ export default function Margshri() {
               className="rounded-xl py-3 font-bold text-sm flex flex-col items-center gap-1"
             >
               <Car size={18} />
-              I'm a Vehicle Owner
+              {t("imOwner")}
             </button>
           </div>
 
           <p style={{ color: COLORS.muted }} className="text-xs text-center mt-4">
-            Sab kuch dekhne ke liye login zaroori nahi. Booking ya post karte waqt Google se login karne ko kaha jayega.
+            {t("loginNote")}
           </p>
+
+          <button onClick={() => setShowSafetyModal(true)} style={{ color: COLORS.muted }} className="text-xs underline text-center block mx-auto mt-3">
+            {t("safetyLink")}
+          </button>
 
           {isAdmin && (
             <button
@@ -817,7 +962,7 @@ export default function Margshri() {
               style={{ background: COLORS.night, color: "white" }}
               className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm mt-4"
             >
-              <LayoutDashboard size={16} /> Admin Panel
+              <LayoutDashboard size={16} /> {t("adminPanel")}
             </button>
           )}
         </div>
@@ -832,6 +977,9 @@ export default function Margshri() {
         <div className="flex items-center gap-3">
           <button onClick={() => setScreen("landing")} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full p-2">
             <Home size={16} />
+          </button>
+          <button onClick={toggleLang} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full px-3 py-1.5 text-xs font-bold">
+            {lang === "en" ? "हिं" : "EN"}
           </button>
           {screen !== "admin" && <ModeToggle />}
           {isAdmin && screen !== "admin" && (
@@ -853,15 +1001,15 @@ export default function Margshri() {
                 style={{ color: myPhone ? COLORS.teal : COLORS.coral, borderColor: COLORS.line }}
                 className="border rounded-full px-3 py-1.5 text-xs font-semibold"
               >
-                {myPhone ? `📞 ${myPhone}` : "+ Add phone"}
+                {myPhone ? `📞 ${myPhone}` : t("addPhone")}
               </button>
               <button onClick={logOut} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full px-3 py-1.5 text-xs font-semibold">
-                Sign out
+                {t("signOut")}
               </button>
             </>
           ) : (
             <button onClick={signInWithGoogle} style={{ background: COLORS.night, color: "white" }} className="rounded-full px-4 py-1.5 text-xs font-bold">
-              Login
+              {t("login")}
             </button>
           )}
         </div>
@@ -881,11 +1029,11 @@ export default function Margshri() {
 
       {screen === "rider" && dataLoaded && (
         <div className="p-6 max-w-2xl mx-auto">
-          <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">Find a ride</h2>
+          <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">{t("findRide")}</h2>
           <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 mb-6">
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <LocationInput placeholder="From" value={search.from} onChange={(v) => setSearch({ ...search, from: v })} />
-              <LocationInput placeholder="To" value={search.to} onChange={(v) => setSearch({ ...search, to: v })} />
+              <LocationInput placeholder={t("from")} value={search.from} onChange={(v) => setSearch({ ...search, from: v })} />
+              <LocationInput placeholder={t("to")} value={search.to} onChange={(v) => setSearch({ ...search, to: v })} />
             </div>
             <div className="flex gap-2 mb-3">
               {Object.entries(VEHICLE_META).map(([key, m]) => {
@@ -906,14 +1054,14 @@ export default function Margshri() {
                 { key: "nonSmoker", label: "Non-smoker" },
                 { key: "ac", label: "AC" },
                 { key: "luggage", label: "Luggage space" },
-              ].map((t) => (
+              ].map((tag) => (
                 <button
-                  key={t.key}
-                  onClick={() => setFilterTags({ ...filterTags, [t.key]: !filterTags[t.key] })}
-                  style={filterTags[t.key] ? { background: COLORS.teal, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                  key={tag.key}
+                  onClick={() => setFilterTags({ ...filterTags, [tag.key]: !filterTags[tag.key] })}
+                  style={filterTags[tag.key] ? { background: COLORS.teal, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
                   className="text-xs font-semibold px-2.5 py-1.5 rounded-full"
                 >
-                  {t.label}
+                  {tag.label}
                 </button>
               ))}
             </div>
@@ -922,19 +1070,19 @@ export default function Margshri() {
           <div className="space-y-3 mb-8">
             {filteredVehicles.length === 0 && (
               <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 text-center mb-3">
-                <p style={{ color: COLORS.muted }} className="text-sm mb-3">Is route par abhi koi vehicle open nahi hai.</p>
-                <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">Apna request post kar do — jab koi owner match kare to aapko dikh jayega.</p>
+                <p style={{ color: COLORS.muted }} className="text-sm mb-3">{t("noVehiclesFound")}</p>
+                <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">{t("postOwnRequestPrompt")}</p>
                 <div className="grid grid-cols-2 gap-2 mb-2">
-                  <LocationInput placeholder="From" value={rform.from} onChange={(v) => setRform({ ...rform, from: v })} />
-                  <LocationInput placeholder="To" value={rform.to} onChange={(v) => setRform({ ...rform, to: v })} />
+                  <LocationInput placeholder={t("from")} value={rform.from} onChange={(v) => setRform({ ...rform, from: v })} />
+                  <LocationInput placeholder={t("to")} value={rform.to} onChange={(v) => setRform({ ...rform, to: v })} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <input type="date" value={rform.date} onChange={(e) => setRform({ ...rform, date: e.target.value })} style={{ borderColor: COLORS.line, color: rform.date ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
                   <input type="time" value={rform.clock} onChange={(e) => setRform({ ...rform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: rform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-                  <input type="number" min="1" placeholder="Seats chahiye" value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
+                  <input type="number" min="1" placeholder={t("seatsWanted")} value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
                 </div>
                 <button onClick={() => requireAuth(postRiderRequest)} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
-                  Post my request
+                  {t("postMyRequest")}
                 </button>
               </div>
             )}
@@ -1017,9 +1165,9 @@ export default function Margshri() {
                     </div>
                   )}
                   <div className="flex justify-between items-center mt-3">
-                    <span style={{ color: COLORS.muted }} className="text-xs">{v.seats} seat(s) open</span>
+                    <span style={{ color: COLORS.muted }} className="text-xs">{v.seats} {t("seatsOpen")}</span>
                     {already ? (
-                      <Badge status={already.status} />
+                      <Badge status={already.status} lang={lang} />
                     ) : (
                       <div className="flex items-center gap-2">
                         <div style={{ borderColor: COLORS.line }} className="flex items-center border rounded-lg overflow-hidden">
@@ -1042,7 +1190,7 @@ export default function Margshri() {
                           </button>
                         </div>
                         <button onClick={() => requireAuth(() => sendRequest(v))} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
-                          Send Request
+                          {t("sendRequest")}
                         </button>
                       </div>
                     )}
@@ -1054,7 +1202,7 @@ export default function Margshri() {
 
           {myRequests.length > 0 && (
             <>
-              <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">My requests</h3>
+              <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("myRequests")}</h3>
               <div className="space-y-2 mb-8">
                 {myRequests.map((r) => {
                   const bookedVehicle = vehicles.find((v) => v.id === r.vehicleId);
@@ -1070,15 +1218,15 @@ export default function Margshri() {
                         </button>
                         {(r.status === "pending" || r.status === "accepted") && (
                           <button onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                            Cancel
+                            {t("cancel")}
                           </button>
                         )}
                         {r.status === "completed" && !hasReviewed(r.id) ? (
                           <button onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.owner }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
-                            Rate Owner
+                            {t("rateOwner")}
                           </button>
                         ) : (
-                          <Badge status={r.status} />
+                          <Badge status={r.status} lang={lang} />
                         )}
                       </div>
                     </div>
@@ -1096,7 +1244,7 @@ export default function Margshri() {
 
           {myRiderPosts.length > 0 && (
             <>
-              <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">My posted requests (open search)</h3>
+              <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("myPostedRequests")}</h3>
               <div className="space-y-2">
                 {myRiderPosts.map((p) => (
                   <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 flex justify-between items-center">
@@ -1107,10 +1255,10 @@ export default function Margshri() {
                     <div className="flex items-center gap-2">
                       {p.status === "open" && (
                         <button onClick={() => requireAuth(() => cancelRiderPost(p.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                          Cancel
+                          {t("cancel")}
                         </button>
                       )}
-                      <Badge status={p.status} />
+                      <Badge status={p.status} lang={lang} />
                     </div>
                   </div>
                 ))}
@@ -1128,7 +1276,7 @@ export default function Margshri() {
 
       {screen === "owner" && dataLoaded && (
         <div className="p-6 max-w-2xl mx-auto">
-          <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">Post your vehicle</h2>
+          <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">{t("postYourVehicle")}</h2>
           <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 mb-8">
             <div className="flex gap-2 mb-3">
               {Object.entries(VEHICLE_META).map(([key, m]) => {
@@ -1144,16 +1292,16 @@ export default function Margshri() {
               })}
             </div>
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <LocationInput placeholder="From" value={vform.from} onChange={(v) => setVform({ ...vform, from: v })} />
-              <LocationInput placeholder="To" value={vform.to} onChange={(v) => setVform({ ...vform, to: v })} />
+              <LocationInput placeholder={t("from")} value={vform.from} onChange={(v) => setVform({ ...vform, from: v })} />
+              <LocationInput placeholder={t("to")} value={vform.to} onChange={(v) => setVform({ ...vform, to: v })} />
               <input type="date" value={vform.date} onChange={(e) => setVform({ ...vform, date: e.target.value })} style={{ borderColor: COLORS.line, color: vform.date ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
               <input type="time" value={vform.clock} onChange={(e) => setVform({ ...vform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: vform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <input type="number" placeholder="Seats" value={vform.seats} onChange={(e) => setVform({ ...vform, seats: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <input type="number" placeholder="Price per seat (₹)" value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+              <input type="number" placeholder={t("seats")} value={vform.seats} onChange={(e) => setVform({ ...vform, seats: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+              <input type="number" placeholder={t("pricePerSeat")} value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
             </div>
-            <p style={{ color: COLORS.muted }} className="text-xs mb-3">Posting for: <b style={{ color: COLORS.charcoal }}>{mode === "local" ? "Local" : "Long Distance"}</b> mode (change from top toggle)</p>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-3">{t("postingFor")} <b style={{ color: COLORS.charcoal }}>{mode === "local" ? t("local") : t("longDistance")}</b> {t("modeChangeNote")}</p>
 
-            <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold mb-1.5">Route type</p>
+            <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold mb-1.5">{t("routeType")}</p>
             <div className="flex gap-2 mb-3">
               <button
                 type="button"
@@ -1161,7 +1309,7 @@ export default function Margshri() {
                 style={vform.routeType === "direct" ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
                 className="text-xs font-semibold px-3 py-1.5 rounded-lg"
               >
-                Direct (no stops)
+                {t("direct")}
               </button>
               <button
                 type="button"
@@ -1169,14 +1317,14 @@ export default function Margshri() {
                 style={vform.routeType === "multi" ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
                 className="text-xs font-semibold px-3 py-1.5 rounded-lg"
               >
-                Multi-stop route
+                {t("multiStop")}
               </button>
             </div>
 
             {vform.routeType === "multi" && (
               <div className="mb-4">
                 <p style={{ color: COLORS.muted }} className="text-xs mb-2">
-                  {vform.from || "From"} se {vform.to || "To"} ke beech ke stops add karo, order mein, apna fare ke saath.
+                  {vform.from || t("from")} se {vform.to || t("to")} ke beech ke stops add karo, order mein, apna fare ke saath.
                 </p>
                 <div className="space-y-2 mb-2">
                   {vform.stops.map((s, i) => (
@@ -1199,7 +1347,7 @@ export default function Margshri() {
                   ))}
                 </div>
                 <button type="button" onClick={addStop} style={{ color: COLORS.night, borderColor: COLORS.line }} className="text-xs font-semibold border rounded-lg px-3 py-1.5">
-                  + Add Stop
+                  {t("addStop")}
                 </button>
               </div>
             )}
@@ -1210,26 +1358,26 @@ export default function Margshri() {
                 { key: "nonSmoker", label: "Non-smoker" },
                 { key: "ac", label: "AC" },
                 { key: "luggage", label: "Luggage space" },
-              ].map((t) => (
+              ].map((tag) => (
                 <button
-                  key={t.key}
+                  key={tag.key}
                   type="button"
-                  onClick={() => setVform({ ...vform, tags: { ...vform.tags, [t.key]: !vform.tags[t.key] } })}
-                  style={vform.tags[t.key] ? { background: COLORS.teal, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                  onClick={() => setVform({ ...vform, tags: { ...vform.tags, [tag.key]: !vform.tags[tag.key] } })}
+                  style={vform.tags[tag.key] ? { background: COLORS.teal, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
                   className="text-xs font-semibold px-2.5 py-1.5 rounded-full"
                 >
-                  {t.label}
+                  {tag.label}
                 </button>
               ))}
             </div>
             <button onClick={() => requireAuth(postVehicle)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold disabled:opacity-50">
-              {syncing ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Post Vehicle
+              {syncing ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} {t("postVehicle")}
             </button>
           </div>
 
-          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">Riders looking for a ride</h3>
+          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("ridersLookingForRide")}</h3>
           <div className="space-y-2 mb-8">
-            {openRiderPostsForOwner.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Abhi koi rider search nahi kar raha.</p>}
+            {openRiderPostsForOwner.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noRidersSearching")}</p>}
             {openRiderPostsForOwner.map((p) => {
               const Icon = VEHICLE_META[p.type]?.icon || Car;
               return (
@@ -1252,19 +1400,19 @@ export default function Margshri() {
                   </div>
                   {p.status === "open" ? (
                     <button onClick={() => requireAuth(() => offerRide(p.id))} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
-                      Offer Ride
+                      {t("offerRide")}
                     </button>
                   ) : (
-                    <Badge status={p.status} />
+                    <Badge status={p.status} lang={lang} />
                   )}
                 </div>
               );
             })}
           </div>
 
-          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">Incoming requests</h3>
+          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("incomingRequests")}</h3>
           <div className="space-y-2 mb-8">
-            {incoming.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Abhi koi request nahi aayi.</p>}
+            {incoming.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noRequestsYet")}</p>}
             {incoming.map((r) => (
               <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3">
                 <div className="flex justify-between items-center">
@@ -1300,10 +1448,10 @@ export default function Margshri() {
                       {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                     </button>
                     <button onClick={() => requireAuth(() => respond(r.id, "completed"))} disabled={syncing} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
-                      Ride Done
+                      {t("rideDone")}
                     </button>
                     <button onClick={() => requireAuth(() => respond(r.id, "noshow"))} disabled={syncing} style={{ background: COLORS.coral, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
-                      No-show
+                      {t("noShow")}
                     </button>
                   </div>
                 ) : r.status === "completed" && !hasReviewed(r.id) ? (
@@ -1313,7 +1461,7 @@ export default function Margshri() {
                       {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                     </button>
                     <button onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.riderName }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
-                      Rate Rider
+                      {t("rateRider")}
                     </button>
                   </div>
                 ) : (
@@ -1322,7 +1470,7 @@ export default function Margshri() {
                       <MessageCircle size={14} />
                       {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                     </button>
-                    <Badge status={r.status} />
+                    <Badge status={r.status} lang={lang} />
                   </div>
                 )}
                 </div>
@@ -1335,17 +1483,17 @@ export default function Margshri() {
             ))}
           </div>
 
-          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">My posted vehicles</h3>
+          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("myPostedVehicles")}</h3>
           <div className="space-y-2">
             {vehicles.filter((v) => v.owner === name).map((v) => (
               <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3 text-sm flex justify-between items-center">
                 <span style={{ color: COLORS.charcoal }}>{v.from} → {v.to} · {v.time}</span>
                 <div className="flex items-center gap-3">
                   <span style={{ color: v.seats === 0 ? COLORS.coral : COLORS.muted }} className="font-semibold">
-                    {v.seats} of {v.totalSeats || v.seats} seats left · ₹{v.price}
+                    {v.seats} of {v.totalSeats || v.seats} {t("seatsLeft")} · ₹{v.price}
                   </span>
                   <button onClick={() => requireAuth(() => deleteVehicle(v.id))} style={{ color: COLORS.coral }} className="text-xs font-semibold">
-                    Remove
+                    {t("remove")}
                   </button>
                 </div>
               </div>
@@ -1438,7 +1586,7 @@ export default function Margshri() {
                       <p style={{ color: COLORS.muted }} className="text-xs">{r.from} → {r.to} · {r.seats || 1} seat(s)</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge status={r.status} />
+                      <Badge status={r.status} lang={lang} />
                       {(r.status === "pending" || r.status === "accepted") && (
                         <button onClick={() => cancelRequest(r.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2 py-1 text-xs font-semibold">
                           Cancel
@@ -1771,6 +1919,41 @@ export default function Margshri() {
                   </div>
                 ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {(showSafetyModal || (user && !safetyAcknowledged)) && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.6)" }}>
+          <div style={{ background: COLORS.sand }} className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldCheck size={22} color={COLORS.coral} />
+              <p style={{ color: COLORS.night }} className="text-base font-bold">Safety & Disclaimer</p>
+            </div>
+            <div className="space-y-3 mb-5">
+              <p style={{ color: COLORS.charcoal }} className="text-sm">
+                Margshri sirf logon ko ek dusre se <b>connect</b> karta hai — hum ID verify (KYC), background check, ya koi bhi safety check khud nahi karte.
+              </p>
+              <ul style={{ color: COLORS.charcoal }} className="text-sm list-disc pl-5 space-y-1.5">
+                <li>Naam, photo, aur phone number sabhi <b>self-declared</b> hain — inki hamne verification nahi ki hai.</li>
+                <li>Payment app ke bahar (cash/UPI seedha) hoti hai — Margshri kisi bhi payment ko handle nahi karta.</li>
+                <li>Ride se pehle khud dusre insaan ki identity confirm karo, aur public/safe jagah pe milna prefer karo.</li>
+                <li>Kisi bhi tarah ki galat behavior, harassment, ya safety issue ho to turant <b>chat ke andar 🚩 flag icon</b> se report karo.</li>
+                <li>Margshri (aur iske admin) kisi bhi dispute, nuksaan, ya ghatna ke liye <b>zimmedar nahi</b> hain — ye app apni risk par use karo.</li>
+              </ul>
+              <p style={{ color: COLORS.muted }} className="text-xs">
+                Agar aap 18 saal se kam umar ke hain, kripya kisi bade (guardian) ke bina is app ka use na karein.
+              </p>
+            </div>
+            {user && !safetyAcknowledged ? (
+              <button onClick={acknowledgeSafety} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-3 text-sm font-bold">
+                {t("understood")}
+              </button>
+            ) : (
+              <button onClick={() => setShowSafetyModal(false)} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-3 text-sm font-bold">
+                {t("close")}
+              </button>
+            )}
           </div>
         </div>
       )}
