@@ -76,6 +76,8 @@ const TRANSLATIONS = {
     submit: "Submit",
     close: "Close",
     understood: "Understood, let's go",
+    idCheckReminder: "🪪 When you meet, show each other your original ID (Aadhaar/License) and verify yourselves — it keeps things safe.",
+    costSharingNotice: "⚖️ This is cost-sharing only — the driver does not earn any profit from this ride.",
   },
   hi: {
     tagline: "एक रास्ता, सब साथ। बाइक से बस तक — अपना रूट शेयर करो।",
@@ -131,6 +133,8 @@ const TRANSLATIONS = {
     submit: "सबमिट करें",
     close: "बंद करें",
     understood: "समझ गया, आगे बढ़ते हैं",
+    idCheckReminder: "🪪 मिलते समय एक-दूसरे को अपना असली ID (आधार/लाइसेंस) दिखाकर स्वयं सत्यापित कर लें — यह सुरक्षित रहेगा।",
+    costSharingNotice: "⚖️ यह केवल कॉस्ट-शेयरिंग है — इस राइड से ड्राइवर कोई लाभ (प्रॉफिट) नहीं कमाता।",
   },
 };
 
@@ -1117,6 +1121,7 @@ export default function Margshri() {
                   <input type="time" value={rform.clock} onChange={(e) => setRform({ ...rform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: rform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
                   <input type="number" min="1" placeholder={t("seatsWanted")} value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
                 </div>
+                <p style={{ color: COLORS.muted }} className="text-[11px] text-center mb-2">{t("costSharingNotice")}</p>
                 <button onClick={() => requireAuth(postRiderRequest)} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50 shadow-md">
                   {t("postMyRequest")}
                 </button>
@@ -1271,6 +1276,11 @@ export default function Margshri() {
                         📞 Call owner: {bookedVehicle.ownerPhone}
                       </a>
                     )}
+                    {["accepted", "completed"].includes(r.status) && (
+                      <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
+                        {t("idCheckReminder")}
+                      </p>
+                    )}
                   </div>
                   );
                 })}
@@ -1406,6 +1416,7 @@ export default function Margshri() {
                 </button>
               ))}
             </div>
+            <p style={{ color: COLORS.muted }} className="text-[11px] text-center mb-2">{t("costSharingNotice")}</p>
             <button onClick={() => requireAuth(postVehicle)} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold disabled:opacity-50 shadow-md">
               {syncing ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} {t("postVehicle")}
             </button>
@@ -1514,6 +1525,11 @@ export default function Margshri() {
                   <a href={`tel:${r.riderPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
                     📞 Call rider: {r.riderPhone}
                   </a>
+                )}
+                {["accepted", "completed"].includes(r.status) && (
+                  <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
+                    {t("idCheckReminder")}
+                  </p>
                 )}
               </div>
             ))}
@@ -2101,7 +2117,7 @@ export default function Margshri() {
               <ul style={{ color: COLORS.charcoal }} className="text-sm list-disc pl-5 space-y-1.5">
                 <li>Naam, photo, aur phone number sabhi <b>self-declared</b> hain — inki hamne verification nahi ki hai.</li>
                 <li>Payment app ke bahar (cash/UPI seedha) hoti hai — Margshri kisi bhi payment ko handle nahi karta.</li>
-                <li>Ride se pehle khud dusre insaan ki identity confirm karo, aur public/safe jagah pe milna prefer karo.</li>
+                <li>Ride se pehle khud dusre insaan ki identity confirm karo — milte waqt ek dusre ka <b>original ID proof (Aadhaar, License, waghera)</b> dikhakar khud verify kar lo, aur public/safe jagah pe milna prefer karo.</li>
                 <li>Kisi bhi tarah ki galat behavior, harassment, ya safety issue ho to turant <b>chat ke andar 🚩 flag icon</b> se report karo.</li>
                 <li>Margshri (aur iske admin) kisi bhi dispute, nuksaan, ya ghatna ke liye <b>zimmedar nahi</b> hain — ye app apni risk par use karo.</li>
               </ul>
