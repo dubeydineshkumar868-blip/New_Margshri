@@ -54,6 +54,7 @@ const TRANSLATIONS = {
     dateTimeExample: "Date & time e.g. Today, 5 PM",
     seats: "Seats",
     pricePerSeat: "Price per seat (₹)",
+    perSeatSuffix: "₹/seat",
     postingFor: "Posting for:",
     modeChangeNote: "mode (change from top toggle)",
     routeType: "Route type",
@@ -78,6 +79,82 @@ const TRANSLATIONS = {
     understood: "Understood, let's go",
     idCheckReminder: "🪪 When you meet, show each other your original ID (Aadhaar/License) and verify yourselves — it keeps things safe.",
     costSharingNotice: "⚖️ This is cost-sharing only — the driver does not earn any profit from this ride.",
+    womenOnly: "Women-only",
+    nonSmoker: "Non-smoker",
+    ac: "AC",
+    luggage: "Luggage space",
+    callOwner: "Call owner",
+    callRider: "Call rider",
+    typeMessage: "Type a message...",
+    noMessagesYet: "No messages yet. Start the conversation!",
+    rateSomeone: "Rate",
+    feedbackHelps: "Your feedback helps others make a better decision.",
+    writeSomething: "Want to write something? (optional)",
+    submitRating: "Submit Rating",
+    addYourPhone: "Add your mobile number",
+    phoneVisibilityNote: "This will only be shown once your booking is confirmed (accepted) — so both of you can talk directly.",
+    phonePlaceholder: "e.g. 98765 43210",
+    reportComplaintAbout: "Report / Complaint about",
+    reportHelpText: "Tell us what went wrong. The admin will look into it and take action if needed.",
+    writeYourComplaint: "Write your complaint...",
+    submitComplaint: "Submit Complaint",
+    installOnIphoneTitle: "To install on iPhone",
+    installStep1: "Tap the Share icon (the box with an arrow) at the bottom",
+    installStep2: "Scroll and tap \"Add to Home Screen\"",
+    installStep3: "Tap \"Add\" in the top-right — the Margshri icon will appear on your Home Screen",
+    gotIt: "Got it",
+    reviewsFor: "reviews",
+    noReviewsYet: "No reviews yet.",
+    goBack: "← Back",
+    overview: "Overview",
+    vehiclesTab: "Vehicles",
+    bookingsTab: "Bookings",
+    complaintsTab: "Complaints",
+    blockedTab: "Blocked",
+    totalVehicles: "Total vehicles",
+    totalBookings: "Total bookings",
+    openRiderRequests: "Open rider requests",
+    openComplaints: "Open complaints",
+    blockedUsers: "Blocked users",
+    totalReviews: "Total reviews",
+    noVehiclesAdmin: "No vehicles yet.",
+    noBookingsAdmin: "No bookings yet.",
+    noComplaintsAdmin: "No complaints yet.",
+    noBlockedUsers: "No one is blocked.",
+    clearAllVehicles: "🗑 Clear All Vehicles",
+    clearAllBookings: "🗑 Clear All Bookings",
+    clearAllComplaints: "🗑 Clear All Complaints",
+    delete: "Delete",
+    markResolved: "Mark Resolved",
+    reporterLabel: "Reporter",
+    aboutLabel: "About",
+    noContactGiven: "No contact given",
+    phoneNotFound: "Phone number not found",
+    resolutionPlaceholder: "Write a resolution note (what was done, optional)...",
+    goBlockUser: "Go block them →",
+    resolutionLabel: "Resolution",
+    blockNewUser: "Block a new user",
+    blockEmailPlaceholder: "user@email.com",
+    blockReasonPlaceholder: "Reason (optional)",
+    blockUserBtn: "Block user",
+    unblock: "Unblock",
+    youAreBlocked: "Your account has been blocked",
+    reasonLabel: "Reason:",
+    reasonNotGiven: "Not given",
+    loading: "Loading...",
+    fullRoute: "(full route)",
+    yourFare: "Your fare",
+    isReady: "is ready!",
+    stopsInstructions: "Add stops between {from} and {to}, in order, with your fare.",
+    aapkaKahanUtrenge: "Where will you get off? (pick your stop)",
+    safetyTitle: "Safety & Disclaimer",
+    safetyIntro: "Margshri only connects people with each other — we do not do ID verification (KYC), background checks, or any safety check ourselves.",
+    safetyPoint1: "Name, photo, and phone number are all self-declared — we have not verified them.",
+    safetyPoint2: "Payment happens outside the app (cash/UPI directly) — Margshri does not handle any payment.",
+    safetyPoint3: "Confirm the other person's identity yourself before the ride — when you meet, show each other your original ID proof (Aadhaar, License, etc.) and verify yourselves, and prefer meeting in a public/safe place.",
+    safetyPoint4: "If any inappropriate behaviour, harassment, or safety issue occurs, report it immediately using the 🚩 flag icon inside chat.",
+    safetyPoint5: "Margshri (and its admin) are not responsible for any dispute, loss, or incident — use this app at your own risk.",
+    safetyAgeNote: "If you are under 18, please do not use this app without a parent/guardian.",
   },
   hi: {
     tagline: "एक रास्ता, सब साथ। बाइक से बस तक — अपना रूट शेयर करो।",
@@ -111,6 +188,7 @@ const TRANSLATIONS = {
     dateTimeExample: "तारीख़ और समय जैसे आज, शाम 5 बजे",
     seats: "सीटें",
     pricePerSeat: "प्रति सीट किराया (₹)",
+    perSeatSuffix: "₹/सीट",
     postingFor: "पोस्ट कर रहे हैं:",
     modeChangeNote: "मोड के लिए (ऊपर से बदलें)",
     routeType: "रूट का प्रकार",
@@ -135,6 +213,82 @@ const TRANSLATIONS = {
     understood: "समझ गया, आगे बढ़ते हैं",
     idCheckReminder: "🪪 मिलते समय एक-दूसरे को अपना असली ID (आधार/लाइसेंस) दिखाकर स्वयं सत्यापित कर लें — यह सुरक्षित रहेगा।",
     costSharingNotice: "⚖️ यह केवल कॉस्ट-शेयरिंग है — इस राइड से ड्राइवर कोई लाभ (प्रॉफिट) नहीं कमाता।",
+    womenOnly: "केवल महिलाएं",
+    nonSmoker: "धूम्रपान-मुक्त",
+    ac: "AC",
+    luggage: "सामान की जगह",
+    callOwner: "मालिक को कॉल करें",
+    callRider: "यात्री को कॉल करें",
+    typeMessage: "मैसेज लिखें...",
+    noMessagesYet: "अभी कोई मैसेज नहीं है। बातचीत शुरू करें!",
+    rateSomeone: "रेट करें",
+    feedbackHelps: "आपकी राय दूसरों को सही फैसला लेने में मदद करती है।",
+    writeSomething: "कुछ लिखना चाहेंगे? (वैकल्पिक)",
+    submitRating: "रेटिंग सबमिट करें",
+    addYourPhone: "अपना मोबाइल नंबर जोड़ें",
+    phoneVisibilityNote: "यह सिर्फ तब दिखेगा जब आपकी बुकिंग कन्फर्म (स्वीकृत) हो जाए — ताकि आप दोनों सीधे बात कर सकें।",
+    phonePlaceholder: "जैसे 98765 43210",
+    reportComplaintAbout: "रिपोर्ट / शिकायत — विषय",
+    reportHelpText: "बताएं क्या समस्या हुई। एडमिन इसे देखेगा और ज़रूरत पड़ने पर कार्रवाई करेगा।",
+    writeYourComplaint: "अपनी शिकायत लिखें...",
+    submitComplaint: "शिकायत सबमिट करें",
+    installOnIphoneTitle: "iPhone पर इंस्टॉल करने के लिए",
+    installStep1: "नीचे Share आइकन (तीर वाला बॉक्स) पर टैप करें",
+    installStep2: "स्क्रॉल करें और \"Add to Home Screen\" पर टैप करें",
+    installStep3: "ऊपर-दाईं ओर \"Add\" दबाएं — Margshri आइकन आपकी होम स्क्रीन पर आ जाएगा",
+    gotIt: "समझ गया",
+    reviewsFor: "की समीक्षाएं",
+    noReviewsYet: "अभी कोई समीक्षा नहीं है।",
+    goBack: "← वापस",
+    overview: "ओवरव्यू",
+    vehiclesTab: "वाहन",
+    bookingsTab: "बुकिंग्स",
+    complaintsTab: "शिकायतें",
+    blockedTab: "ब्लॉक किए गए",
+    totalVehicles: "कुल वाहन",
+    totalBookings: "कुल बुकिंग्स",
+    openRiderRequests: "खुली यात्री रिक्वेस्ट्स",
+    openComplaints: "खुली शिकायतें",
+    blockedUsers: "ब्लॉक किए गए यूज़र",
+    totalReviews: "कुल समीक्षाएं",
+    noVehiclesAdmin: "अभी कोई वाहन नहीं है।",
+    noBookingsAdmin: "अभी कोई बुकिंग नहीं है।",
+    noComplaintsAdmin: "अभी कोई शिकायत नहीं है।",
+    noBlockedUsers: "कोई भी ब्लॉक नहीं है।",
+    clearAllVehicles: "🗑 सभी वाहन हटाएं",
+    clearAllBookings: "🗑 सभी बुकिंग्स हटाएं",
+    clearAllComplaints: "🗑 सभी शिकायतें हटाएं",
+    delete: "हटाएं",
+    markResolved: "हल किया गया मार्क करें",
+    reporterLabel: "रिपोर्ट करने वाला",
+    aboutLabel: "किसके बारे में",
+    noContactGiven: "कोई संपर्क नहीं दिया गया",
+    phoneNotFound: "फ़ोन नंबर नहीं मिला",
+    resolutionPlaceholder: "समाधान नोट लिखें (क्या किया गया, वैकल्पिक)...",
+    goBlockUser: "ब्लॉक करने जाएं →",
+    resolutionLabel: "समाधान",
+    blockNewUser: "नया यूज़र ब्लॉक करें",
+    blockEmailPlaceholder: "user@email.com",
+    blockReasonPlaceholder: "कारण (वैकल्पिक)",
+    blockUserBtn: "यूज़र ब्लॉक करें",
+    unblock: "अनब्लॉक करें",
+    youAreBlocked: "आपका अकाउंट ब्लॉक कर दिया गया है",
+    reasonLabel: "कारण:",
+    reasonNotGiven: "नहीं दिया गया",
+    loading: "लोड हो रहा है...",
+    fullRoute: "(पूरा रूट)",
+    yourFare: "आपका किराया",
+    isReady: "तैयार है!",
+    stopsInstructions: "{from} से {to} के बीच के स्टॉप जोड़ें, क्रम में, अपने किराए के साथ।",
+    aapkaKahanUtrenge: "आप कहाँ उतरेंगे? (अपना स्टॉप चुनें)",
+    safetyTitle: "सुरक्षा व अस्वीकरण",
+    safetyIntro: "Margshri सिर्फ लोगों को एक-दूसरे से जोड़ता है — हम ID वेरिफिकेशन (KYC), बैकग्राउंड चेक, या कोई भी सेफ्टी चेक खुद नहीं करते।",
+    safetyPoint1: "नाम, फ़ोटो और फ़ोन नंबर सभी स्वयं-घोषित हैं — इनका हमने सत्यापन नहीं किया है।",
+    safetyPoint2: "भुगतान ऐप के बाहर (सीधे कैश/UPI से) होता है — Margshri किसी भी भुगतान को हैंडल नहीं करता।",
+    safetyPoint3: "राइड से पहले खुद दूसरे व्यक्ति की पहचान सुनिश्चित करें — मिलते समय एक-दूसरे को अपना असली ID प्रूफ (आधार, लाइसेंस, आदि) दिखाकर स्वयं सत्यापित करें, और सार्वजनिक/सुरक्षित जगह पर मिलना पसंद करें।",
+    safetyPoint4: "किसी भी तरह के गलत व्यवहार, उत्पीड़न, या सुरक्षा समस्या की स्थिति में तुरंत चैट के अंदर 🚩 फ़्लैग आइकन से रिपोर्ट करें।",
+    safetyPoint5: "Margshri (और इसका एडमिन) किसी भी विवाद, नुकसान, या घटना के लिए ज़िम्मेदार नहीं हैं — यह ऐप अपने जोखिम पर उपयोग करें।",
+    safetyAgeNote: "यदि आप 18 वर्ष से कम उम्र के हैं, तो कृपया किसी अभिभावक के बिना इस ऐप का उपयोग न करें।",
   },
 };
 
@@ -165,6 +319,38 @@ function formatDateTime(dateStr, timeStr) {
   const dateLabel = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
   const timeLabel = d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
   return `${dateLabel}, ${timeLabel}`;
+}
+
+// Fill these in once your Google AdSense application is approved —
+// leave them empty for now, and no ad space will show (nothing broken, nothing to undo).
+const ADSENSE_CLIENT_ID = ""; // e.g. "ca-pub-1234567890123456"
+const ADSENSE_SLOT_ID = ""; // e.g. "1234567890"
+
+function AdSlot() {
+  const ref = React.useRef(null);
+  useEffect(() => {
+    if (!ADSENSE_CLIENT_ID || !ADSENSE_SLOT_ID) return;
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch {
+      // AdSense script not loaded yet — safe to ignore
+    }
+  }, []);
+
+  if (!ADSENSE_CLIENT_ID || !ADSENSE_SLOT_ID) return null;
+
+  return (
+    <div ref={ref} className="my-3">
+      <ins
+        className="adsbygoogle"
+        style={{ display: "block" }}
+        data-ad-client={ADSENSE_CLIENT_ID}
+        data-ad-slot={ADSENSE_SLOT_ID}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
+    </div>
+  );
 }
 
 function RouteLine({ compact, stopCount = 0 }) {
@@ -896,10 +1082,10 @@ export default function Margshri() {
       <div style={{ background: COLORS.sand, minHeight: 560 }} className="w-full flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
           <Ban size={40} color={COLORS.coral} className="mx-auto mb-3" />
-          <p style={{ color: COLORS.night }} className="text-lg font-bold mb-2">Aapka account block kar diya gaya hai</p>
-          <p style={{ color: COLORS.muted }} className="text-sm mb-4">Reason: {myBlock?.reason || "Diya nahi gaya"}</p>
+          <p style={{ color: COLORS.night }} className="text-lg font-bold mb-2">{t("youAreBlocked")}</p>
+          <p style={{ color: COLORS.muted }} className="text-sm mb-4">{t("reasonLabel")} {myBlock?.reason || t("reasonNotGiven")}</p>
           <button onClick={logOut} style={{ background: COLORS.night, color: "white" }} className="rounded-lg px-5 py-2.5 text-sm font-bold">
-            Sign out
+            {t("signOut")}
           </button>
         </div>
       </div>
@@ -996,6 +1182,8 @@ export default function Margshri() {
             </button>
           </div>
 
+          <AdSlot />
+
           {isAdmin && (
             <button
               onClick={() => setScreen("admin")}
@@ -1012,7 +1200,7 @@ export default function Margshri() {
 
   return (
     <div style={{ background: `linear-gradient(180deg, ${COLORS.sand} 0%, #F2E9D8 100%)`, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }} className="w-full">
-      <div style={{ background: "white" }} className="flex items-center justify-between px-6 py-4 flex-wrap gap-3 shadow-sm relative z-10">
+      <div style={{ background: "white" }} className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 flex-wrap gap-2 sm:gap-3 shadow-sm relative z-10">
         <Logo />
         <div className="flex items-center gap-3">
           <button onClick={() => setScreen("landing")} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full p-2">
@@ -1068,7 +1256,7 @@ export default function Margshri() {
       )}
 
       {screen === "rider" && dataLoaded && (
-        <div className="p-6 max-w-2xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-2xl mx-auto">
           <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">{t("findRide")}</h2>
           <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-6">
             <div className="grid grid-cols-2 gap-3 mb-3">
@@ -1090,10 +1278,10 @@ export default function Margshri() {
             </div>
             <div className="flex flex-wrap gap-2">
               {[
-                { key: "womenOnly", label: "Women-only" },
-                { key: "nonSmoker", label: "Non-smoker" },
-                { key: "ac", label: "AC" },
-                { key: "luggage", label: "Luggage space" },
+                { key: "womenOnly", label: t("womenOnly") },
+                { key: "nonSmoker", label: t("nonSmoker") },
+                { key: "ac", label: t("ac") },
+                { key: "luggage", label: t("luggage") },
               ].map((tag) => (
                 <button
                   key={tag.key}
@@ -1119,7 +1307,10 @@ export default function Margshri() {
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <input type="date" value={rform.date} onChange={(e) => setRform({ ...rform, date: e.target.value })} style={{ borderColor: COLORS.line, color: rform.date ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
                   <input type="time" value={rform.clock} onChange={(e) => setRform({ ...rform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: rform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-                  <input type="number" min="1" placeholder={t("seatsWanted")} value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
+                  <div className="relative col-span-2">
+                    <input type="number" min="1" placeholder={t("seatsWanted")} value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="w-full border rounded-lg pl-3 pr-16 py-2 text-sm outline-none" />
+                    <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("seats")}</span>
+                  </div>
                 </div>
                 <p style={{ color: COLORS.muted }} className="text-[11px] text-center mb-2">{t("costSharingNotice")}</p>
                 <button onClick={() => requireAuth(postRiderRequest)} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50 shadow-md">
@@ -1127,11 +1318,12 @@ export default function Margshri() {
                 </button>
               </div>
             )}
-            {filteredVehicles.map((v) => {
+            {filteredVehicles.map((v, index) => {
               const Icon = VEHICLE_META[v.type].icon;
               const already = requests.find((r) => r.vehicleId === v.id && r.riderName === name && !["cancelled", "rejected"].includes(r.status));
               return (
-                <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 shadow-sm">
+                <React.Fragment key={v.id}>
+                <div style={{ borderColor: COLORS.line }} className="bg-white border rounded-2xl p-4 shadow-sm">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <div style={{ background: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0">
@@ -1158,21 +1350,21 @@ export default function Margshri() {
                   </div>
                   {v.tags && Object.values(v.tags).some(Boolean) && (
                     <div className="flex flex-wrap gap-1 mb-2">
-                      {v.tags.womenOnly && <span style={{ background: "#FBE9F0", color: "#C2185B" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">Women-only</span>}
-                      {v.tags.nonSmoker && <span style={{ background: "#E4F3EF", color: COLORS.teal }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">Non-smoker</span>}
-                      {v.tags.ac && <span style={{ background: "#E7EEFB", color: "#3355AA" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">AC</span>}
-                      {v.tags.luggage && <span style={{ background: "#FDF1DE", color: "#B4700C" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">Luggage space</span>}
+                      {v.tags.womenOnly && <span style={{ background: "#FBE9F0", color: "#C2185B" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">{t("womenOnly")}</span>}
+                      {v.tags.nonSmoker && <span style={{ background: "#E4F3EF", color: COLORS.teal }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">{t("nonSmoker")}</span>}
+                      {v.tags.ac && <span style={{ background: "#E7EEFB", color: "#3355AA" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">{t("ac")}</span>}
+                      {v.tags.luggage && <span style={{ background: "#FDF1DE", color: "#B4700C" }} className="text-[10px] font-semibold px-2 py-0.5 rounded-full">{t("luggage")}</span>}
                     </div>
                   )}
                   <div className="flex items-center justify-between text-xs mb-2" style={{ color: COLORS.charcoal }}>
                     <span className="font-semibold">{v.from}</span>
-                    <span className="font-semibold">{v.to} <span style={{ color: COLORS.muted, fontWeight: 400 }}>(full route)</span></span>
+                    <span className="font-semibold">{v.to} <span style={{ color: COLORS.muted, fontWeight: 400 }}>{t("fullRoute")}</span></span>
                   </div>
                   <RouteLine compact stopCount={(v.stops || []).length} />
                   {v.stops && v.stops.length > 0 && !already && (
                     <div className="mt-2">
-                      <label style={{ color: COLORS.muted }} className="text-[10px] font-semibold block mb-1">Aap kahan utrenge? (apna stop chuno)</label>
-                      <div className="flex items-center gap-2">
+                      <label style={{ color: COLORS.muted }} className="text-[10px] font-semibold block mb-1">{t("aapkaKahanUtrenge")}</label>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <select
                           value={getSelectedDest(v).name}
                           onChange={(e) => {
@@ -1181,9 +1373,9 @@ export default function Margshri() {
                             setDestSelections((prev) => ({ ...prev, [v.id]: dest }));
                           }}
                           style={{ borderColor: COLORS.line, color: COLORS.charcoal }}
-                          className="flex-1 border rounded-lg px-2 py-1.5 text-xs outline-none"
+                          className="flex-1 min-w-0 border rounded-lg px-2 py-1.5 text-xs outline-none"
                         >
-                          <option value={v.to}>{v.to} (Full route)</option>
+                          <option value={v.to}>{v.to} {t("fullRoute")}</option>
                           {v.stops.map((s, i) => (
                             <option key={i} value={s.name}>
                               {s.name}
@@ -1191,7 +1383,7 @@ export default function Margshri() {
                           ))}
                         </select>
                         <span style={{ background: "#FDF1DE", color: "#B4700C" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap">
-                          Aapka fare: ₹{getSelectedDest(v).price}
+                          {t("yourFare")}: ₹{getSelectedDest(v).price}
                         </span>
                       </div>
                     </div>
@@ -1219,8 +1411,8 @@ export default function Margshri() {
                           >
                             −
                           </button>
-                          <span style={{ color: COLORS.charcoal, borderColor: COLORS.line }} className="px-2 text-xs font-bold border-l border-r">
-                            {getSeatCount(v.id, v.seats)}
+                          <span style={{ color: COLORS.charcoal, borderColor: COLORS.line }} className="px-2 text-xs font-bold border-l border-r whitespace-nowrap">
+                            {getSeatCount(v.id, v.seats)} {t("seats")}
                           </span>
                           <button
                             onClick={() => adjustSeats(v.id, 1, v.seats)}
@@ -1237,6 +1429,8 @@ export default function Margshri() {
                     )}
                   </div>
                 </div>
+                {(index + 1) % 3 === 0 && <AdSlot />}
+                </React.Fragment>
               );
             })}
           </div>
@@ -1273,7 +1467,7 @@ export default function Margshri() {
                     </div>
                     {showContact && (
                       <a href={`tel:${bookedVehicle.ownerPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
-                        📞 Call owner: {bookedVehicle.ownerPhone}
+                        📞 {t("callOwner")}: {bookedVehicle.ownerPhone}
                       </a>
                     )}
                     {["accepted", "completed"].includes(r.status) && (
@@ -1296,7 +1490,7 @@ export default function Margshri() {
                   <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
                     <span style={{ color: COLORS.charcoal }} className="text-sm">
                       {p.from} <ArrowRight size={12} className="inline" /> {p.to} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}
-                      {p.status === "matched" && p.ownerName ? ` · ${p.ownerName} ready hai!` : ""}
+                      {p.status === "matched" && p.ownerName ? ` · ${p.ownerName} ${t("isReady")}` : ""}
                     </span>
                     <div className="flex items-center gap-2">
                       {p.status === "open" && (
@@ -1321,7 +1515,7 @@ export default function Margshri() {
       )}
 
       {screen === "owner" && dataLoaded && (
-        <div className="p-6 max-w-2xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-2xl mx-auto">
           <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">{t("postYourVehicle")}</h2>
           <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-8">
             <div className="flex gap-2 mb-3">
@@ -1342,8 +1536,14 @@ export default function Margshri() {
               <LocationInput placeholder={t("to")} value={vform.to} onChange={(v) => setVform({ ...vform, to: v })} />
               <input type="date" value={vform.date} onChange={(e) => setVform({ ...vform, date: e.target.value })} style={{ borderColor: COLORS.line, color: vform.date ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
               <input type="time" value={vform.clock} onChange={(e) => setVform({ ...vform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: vform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <input type="number" placeholder={t("seats")} value={vform.seats} onChange={(e) => setVform({ ...vform, seats: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <input type="number" placeholder={t("pricePerSeat")} value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+              <div className="relative">
+                <input type="number" placeholder={t("seats")} value={vform.seats} onChange={(e) => setVform({ ...vform, seats: e.target.value })} style={{ borderColor: COLORS.line }} className="w-full border rounded-lg pl-3 pr-16 py-2 text-sm outline-none" />
+                <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("seats")}</span>
+              </div>
+              <div className="relative">
+                <input type="number" placeholder={t("pricePerSeat")} value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="w-full border rounded-lg pl-3 pr-16 py-2 text-sm outline-none" />
+                <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("perSeatSuffix")}</span>
+              </div>
             </div>
             <p style={{ color: COLORS.muted }} className="text-xs mb-3">{t("postingFor")} <b style={{ color: COLORS.charcoal }}>{mode === "local" ? t("local") : t("longDistance")}</b> {t("modeChangeNote")}</p>
 
@@ -1370,7 +1570,7 @@ export default function Margshri() {
             {vform.routeType === "multi" && (
               <div className="mb-4">
                 <p style={{ color: COLORS.muted }} className="text-xs mb-2">
-                  {vform.from || t("from")} se {vform.to || t("to")} ke beech ke stops add karo, order mein, apna fare ke saath.
+                  {t("stopsInstructions").replace("{from}", vform.from || t("from")).replace("{to}", vform.to || t("to"))}
                 </p>
                 <div className="space-y-2 mb-2">
                   {vform.stops.map((s, i) => (
@@ -1400,10 +1600,10 @@ export default function Margshri() {
 
             <div className="flex flex-wrap gap-2 mb-3">
               {[
-                { key: "womenOnly", label: "Women-only" },
-                { key: "nonSmoker", label: "Non-smoker" },
-                { key: "ac", label: "AC" },
-                { key: "luggage", label: "Luggage space" },
+                { key: "womenOnly", label: t("womenOnly") },
+                { key: "nonSmoker", label: t("nonSmoker") },
+                { key: "ac", label: t("ac") },
+                { key: "luggage", label: t("luggage") },
               ].map((tag) => (
                 <button
                   key={tag.key}
@@ -1523,7 +1723,7 @@ export default function Margshri() {
                 </div>
                 {["accepted", "completed"].includes(r.status) && r.riderPhone && (
                   <a href={`tel:${r.riderPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
-                    📞 Call rider: {r.riderPhone}
+                    📞 {t("callRider")}: {r.riderPhone}
                   </a>
                 )}
                 {["accepted", "completed"].includes(r.status) && (
@@ -1555,8 +1755,8 @@ export default function Margshri() {
       )}
 
       {screen === "privacy" && (
-        <div className="p-6 max-w-2xl mx-auto">
-          <button onClick={() => setScreen("landing")} style={{ color: COLORS.muted }} className="text-sm mb-4">← Back</button>
+        <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+          <button onClick={() => setScreen("landing")} style={{ color: COLORS.muted }} className="text-sm mb-4">{t("goBack")}</button>
           <h2 style={{ color: COLORS.night }} className="text-xl font-bold mb-1">Privacy Policy</h2>
           <p style={{ color: COLORS.muted }} className="text-xs mb-6">Last updated: September 2026</p>
 
@@ -1616,8 +1816,8 @@ export default function Margshri() {
       )}
 
       {screen === "terms" && (
-        <div className="p-6 max-w-2xl mx-auto">
-          <button onClick={() => setScreen("landing")} style={{ color: COLORS.muted }} className="text-sm mb-4">← Back</button>
+        <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+          <button onClick={() => setScreen("landing")} style={{ color: COLORS.muted }} className="text-sm mb-4">{t("goBack")}</button>
           <h2 style={{ color: COLORS.night }} className="text-xl font-bold mb-1">Terms of Service</h2>
           <p style={{ color: COLORS.muted }} className="text-xs mb-6">Last updated: September 2026</p>
 
@@ -1683,27 +1883,27 @@ export default function Margshri() {
       )}
 
       {screen === "admin" && isAdmin && (
-        <div className="p-6 max-w-3xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-3xl mx-auto">
           <div className="flex items-center gap-2 mb-5">
             <LayoutDashboard size={20} color={COLORS.night} />
-            <h2 style={{ color: COLORS.night }} className="text-lg font-bold">Admin Panel</h2>
+            <h2 style={{ color: COLORS.night }} className="text-lg font-bold">{t("adminPanel")}</h2>
           </div>
 
           <div className="flex gap-2 mb-5 flex-wrap">
             {[
-              { key: "overview", label: "Overview" },
-              { key: "vehicles", label: `Vehicles (${vehicles.length})` },
-              { key: "bookings", label: `Bookings (${requests.length})` },
-              { key: "complaints", label: `Complaints (${complaints.filter((c) => c.status === "open").length})` },
-              { key: "blocked", label: `Blocked (${blockedUsers.length})` },
-            ].map((t) => (
+              { key: "overview", label: t("overview") },
+              { key: "vehicles", label: `${t("vehiclesTab")} (${vehicles.length})` },
+              { key: "bookings", label: `${t("bookingsTab")} (${requests.length})` },
+              { key: "complaints", label: `${t("complaintsTab")} (${complaints.filter((c) => c.status === "open").length})` },
+              { key: "blocked", label: `${t("blockedTab")} (${blockedUsers.length})` },
+            ].map((tab) => (
               <button
-                key={t.key}
-                onClick={() => setAdminTab(t.key)}
-                style={adminTab === t.key ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                key={tab.key}
+                onClick={() => setAdminTab(tab.key)}
+                style={adminTab === tab.key ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
                 className="text-xs font-semibold px-3 py-1.5 rounded-lg"
               >
-                {t.label}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -1711,12 +1911,12 @@ export default function Margshri() {
           {adminTab === "overview" && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
-                { label: "Total vehicles", value: vehicles.length },
-                { label: "Total bookings", value: requests.length },
-                { label: "Open rider requests", value: riderPosts.filter((p) => p.status === "open").length },
-                { label: "Open complaints", value: complaints.filter((c) => c.status === "open").length },
-                { label: "Blocked users", value: blockedUsers.length },
-                { label: "Total reviews", value: reviews.length },
+                { label: t("totalVehicles"), value: vehicles.length },
+                { label: t("totalBookings"), value: requests.length },
+                { label: t("openRiderRequests"), value: riderPosts.filter((p) => p.status === "open").length },
+                { label: t("openComplaints"), value: complaints.filter((c) => c.status === "open").length },
+                { label: t("blockedUsers"), value: blockedUsers.length },
+                { label: t("totalReviews"), value: reviews.length },
               ].map((s, i) => (
                 <div key={i} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl p-4 text-center">
                   <p style={{ color: COLORS.night }} className="text-2xl font-bold">{s.value}</p>
@@ -1730,11 +1930,11 @@ export default function Margshri() {
             <div>
               {vehicles.length > 0 && (
                 <button onClick={clearAllVehicles} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-3 py-1.5 text-xs font-semibold mb-3">
-                  🗑 Clear All Vehicles
+                  {t("clearAllVehicles")}
                 </button>
               )}
               <div className="space-y-2">
-                {vehicles.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi vehicle nahi hai.</p>}
+                {vehicles.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noVehiclesAdmin")}</p>}
                 {vehicles.map((v) => (
                   <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
                     <div>
@@ -1742,7 +1942,7 @@ export default function Margshri() {
                       <p style={{ color: COLORS.muted }} className="text-xs">{v.from} → {v.to} · {v.time} · {v.seats} of {v.totalSeats || v.seats} seats · {v.mode}</p>
                     </div>
                     <button onClick={() => deleteVehicle(v.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold shrink-0">
-                      Remove
+                      {t("remove")}
                     </button>
                   </div>
                 ))}
@@ -1754,11 +1954,11 @@ export default function Margshri() {
             <div>
               {requests.length > 0 && (
                 <button onClick={clearAllBookings} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-3 py-1.5 text-xs font-semibold mb-3">
-                  🗑 Clear All Bookings
+                  {t("clearAllBookings")}
                 </button>
               )}
               <div className="space-y-2">
-                {requests.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi booking nahi hai.</p>}
+                {requests.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noBookingsAdmin")}</p>}
                 {requests.map((r) => (
                   <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
                     <div>
@@ -1769,11 +1969,11 @@ export default function Margshri() {
                       <Badge status={r.status} lang={lang} />
                       {(r.status === "pending" || r.status === "accepted") && (
                         <button onClick={() => cancelRequest(r.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2 py-1 text-xs font-semibold">
-                          Cancel
+                          {t("cancel")}
                         </button>
                       )}
                       <button onClick={() => deleteRequestAdmin(r.id)} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2 py-1 text-xs font-semibold">
-                        Delete
+                        {t("delete")}
                       </button>
                     </div>
                   </div>
@@ -1786,17 +1986,17 @@ export default function Margshri() {
             <div className="space-y-2">
               {complaints.length > 0 && (
                 <button onClick={clearAllComplaints} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-3 py-1.5 text-xs font-semibold mb-1">
-                  🗑 Clear All Complaints
+                  {t("clearAllComplaints")}
                 </button>
               )}
-              {complaints.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi complaint nahi hai.</p>}
+              {complaints.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noComplaintsAdmin")}</p>}
               {complaints
                 .slice()
                 .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
                 .map((c) => (
                   <div key={c.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
                     <div className="flex justify-between items-start mb-1">
-                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{c.reporterName} ne {c.aboutName} ke baare mein report kiya</p>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{c.reporterName} → {c.aboutName}</p>
                       <span
                         style={c.status === "open" ? { background: "#FBE9E7", color: COLORS.coral } : { background: "#E4F3EF", color: COLORS.teal }}
                         className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shrink-0"
@@ -1808,19 +2008,19 @@ export default function Margshri() {
 
                     <div className="flex flex-wrap gap-3 mb-2">
                       <div style={{ background: "#F3EFE6" }} className="rounded-lg px-2.5 py-1.5">
-                        <p style={{ color: COLORS.muted }} className="text-[10px] font-semibold mb-0.5">Reporter: {c.reporterName}</p>
+                        <p style={{ color: COLORS.muted }} className="text-[10px] font-semibold mb-0.5">{t("reporterLabel")}: {c.reporterName}</p>
                         <div className="flex gap-2">
                           {c.reporterPhone && <a href={`tel:${c.reporterPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold">📞 {c.reporterPhone}</a>}
                           {c.reporterEmail && <a href={`mailto:${c.reporterEmail}`} style={{ color: COLORS.teal }} className="text-xs font-bold">✉️ Email</a>}
-                          {!c.reporterPhone && !c.reporterEmail && <span style={{ color: COLORS.muted }} className="text-xs">Contact nahi diya</span>}
+                          {!c.reporterPhone && !c.reporterEmail && <span style={{ color: COLORS.muted }} className="text-xs">{t("noContactGiven")}</span>}
                         </div>
                       </div>
                       <div style={{ background: "#F3EFE6" }} className="rounded-lg px-2.5 py-1.5">
-                        <p style={{ color: COLORS.muted }} className="text-[10px] font-semibold mb-0.5">Jiski complaint hai: {c.aboutName}</p>
+                        <p style={{ color: COLORS.muted }} className="text-[10px] font-semibold mb-0.5">{t("aboutLabel")}: {c.aboutName}</p>
                         {c.aboutPhone ? (
                           <a href={`tel:${c.aboutPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold">📞 {c.aboutPhone}</a>
                         ) : (
-                          <span style={{ color: COLORS.muted }} className="text-xs">Phone number nahi mila</span>
+                          <span style={{ color: COLORS.muted }} className="text-xs">{t("phoneNotFound")}</span>
                         )}
                       </div>
                     </div>
@@ -1830,14 +2030,14 @@ export default function Margshri() {
                         <textarea
                           value={resolutionDrafts[c.id] ?? ""}
                           onChange={(e) => setResolutionDrafts((prev) => ({ ...prev, [c.id]: e.target.value }))}
-                          placeholder="Resolution note likho (kya kiya gaya, optional)..."
+                          placeholder={t("resolutionPlaceholder")}
                           style={{ borderColor: COLORS.line }}
                           className="w-full border rounded-lg px-3 py-2 text-xs outline-none mb-2 resize-none"
                           rows={2}
                         />
                         <div className="flex gap-2">
                           <button onClick={() => resolveComplaint(c.id, resolutionDrafts[c.id])} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
-                            Mark Resolved
+                            {t("markResolved")}
                           </button>
                           {c.aboutPhone && (
                             <button
@@ -1848,11 +2048,11 @@ export default function Margshri() {
                               style={{ color: COLORS.coral, borderColor: COLORS.line }}
                               className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold"
                             >
-                              Block karne jaao →
+                              {t("goBlockUser")}
                             </button>
                           )}
                           <button onClick={() => deleteComplaint(c.id)} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                            Delete
+                            {t("delete")}
                           </button>
                         </div>
                       </>
@@ -1860,11 +2060,11 @@ export default function Margshri() {
                       <div>
                         {c.resolutionNote && (
                           <p style={{ color: COLORS.charcoal, background: "#E4F3EF" }} className="text-xs rounded-lg px-3 py-2 mb-2">
-                            <b>Resolution:</b> {c.resolutionNote}
+                            <b>{t("resolutionLabel")}:</b> {c.resolutionNote}
                           </p>
                         )}
                         <button onClick={() => deleteComplaint(c.id)} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                          Delete
+                          {t("delete")}
                         </button>
                       </div>
                     )}
@@ -1876,28 +2076,28 @@ export default function Margshri() {
           {adminTab === "blocked" && (
             <div>
               <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-5">
-                <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">Naya user block karo</p>
+                <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">{t("blockNewUser")}</p>
                 <input
                   type="email"
-                  placeholder="user@email.com"
+                  placeholder={t("blockEmailPlaceholder")}
                   value={blockEmailInput}
                   onChange={(e) => setBlockEmailInput(e.target.value)}
                   style={{ borderColor: COLORS.line }}
                   className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-2"
                 />
                 <input
-                  placeholder="Reason (optional)"
+                  placeholder={t("blockReasonPlaceholder")}
                   value={blockReasonInput}
                   onChange={(e) => setBlockReasonInput(e.target.value)}
                   style={{ borderColor: COLORS.line }}
                   className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-3"
                 />
                 <button onClick={blockUserByEmail} style={{ background: COLORS.coral, color: "white" }} className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold">
-                  <Ban size={14} /> Block user
+                  <Ban size={14} /> {t("blockUserBtn")}
                 </button>
               </div>
               <div className="space-y-2">
-                {blockedUsers.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">Koi bhi block nahi hai.</p>}
+                {blockedUsers.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noBlockedUsers")}</p>}
                 {blockedUsers.map((b) => (
                   <div key={b.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
                     <div>
@@ -1905,7 +2105,7 @@ export default function Margshri() {
                       <p style={{ color: COLORS.muted }} className="text-xs">{b.reason}</p>
                     </div>
                     <button onClick={() => unblockUser(b.id)} style={{ color: COLORS.teal, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                      Unblock
+                      {t("unblock")}
                     </button>
                   </div>
                 ))}
@@ -1931,7 +2131,7 @@ export default function Margshri() {
             </div>
             <div className="flex flex-col gap-2 p-4 overflow-y-auto" style={{ maxHeight: 320, minHeight: 160 }}>
               {messages.filter((m) => m.requestId === activeChat.requestId).length === 0 && (
-                <p style={{ color: COLORS.muted }} className="text-xs text-center py-6">Koi message nahi hai abhi. Baat shuru karo!</p>
+                <p style={{ color: COLORS.muted }} className="text-xs text-center py-6">{t("noMessagesYet")}</p>
               )}
               {messages
                 .filter((m) => m.requestId === activeChat.requestId)
@@ -1952,7 +2152,7 @@ export default function Margshri() {
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Message likho..."
+                placeholder={t("typeMessage")}
                 style={{ borderColor: COLORS.line }}
                 className="flex-1 border rounded-full px-4 py-2 text-sm outline-none"
               />
@@ -1967,25 +2167,25 @@ export default function Margshri() {
       {activeReview && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setActiveReview(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
-            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">Rate {activeReview.revieweeName}</p>
-            <p style={{ color: COLORS.muted }} className="text-xs mb-4">Aapka feedback doosron ko sahi decision lene mein madad karta hai.</p>
+            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">{t("rateSomeone")} {activeReview.revieweeName}</p>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-4">{t("feedbackHelps")}</p>
             <div className="flex justify-center mb-4">
               <StarRating value={reviewRating} onChange={setReviewRating} size={28} />
             </div>
             <textarea
               value={reviewComment}
               onChange={(e) => setReviewComment(e.target.value)}
-              placeholder="Kuch likhna chahenge? (optional)"
+              placeholder={t("writeSomething")}
               style={{ borderColor: COLORS.line }}
               className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-4 resize-none"
               rows={3}
             />
             <div className="flex gap-2">
               <button onClick={() => setActiveReview(null)} style={{ borderColor: COLORS.line, color: COLORS.muted }} className="flex-1 border rounded-lg py-2.5 text-sm font-bold">
-                Cancel
+                {t("cancel")}
               </button>
               <button onClick={submitReview} style={{ background: COLORS.amber, color: COLORS.night }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
-                Submit Rating
+                {t("submitRating")}
               </button>
             </div>
           </div>
@@ -1995,22 +2195,22 @@ export default function Margshri() {
       {showPhoneModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowPhoneModal(false)}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
-            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">Apna mobile number add karo</p>
-            <p style={{ color: COLORS.muted }} className="text-xs mb-4">Ye sirf tab dikhega jab aapki booking confirm (accepted) ho jaaye — taaki dono log seedha baat kar sakein.</p>
+            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">{t("addYourPhone")}</p>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-4">{t("phoneVisibilityNote")}</p>
             <input
               type="tel"
               value={phoneInput}
               onChange={(e) => setPhoneInput(e.target.value)}
-              placeholder="e.g. 98765 43210"
+              placeholder={t("phonePlaceholder")}
               style={{ borderColor: COLORS.line }}
               className="w-full border rounded-lg px-3 py-2.5 text-sm outline-none mb-4"
             />
             <div className="flex gap-2">
               <button onClick={() => setShowPhoneModal(false)} style={{ borderColor: COLORS.line, color: COLORS.muted }} className="flex-1 border rounded-lg py-2.5 text-sm font-bold">
-                Cancel
+                {t("cancel")}
               </button>
               <button onClick={savePhone} style={{ background: COLORS.amber, color: COLORS.night }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
-                Save
+                {t("save")}
               </button>
             </div>
           </div>
@@ -2020,23 +2220,23 @@ export default function Margshri() {
       {showIOSHint && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowIOSHint(false)}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
-            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-3">iPhone par install karne ke liye</p>
+            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("installOnIphoneTitle")}</p>
             <div className="space-y-3 mb-4">
               <div className="flex items-start gap-2">
                 <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
-                <p style={{ color: COLORS.charcoal }} className="text-sm">Neeche Share icon (⬆️ box) par tap karo</p>
+                <p style={{ color: COLORS.charcoal }} className="text-sm">{t("installStep1")}</p>
               </div>
               <div className="flex items-start gap-2">
                 <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>
-                <p style={{ color: COLORS.charcoal }} className="text-sm">Scroll karke "Add to Home Screen" dhundo aur tap karo</p>
+                <p style={{ color: COLORS.charcoal }} className="text-sm">{t("installStep2")}</p>
               </div>
               <div className="flex items-start gap-2">
                 <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</span>
-                <p style={{ color: COLORS.charcoal }} className="text-sm">Top-right "Add" dabao — Margshri icon home screen par aa jayega</p>
+                <p style={{ color: COLORS.charcoal }} className="text-sm">{t("installStep3")}</p>
               </div>
             </div>
             <button onClick={() => setShowIOSHint(false)} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold">
-              Samajh gaya
+              {t("gotIt")}
             </button>
           </div>
         </div>
@@ -2045,22 +2245,22 @@ export default function Margshri() {
       {activeReport && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setActiveReport(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
-            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">Report / Complaint: {activeReport.aboutName}</p>
-            <p style={{ color: COLORS.muted }} className="text-xs mb-4">Kya problem hui, bataiye. Admin isko dekhega aur zaroorat pade to action lega.</p>
+            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">{t("reportComplaintAbout")}: {activeReport.aboutName}</p>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-4">{t("reportHelpText")}</p>
             <textarea
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
-              placeholder="Apni complaint likhiye..."
+              placeholder={t("writeYourComplaint")}
               style={{ borderColor: COLORS.line }}
               className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-4 resize-none"
               rows={4}
             />
             <div className="flex gap-2">
               <button onClick={() => setActiveReport(null)} style={{ borderColor: COLORS.line, color: COLORS.muted }} className="flex-1 border rounded-lg py-2.5 text-sm font-bold">
-                Cancel
+                {t("cancel")}
               </button>
               <button onClick={submitReport} style={{ background: COLORS.coral, color: "white" }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
-                Submit Complaint
+                {t("submitComplaint")}
               </button>
             </div>
           </div>
@@ -2072,7 +2272,7 @@ export default function Margshri() {
           <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl flex flex-col">
             <div style={{ background: COLORS.night }} className="flex items-center justify-between px-4 py-3 rounded-t-2xl">
               <p className="text-white text-sm font-bold">
-                {viewingReviewsFor}'s reviews {getAvgRating(viewingReviewsFor) && `· ⭐ ${getAvgRating(viewingReviewsFor).avg} (${getAvgRating(viewingReviewsFor).count})`}
+                {viewingReviewsFor}'s {t("reviewsFor")} {getAvgRating(viewingReviewsFor) && `· ⭐ ${getAvgRating(viewingReviewsFor).avg} (${getAvgRating(viewingReviewsFor).count})`}
               </p>
               <button onClick={() => setViewingReviewsFor(null)} className="text-white">
                 <X size={18} />
@@ -2080,7 +2280,7 @@ export default function Margshri() {
             </div>
             <div className="flex flex-col gap-3 p-4 overflow-y-auto" style={{ maxHeight: 400, minHeight: 120 }}>
               {reviews.filter((r) => r.revieweeName === viewingReviewsFor).length === 0 && (
-                <p style={{ color: COLORS.muted }} className="text-xs text-center py-6">Abhi koi review nahi hai.</p>
+                <p style={{ color: COLORS.muted }} className="text-xs text-center py-6">{t("noReviewsYet")}</p>
               )}
               {reviews
                 .filter((r) => r.revieweeName === viewingReviewsFor)
@@ -2108,21 +2308,21 @@ export default function Margshri() {
           <div style={{ background: COLORS.sand }} className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center gap-2 mb-3">
               <ShieldCheck size={22} color={COLORS.coral} />
-              <p style={{ color: COLORS.night }} className="text-base font-bold">Safety & Disclaimer</p>
+              <p style={{ color: COLORS.night }} className="text-base font-bold">{t("safetyTitle")}</p>
             </div>
             <div className="space-y-3 mb-5">
               <p style={{ color: COLORS.charcoal }} className="text-sm">
-                Margshri sirf logon ko ek dusre se <b>connect</b> karta hai — hum ID verify (KYC), background check, ya koi bhi safety check khud nahi karte.
+                {t("safetyIntro")}
               </p>
               <ul style={{ color: COLORS.charcoal }} className="text-sm list-disc pl-5 space-y-1.5">
-                <li>Naam, photo, aur phone number sabhi <b>self-declared</b> hain — inki hamne verification nahi ki hai.</li>
-                <li>Payment app ke bahar (cash/UPI seedha) hoti hai — Margshri kisi bhi payment ko handle nahi karta.</li>
-                <li>Ride se pehle khud dusre insaan ki identity confirm karo — milte waqt ek dusre ka <b>original ID proof (Aadhaar, License, waghera)</b> dikhakar khud verify kar lo, aur public/safe jagah pe milna prefer karo.</li>
-                <li>Kisi bhi tarah ki galat behavior, harassment, ya safety issue ho to turant <b>chat ke andar 🚩 flag icon</b> se report karo.</li>
-                <li>Margshri (aur iske admin) kisi bhi dispute, nuksaan, ya ghatna ke liye <b>zimmedar nahi</b> hain — ye app apni risk par use karo.</li>
+                <li>{t("safetyPoint1")}</li>
+                <li>{t("safetyPoint2")}</li>
+                <li>{t("safetyPoint3")}</li>
+                <li>{t("safetyPoint4")}</li>
+                <li>{t("safetyPoint5")}</li>
               </ul>
               <p style={{ color: COLORS.muted }} className="text-xs">
-                Agar aap 18 saal se kam umar ke hain, kripya kisi bade (guardian) ke bina is app ka use na karein.
+                {t("safetyAgeNote")}
               </p>
             </div>
             {user && !safetyAcknowledged ? (
