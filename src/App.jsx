@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -163,6 +163,24 @@ const TRANSLATIONS = {
     amenities: "Amenities",
     showResults: "Show results",
     resultsCount: "results",
+    heroHeadline: "Share the ride. Split the cost.",
+    feature1Title: "Local & Long Distance",
+    feature1Desc: "Whether it's across town or across cities, find or offer a ride either way.",
+    feature2Title: "Cost-Sharing, Not For Profit",
+    feature2Desc: "Only fuel and toll costs are shared — this isn't a commercial taxi service.",
+    feature3Title: "Bike to Bus — Every Vehicle",
+    feature3Desc: "Two-wheeler, car, or bus — whatever you're driving, share your route.",
+    howItWorksHeading: "How Margshri works",
+    stepPost: "Post",
+    stepPostDesc: "Owners post their vehicle, riders post their route.",
+    stepMatch: "Match",
+    stepMatchDesc: "Get matched with someone going the same way.",
+    stepChat: "Chat",
+    stepChatDesc: "Talk directly and settle the details.",
+    stepVerify: "Verify",
+    stepVerifyDesc: "Show your ID to each other when you meet.",
+    stepRide: "Ride & Review",
+    stepRideDesc: "Share the journey, then rate each other.",
     fullRoute: "(full route)",
     yourFare: "Your fare",
     isReady: "is ready!",
@@ -318,6 +336,24 @@ const TRANSLATIONS = {
     amenities: "सुविधाएं",
     showResults: "परिणाम दिखाएं",
     resultsCount: "परिणाम",
+    heroHeadline: "राइड शेयर करो। खर्चा बांटो।",
+    feature1Title: "लोकल और लॉन्ग डिस्टेंस",
+    feature1Desc: "शहर के अंदर हो या दूसरे शहर तक, दोनों तरह की राइड यहां मिलेगी।",
+    feature2Title: "सिर्फ कॉस्ट-शेयरिंग, प्रॉफिट नहीं",
+    feature2Desc: "सिर्फ फ्यूल और टोल का खर्चा बंटता है — यह कोई कमर्शियल टैक्सी सेवा नहीं है।",
+    feature3Title: "बाइक से बस तक — हर वाहन",
+    feature3Desc: "टू-व्हीलर, कार, या बस — जो भी चला रहे हैं, अपना रूट शेयर करें।",
+    howItWorksHeading: "Margshri कैसे काम करता है",
+    stepPost: "पोस्ट करें",
+    stepPostDesc: "मालिक अपना वाहन पोस्ट करते हैं, यात्री अपना रूट पोस्ट करते हैं।",
+    stepMatch: "मैच करें",
+    stepMatchDesc: "अपने रास्ते पर जा रहे किसी व्यक्ति से मैच हो जाएं।",
+    stepChat: "चैट करें",
+    stepChatDesc: "सीधे बात करें और विवरण तय करें।",
+    stepVerify: "सत्यापित करें",
+    stepVerifyDesc: "मिलते समय एक-दूसरे को अपनी ID दिखाएं।",
+    stepRide: "राइड और रेटिंग",
+    stepRideDesc: "यात्रा साझा करें, फिर एक-दूसरे को रेट करें।",
     fullRoute: "(पूरा रूट)",
     yourFare: "आपका किराया",
     isReady: "तैयार है!",
@@ -1183,8 +1219,8 @@ export default function Margshri() {
   if (screen === "landing") {
     return (
       <div
-        style={{ background: `linear-gradient(180deg, ${COLORS.sand} 0%, #F2E9D8 100%)`, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }}
-        className="w-full flex items-center justify-center p-6 relative overflow-hidden"
+        style={{ background: `linear-gradient(180deg, ${COLORS.sand} 0%, #F2E9D8 100%)`, fontFamily: "ui-sans-serif, system-ui" }}
+        className="w-full relative overflow-hidden"
       >
         <div
           className="absolute rounded-full pointer-events-none"
@@ -1192,75 +1228,153 @@ export default function Margshri() {
         />
         <div
           className="absolute rounded-full pointer-events-none"
-          style={{ width: 260, height: 260, background: COLORS.teal, opacity: 0.15, filter: "blur(70px)", bottom: -80, right: -80 }}
+          style={{ width: 260, height: 260, background: COLORS.teal, opacity: 0.15, filter: "blur(70px)", top: 200, right: -80 }}
         />
 
-        <div className="w-full max-w-sm relative animate-fade-up">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center gap-2.5">
-              <div style={{ background: COLORS.amber }} className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg">
-                <MapPin size={22} color={COLORS.night} strokeWidth={2.5} />
-              </div>
-              <span style={{ color: COLORS.night, letterSpacing: "-0.03em" }} className="text-2xl font-bold">
-                Margshri
-              </span>
+        {/* Top bar */}
+        <div className="max-w-6xl mx-auto flex justify-between items-center px-6 pt-6 relative z-10">
+          <div className="flex items-center gap-2.5">
+            <div style={{ background: COLORS.amber }} className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shadow-lg">
+              <MapPin size={20} color={COLORS.night} strokeWidth={2.5} />
             </div>
-            <button onClick={toggleLang} style={{ borderColor: COLORS.line, color: COLORS.night, background: "white" }} className="border rounded-full px-3 py-1.5 text-xs font-bold shadow-sm">
-              {lang === "en" ? "हिं" : "EN"}
-            </button>
+            <span style={{ color: COLORS.night, letterSpacing: "-0.03em" }} className="text-xl sm:text-2xl font-bold">
+              Margshri
+            </span>
+          </div>
+          <button onClick={toggleLang} style={{ borderColor: COLORS.line, color: COLORS.night, background: "white" }} className="border rounded-full px-3 py-1.5 text-xs font-bold shadow-sm">
+            {lang === "en" ? "हिं" : "EN"}
+          </button>
+        </div>
+
+        {/* Hero */}
+        <div className="max-w-6xl mx-auto px-6 py-10 lg:py-16 lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center relative z-10">
+          <div className="w-full max-w-sm mx-auto lg:max-w-none lg:mx-0 animate-fade-up">
+            <h1 style={{ color: COLORS.night, letterSpacing: "-0.02em" }} className="text-2xl lg:text-5xl font-bold text-center lg:text-left mb-4 leading-tight">
+              {t("heroHeadline")}
+            </h1>
+            <p style={{ color: COLORS.charcoal }} className="text-base lg:text-lg font-medium text-center lg:text-left mb-8 px-2 lg:px-0">
+              {t("tagline")}
+            </p>
+
+            <div className="relative mb-9 max-w-sm mx-auto lg:mx-0" style={{ height: 32 }}>
+              <RouteLine />
+              <div className="absolute animate-travel" style={{ top: "50%", marginTop: -14 }}>
+                <div style={{ background: COLORS.night }} className="w-7 h-7 rounded-full flex items-center justify-center shadow-lg">
+                  <Car size={13} color="white" />
+                </div>
+              </div>
+            </div>
+
+            {!isStandalone && (installPrompt || isIOS) && (
+              <button
+                onClick={handleInstallClick}
+                style={{ background: COLORS.night, color: "white" }}
+                className="w-full max-w-sm mx-auto lg:mx-0 flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm mb-4 shadow-md lg:block"
+              >
+                {t("installApp")}
+              </button>
+            )}
+
+            <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto lg:mx-0 lg:max-w-md">
+              <button
+                onClick={() => enter("rider")}
+                style={{ background: COLORS.amber, color: COLORS.night }}
+                className="rounded-xl py-4 font-bold text-sm flex flex-col items-center gap-1.5 shadow-md"
+              >
+                <UsersIcon size={20} />
+                {t("imRider")}
+              </button>
+              <button
+                onClick={() => enter("owner")}
+                style={{ background: COLORS.night, color: "white" }}
+                className="rounded-xl py-4 font-bold text-sm flex flex-col items-center gap-1.5 shadow-md"
+              >
+                <Car size={20} />
+                {t("imOwner")}
+              </button>
+            </div>
+
+            <p style={{ color: COLORS.muted }} className="text-xs text-center lg:text-left mt-5 max-w-sm mx-auto lg:mx-0">
+              {t("loginNote")}
+            </p>
           </div>
 
-          <p style={{ color: COLORS.charcoal }} className="text-center text-base font-medium mb-8 px-2">
-            {t("tagline")}
-          </p>
-
-          <div className="relative mb-9" style={{ height: 32 }}>
-            <RouteLine />
-            <div className="absolute animate-travel" style={{ top: "50%", marginTop: -14 }}>
-              <div style={{ background: COLORS.night }} className="w-7 h-7 rounded-full flex items-center justify-center shadow-lg">
-                <Car size={13} color="white" />
+          {/* Right visual — desktop only */}
+          <div className="hidden lg:flex items-center justify-center">
+            <div style={{ background: COLORS.night }} className="w-full rounded-3xl p-10 shadow-2xl relative overflow-hidden">
+              <div className="absolute rounded-full" style={{ width: 200, height: 200, background: COLORS.amber, opacity: 0.15, filter: "blur(50px)", top: -40, right: -40 }} />
+              <div className="relative space-y-5">
+                {[
+                  { icon: Bike, label: "Bike" },
+                  { icon: Car, label: "Car" },
+                  { icon: Bus, label: "Bus" },
+                ].map((v, i) => (
+                  <div key={i} style={{ background: "rgba(255,255,255,0.08)" }} className="flex items-center gap-4 rounded-2xl p-4">
+                    <div style={{ background: COLORS.amber }} className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                      <v.icon size={22} color={COLORS.night} />
+                    </div>
+                    <div className="flex-1">
+                      <div style={{ background: "rgba(255,255,255,0.2)", width: `${70 - i * 10}%` }} className="h-2.5 rounded-full mb-2" />
+                      <div style={{ background: "rgba(255,255,255,0.12)", width: `${45 - i * 5}%` }} className="h-2 rounded-full" />
+                    </div>
+                    <Star size={16} fill={COLORS.amber} color={COLORS.amber} />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
+        </div>
 
-          {!isStandalone && (installPrompt || isIOS) && (
-            <button
-              onClick={handleInstallClick}
-              style={{ background: COLORS.night, color: "white" }}
-              className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm mb-4 shadow-md"
-            >
-              {t("installApp")}
-            </button>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => enter("rider")}
-              style={{ background: COLORS.amber, color: COLORS.night }}
-              className="rounded-xl py-4 font-bold text-sm flex flex-col items-center gap-1.5 shadow-md"
-            >
-              <UsersIcon size={20} />
-              {t("imRider")}
-            </button>
-            <button
-              onClick={() => enter("owner")}
-              style={{ background: COLORS.night, color: "white" }}
-              className="rounded-xl py-4 font-bold text-sm flex flex-col items-center gap-1.5 shadow-md"
-            >
-              <Car size={20} />
-              {t("imOwner")}
-            </button>
+        {/* Feature highlights */}
+        <div className="max-w-6xl mx-auto px-6 py-10 lg:py-14 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {[
+              { icon: MapPin, title: t("feature1Title"), desc: t("feature1Desc") },
+              { icon: Wallet, title: t("feature2Title"), desc: t("feature2Desc") },
+              { icon: Bus, title: t("feature3Title"), desc: t("feature3Desc") },
+            ].map((f, i) => (
+              <div key={i} className="text-center sm:text-left">
+                <div style={{ background: "white" }} className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm mb-4 mx-auto sm:mx-0">
+                  <f.icon size={22} color={COLORS.night} />
+                </div>
+                <p style={{ color: COLORS.night }} className="text-base font-bold mb-1.5">{f.title}</p>
+                <p style={{ color: COLORS.muted }} className="text-sm leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
           </div>
+        </div>
 
-          <p style={{ color: COLORS.muted }} className="text-xs text-center mt-5">
-            {t("loginNote")}
-          </p>
+        {/* How it works */}
+        <div style={{ background: COLORS.night }} className="relative z-10">
+          <div className="max-w-6xl mx-auto px-6 py-10 lg:py-14">
+            <p style={{ color: "white" }} className="text-xl lg:text-2xl font-bold text-center mb-10">{t("howItWorksHeading")}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-6">
+              {[
+                { icon: ClipboardList, title: t("stepPost"), desc: t("stepPostDesc") },
+                { icon: UsersIcon, title: t("stepMatch"), desc: t("stepMatchDesc") },
+                { icon: MessageCircle, title: t("stepChat"), desc: t("stepChatDesc") },
+                { icon: ShieldCheck, title: t("stepVerify"), desc: t("stepVerifyDesc") },
+                { icon: Star, title: t("stepRide"), desc: t("stepRideDesc") },
+              ].map((s, i) => (
+                <div key={i} className="text-center">
+                  <div style={{ background: COLORS.amber }} className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 mx-auto">
+                    <s.icon size={19} color={COLORS.night} />
+                  </div>
+                  <p style={{ color: "white" }} className="text-sm font-bold mb-1">{s.title}</p>
+                  <p style={{ color: "rgba(255,255,255,0.6)" }} className="text-xs leading-relaxed">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-          <button onClick={() => setShowSafetyModal(true)} style={{ color: COLORS.muted }} className="text-xs underline text-center block mx-auto mt-3">
+        {/* Footer */}
+        <div className="max-w-6xl mx-auto px-6 py-8 relative z-10">
+          <button onClick={() => setShowSafetyModal(true)} style={{ color: COLORS.muted }} className="text-xs underline text-center block mx-auto mb-2">
             {t("safetyLink")}
           </button>
 
-          <div className="flex items-center justify-center gap-3 mt-2">
+          <div className="flex items-center justify-center gap-3 mb-4">
             <button onClick={() => setScreen("privacy")} style={{ color: COLORS.muted }} className="text-xs underline">
               Privacy Policy
             </button>
@@ -1270,13 +1384,15 @@ export default function Margshri() {
             </button>
           </div>
 
-          <AdSlot />
+          <div className="max-w-sm mx-auto">
+            <AdSlot />
+          </div>
 
           {isAdmin && (
             <button
               onClick={() => setScreen("admin")}
               style={{ background: COLORS.night, color: "white" }}
-              className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm mt-4"
+              className="max-w-sm mx-auto w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm mt-4"
             >
               <LayoutDashboard size={16} /> {t("adminPanel")}
             </button>
