@@ -561,7 +561,43 @@ function StarRating({ value, onChange, size = 20 }) {
   );
 }
 
-export default function Margshri() {
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.error("Margshri crashed:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ background: COLORS.sand, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }} className="w-full flex items-center justify-center p-6">
+          <div className="text-center max-w-sm">
+            <div style={{ background: COLORS.coral }} className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <X size={26} color="white" />
+            </div>
+            <p style={{ color: COLORS.night }} className="text-lg font-bold mb-2">Kuch galat ho gaya</p>
+            <p style={{ color: COLORS.muted }} className="text-sm mb-5">Something went wrong. Please reload the page.</p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{ background: COLORS.night, color: "white" }}
+              className="rounded-lg px-5 py-2.5 text-sm font-bold shadow-md"
+            >
+              Reload / रीलोड करें
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function MargshriApp() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -1983,7 +2019,7 @@ export default function Margshri() {
                     <button onClick={() => requireAuth(() => respond(r.id, "rejected"))} disabled={syncing} style={{ background: COLORS.coral }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><X size={15} color="white" /></button>
                   </div>
                 ) : r.status === "accepted" ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
                     <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
                       <MessageCircle size={14} />
                       {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
@@ -1993,6 +2029,9 @@ export default function Margshri() {
                     </button>
                     <button onClick={() => requireAuth(() => respond(r.id, "noshow"))} disabled={syncing} style={{ background: COLORS.coral, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
                       {t("noShow")}
+                    </button>
+                    <button onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                      {t("cancel")}
                     </button>
                   </div>
                 ) : r.status === "completed" && !hasReviewed(r.id) ? (
@@ -2759,5 +2798,13 @@ export default function Margshri() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Margshri() {
+  return (
+    <ErrorBoundary>
+      <MargshriApp />
+    </ErrorBoundary>
   );
 }
