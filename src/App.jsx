@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -142,6 +142,27 @@ const TRANSLATIONS = {
     reasonLabel: "Reason:",
     reasonNotGiven: "Not given",
     loading: "Loading...",
+    activeTab: "Active",
+    historyTab: "History",
+    noHistoryYet: "No history yet.",
+    noActiveYet: "Nothing active right now.",
+    sortBy: "Sort by:",
+    sortTime: "Time",
+    sortPriceLow: "Price: Low to High",
+    sortRating: "Rating",
+    filter: "Filter",
+    clearAll: "Clear all",
+    sortByHeading: "Sort by",
+    earliestDeparture: "Earliest departure",
+    lowestPrice: "Lowest price",
+    departureTime: "Departure time",
+    morning: "Morning (5 AM – 12 PM)",
+    afternoon: "Afternoon (12 PM – 5 PM)",
+    evening: "Evening (5 PM – 9 PM)",
+    night: "Night (9 PM – 5 AM)",
+    amenities: "Amenities",
+    showResults: "Show results",
+    resultsCount: "results",
     fullRoute: "(full route)",
     yourFare: "Your fare",
     isReady: "is ready!",
@@ -276,6 +297,27 @@ const TRANSLATIONS = {
     reasonLabel: "कारण:",
     reasonNotGiven: "नहीं दिया गया",
     loading: "लोड हो रहा है...",
+    activeTab: "सक्रिय",
+    historyTab: "इतिहास",
+    noHistoryYet: "अभी कोई इतिहास नहीं है।",
+    noActiveYet: "अभी कुछ भी सक्रिय नहीं है।",
+    sortBy: "इस हिसाब से क्रमबद्ध करें:",
+    sortTime: "समय",
+    sortPriceLow: "किराया: कम से ज़्यादा",
+    sortRating: "रेटिंग",
+    filter: "फ़िल्टर",
+    clearAll: "सभी हटाएं",
+    sortByHeading: "इस हिसाब से क्रमबद्ध करें",
+    earliestDeparture: "सबसे जल्दी प्रस्थान",
+    lowestPrice: "सबसे कम किराया",
+    departureTime: "प्रस्थान समय",
+    morning: "सुबह (5 AM – 12 PM)",
+    afternoon: "दोपहर (12 PM – 5 PM)",
+    evening: "शाम (5 PM – 9 PM)",
+    night: "रात (9 PM – 5 AM)",
+    amenities: "सुविधाएं",
+    showResults: "परिणाम दिखाएं",
+    resultsCount: "परिणाम",
     fullRoute: "(पूरा रूट)",
     yourFare: "आपका किराया",
     isReady: "तैयार है!",
@@ -458,6 +500,19 @@ function Badge({ status, lang = "en" }) {
   );
 }
 
+function SectionHeading({ icon: Icon, children, size = "lg" }) {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <div style={{ background: COLORS.night }} className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+        <Icon size={14} color="white" />
+      </div>
+      <h2 style={{ color: COLORS.night, letterSpacing: "-0.01em" }} className={size === "lg" ? "text-lg font-bold" : "text-sm font-bold"}>
+        {children}
+      </h2>
+    </div>
+  );
+}
+
 function StarRating({ value, onChange, size = 20 }) {
   return (
     <div className="flex gap-1">
@@ -548,6 +603,11 @@ export default function Margshri() {
   const [mode, setMode] = useState("local");
 
   const [search, setSearch] = useState({ from: "", to: "", type: "car" });
+  const [sortBy, setSortBy] = useState("time");
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [timeOfDayFilter, setTimeOfDayFilter] = useState(null);
+  const [riderTab, setRiderTab] = useState("active");
+  const [ownerTab, setOwnerTab] = useState("active");
   const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
   const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
   const [rform, setRform] = useState({ from: "", to: "", date: "", clock: "", seatsNeeded: 1 });
@@ -795,6 +855,7 @@ export default function Margshri() {
         seats: Number(vform.seats) || 1,
         totalSeats: Number(vform.seats) || 1,
         time: formatDateTime(vform.date, vform.clock),
+        timestamp: new Date(`${vform.date}T${vform.clock}`).getTime() || 0,
         price: Number(vform.price) || 0,
         tags: vform.tags,
         routeType: vform.routeType,
@@ -817,6 +878,8 @@ export default function Margshri() {
       const newPost = {
         riderName: name,
         riderId: user?.uid || null,
+        riderPhone: myPhone || null,
+        riderPhoto: user?.photoURL || null,
         from: rform.from,
         to: rform.to,
         time: formatDateTime(rform.date, rform.clock),
@@ -834,8 +897,9 @@ export default function Margshri() {
     });
 
   const offerRide = (postId) => {
-    setRiderPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, status: "matched", ownerName: name, ownerId: user?.uid || null } : p)));
-    updateDoc(doc(db, RIDER_POSTS_COLLECTION, postId), { status: "matched", ownerName: name, ownerId: user?.uid || null }).catch(() => {
+    const updates = { status: "matched", ownerName: name, ownerId: user?.uid || null, ownerPhone: myPhone || null, ownerPhoto: user?.photoURL || null };
+    setRiderPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, ...updates } : p)));
+    updateDoc(doc(db, RIDER_POSTS_COLLECTION, postId), updates).catch(() => {
       setErrorMsg("Status save nahi ho paya, dubara try karo.");
     });
   };
@@ -1026,21 +1090,45 @@ export default function Margshri() {
 
   const myVehicleIds = vehicles.filter((v) => v.owner === name).map((v) => v.id);
   const incoming = requests.filter((r) => myVehicleIds.includes(r.vehicleId));
+  const incomingActive = incoming.filter((r) => ["pending", "accepted"].includes(r.status));
+  const incomingHistory = incoming.filter((r) => ["completed", "rejected", "cancelled", "noshow"].includes(r.status));
   const myRequests = requests.filter((r) => r.riderName === name);
+  const myRequestsActive = myRequests.filter((r) => ["pending", "accepted"].includes(r.status));
+  const myRequestsHistory = myRequests.filter((r) => ["completed", "rejected", "cancelled", "noshow"].includes(r.status));
   const myRiderPosts = riderPosts.filter((p) => p.riderName === name);
   const openRiderPostsForOwner = riderPosts.filter((p) => p.mode === mode && (p.status === "open" || p.ownerName === name));
   const activeTagFilters = Object.entries(filterTags).filter(([, v]) => v).map(([k]) => k);
-  const filteredVehicles = vehicles.filter(
-    (v) =>
-      v.mode === mode &&
-      v.type === search.type &&
-      v.seats > 0 &&
-      (search.from === "" || v.from.toLowerCase().includes(search.from.toLowerCase())) &&
-      (search.to === "" ||
-        v.to.toLowerCase().includes(search.to.toLowerCase()) ||
-        (v.stops || []).some((s) => s.name.toLowerCase().includes(search.to.toLowerCase()))) &&
-      activeTagFilters.every((tag) => v.tags && v.tags[tag])
-  );
+  const getTimeOfDay = (timestamp) => {
+    if (!timestamp) return null;
+    const hour = new Date(timestamp).getHours();
+    if (hour >= 5 && hour < 12) return "morning";
+    if (hour >= 12 && hour < 17) return "afternoon";
+    if (hour >= 17 && hour < 21) return "evening";
+    return "night";
+  };
+
+  const filteredVehicles = vehicles
+    .filter(
+      (v) =>
+        v.mode === mode &&
+        v.type === search.type &&
+        v.seats > 0 &&
+        (search.from === "" || v.from.toLowerCase().includes(search.from.toLowerCase())) &&
+        (search.to === "" ||
+          v.to.toLowerCase().includes(search.to.toLowerCase()) ||
+          (v.stops || []).some((s) => s.name.toLowerCase().includes(search.to.toLowerCase()))) &&
+        activeTagFilters.every((tag) => v.tags && v.tags[tag]) &&
+        (!timeOfDayFilter || getTimeOfDay(v.timestamp) === timeOfDayFilter)
+    )
+    .sort((a, b) => {
+      if (sortBy === "price") return (a.price || 0) - (b.price || 0);
+      if (sortBy === "rating") {
+        const ra = getAvgRating(a.owner)?.avg || 0;
+        const rb = getAvgRating(b.owner)?.avg || 0;
+        return rb - ra;
+      }
+      return (a.timestamp || 0) - (b.timestamp || 0);
+    });
 
   const Logo = () => (
     <button onClick={() => setScreen("landing")} className="flex items-center gap-2">
@@ -1257,7 +1345,7 @@ export default function Margshri() {
 
       {screen === "rider" && dataLoaded && (
         <div className="p-4 sm:p-6 max-w-2xl mx-auto">
-          <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">{t("findRide")}</h2>
+          <SectionHeading icon={Search}>{t("findRide")}</SectionHeading>
           <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-6">
             <div className="grid grid-cols-2 gap-3 mb-3">
               <LocationInput placeholder={t("from")} value={search.from} onChange={(v) => setSearch({ ...search, from: v })} />
@@ -1276,28 +1364,30 @@ export default function Margshri() {
                 );
               })}
             </div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { key: "womenOnly", label: t("womenOnly") },
-                { key: "nonSmoker", label: t("nonSmoker") },
-                { key: "ac", label: t("ac") },
-                { key: "luggage", label: t("luggage") },
-              ].map((tag) => (
-                <button
-                  key={tag.key}
-                  onClick={() => setFilterTags({ ...filterTags, [tag.key]: !filterTags[tag.key] })}
-                  style={filterTags[tag.key] ? { background: COLORS.teal, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
-                  className="text-xs font-semibold px-2.5 py-1.5 rounded-full"
-                >
-                  {tag.label}
-                </button>
-              ))}
-            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-4">
+            <p style={{ color: COLORS.muted }} className="text-xs font-semibold">
+              {filteredVehicles.length} {t("resultsCount")}
+            </p>
+            <button
+              onClick={() => setShowFilterModal(true)}
+              style={{ borderColor: COLORS.line, color: COLORS.night, background: "white" }}
+              className="flex items-center gap-1.5 border rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
+            >
+              <Filter size={13} /> {t("filter")}
+              {(activeTagFilters.length > 0 || timeOfDayFilter) && (
+                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-bold">
+                  {activeTagFilters.length + (timeOfDayFilter ? 1 : 0)}
+                </span>
+              )}
+            </button>
           </div>
 
           <div className="space-y-3 mb-8">
             {filteredVehicles.length === 0 && (
               <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 text-center mb-3">
+                <PackageSearch size={28} color={COLORS.line} className="mx-auto mb-2" />
                 <p style={{ color: COLORS.muted }} className="text-sm mb-3">{t("noVehiclesFound")}</p>
                 <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">{t("postOwnRequestPrompt")}</p>
                 <div className="grid grid-cols-2 gap-2 mb-2">
@@ -1437,9 +1527,24 @@ export default function Margshri() {
 
           {myRequests.length > 0 && (
             <>
-              <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("myRequests")}</h3>
+              <SectionHeading icon={Inbox} size="sm">{t("myRequests")}</SectionHeading>
+              <div className="flex gap-2 mb-3">
+                {["active", "history"].map((tabKey) => (
+                  <button
+                    key={tabKey}
+                    onClick={() => setRiderTab(tabKey)}
+                    style={riderTab === tabKey ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                  >
+                    {tabKey === "active" ? t("activeTab") : t("historyTab")}
+                  </button>
+                ))}
+              </div>
               <div className="space-y-2 mb-8">
-                {myRequests.map((r) => {
+                {(riderTab === "active" ? myRequestsActive : myRequestsHistory).length === 0 && (
+                  <p style={{ color: COLORS.muted }} className="text-sm py-2">{riderTab === "active" ? t("noActiveYet") : t("noHistoryYet")}</p>
+                )}
+                {(riderTab === "active" ? myRequestsActive : myRequestsHistory).map((r) => {
                   const bookedVehicle = vehicles.find((v) => v.id === r.vehicleId);
                   const showContact = ["accepted", "completed"].includes(r.status) && bookedVehicle?.ownerPhone;
                   return (
@@ -1484,22 +1589,42 @@ export default function Margshri() {
 
           {myRiderPosts.length > 0 && (
             <>
-              <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("myPostedRequests")}</h3>
+              <SectionHeading icon={PackageSearch} size="sm">{t("myPostedRequests")}</SectionHeading>
               <div className="space-y-2">
                 {myRiderPosts.map((p) => (
-                  <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
-                    <span style={{ color: COLORS.charcoal }} className="text-sm">
-                      {p.from} <ArrowRight size={12} className="inline" /> {p.to} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}
-                      {p.status === "matched" && p.ownerName ? ` · ${p.ownerName} ${t("isReady")}` : ""}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {p.status === "open" && (
-                        <button onClick={() => requireAuth(() => cancelRiderPost(p.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                          {t("cancel")}
-                        </button>
-                      )}
-                      <Badge status={p.status} lang={lang} />
+                  <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
+                    <div className="flex justify-between items-center">
+                      <span style={{ color: COLORS.charcoal }} className="text-sm">
+                        {p.from} <ArrowRight size={12} className="inline" /> {p.to} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}
+                        {p.status === "matched" && p.ownerName ? ` · ${p.ownerName} ${t("isReady")}` : ""}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {p.status === "open" && (
+                          <button onClick={() => requireAuth(() => cancelRiderPost(p.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                            {t("cancel")}
+                          </button>
+                        )}
+                        {p.status === "matched" && (
+                          <button onClick={() => requireAuth(() => openChat(p.id, p.ownerName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
+                            <MessageCircle size={14} />
+                            {hasUnreadMessages(p.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
+                          </button>
+                        )}
+                        <Badge status={p.status} lang={lang} />
+                      </div>
                     </div>
+                    {p.status === "matched" && (
+                      <>
+                        {p.ownerPhone && (
+                          <a href={`tel:${p.ownerPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
+                            📞 {t("callOwner")}: {p.ownerPhone}
+                          </a>
+                        )}
+                        <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
+                          {t("idCheckReminder")}
+                        </p>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1516,7 +1641,7 @@ export default function Margshri() {
 
       {screen === "owner" && dataLoaded && (
         <div className="p-4 sm:p-6 max-w-2xl mx-auto">
-          <h2 style={{ color: COLORS.night }} className="text-lg font-bold mb-4">{t("postYourVehicle")}</h2>
+          <SectionHeading icon={Car}>{t("postYourVehicle")}</SectionHeading>
           <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-8">
             <div className="flex gap-2 mb-3">
               {Object.entries(VEHICLE_META).map(([key, m]) => {
@@ -1622,45 +1747,92 @@ export default function Margshri() {
             </button>
           </div>
 
-          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("ridersLookingForRide")}</h3>
+          <SectionHeading icon={UsersIcon} size="sm">{t("ridersLookingForRide")}</SectionHeading>
           <div className="space-y-2 mb-8">
-            {openRiderPostsForOwner.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noRidersSearching")}</p>}
+            {openRiderPostsForOwner.length === 0 && (
+              <div className="text-center py-6">
+                <UsersIcon size={28} color={COLORS.line} className="mx-auto mb-2" />
+                <p style={{ color: COLORS.muted }} className="text-sm">{t("noRidersSearching")}</p>
+              </div>
+            )}
             {openRiderPostsForOwner.map((p) => {
               const Icon = VEHICLE_META[p.type]?.icon || Car;
+              const isMyMatch = p.status === "matched" && p.ownerId === user?.uid;
               return (
-                <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div style={{ background: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-                      <Icon size={14} color="white" />
+                <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div style={{ background: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+                        {p.riderPhoto ? <img src={p.riderPhoto} alt="" className="w-full h-full object-cover" /> : <Icon size={14} color="white" />}
+                      </div>
+                      <div>
+                        <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold flex items-center gap-1">
+                          {p.riderName}
+                          {getAvgRating(p.riderName) && (
+                            <button onClick={() => setViewingReviewsFor(p.riderName)} style={{ color: COLORS.muted }} className="text-xs font-normal flex items-center gap-0.5">
+                              <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {getAvgRating(p.riderName).avg}
+                            </button>
+                          )}
+                        </p>
+                        <p style={{ color: COLORS.muted }} className="text-xs">{p.from} <ArrowRight size={11} className="inline" /> {p.to} · {p.time} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold flex items-center gap-1">
-                        {p.riderName}
-                        {getAvgRating(p.riderName) && (
-                          <button onClick={() => setViewingReviewsFor(p.riderName)} style={{ color: COLORS.muted }} className="text-xs font-normal flex items-center gap-0.5">
-                            <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {getAvgRating(p.riderName).avg}
-                          </button>
-                        )}
-                      </p>
-                      <p style={{ color: COLORS.muted }} className="text-xs">{p.from} <ArrowRight size={11} className="inline" /> {p.to} · {p.time} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}</p>
+                    <div className="flex items-center gap-2">
+                      {p.status === "open" ? (
+                        <button onClick={() => requireAuth(() => offerRide(p.id))} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
+                          {t("offerRide")}
+                        </button>
+                      ) : (
+                        <>
+                          {isMyMatch && (
+                            <button onClick={() => requireAuth(() => openChat(p.id, p.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
+                              <MessageCircle size={14} />
+                              {hasUnreadMessages(p.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
+                            </button>
+                          )}
+                          <Badge status={p.status} lang={lang} />
+                        </>
+                      )}
                     </div>
                   </div>
-                  {p.status === "open" ? (
-                    <button onClick={() => requireAuth(() => offerRide(p.id))} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
-                      {t("offerRide")}
-                    </button>
-                  ) : (
-                    <Badge status={p.status} lang={lang} />
+                  {isMyMatch && (
+                    <>
+                      {p.riderPhone && (
+                        <a href={`tel:${p.riderPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
+                          📞 {t("callRider")}: {p.riderPhone}
+                        </a>
+                      )}
+                      <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
+                        {t("idCheckReminder")}
+                      </p>
+                    </>
                   )}
                 </div>
               );
             })}
           </div>
 
-          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("incomingRequests")}</h3>
+          <SectionHeading icon={Inbox} size="sm">{t("incomingRequests")}</SectionHeading>
+          <div className="flex gap-2 mb-3">
+            {["active", "history"].map((tabKey) => (
+              <button
+                key={tabKey}
+                onClick={() => setOwnerTab(tabKey)}
+                style={ownerTab === tabKey ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+              >
+                {tabKey === "active" ? t("activeTab") : t("historyTab")}
+              </button>
+            ))}
+          </div>
           <div className="space-y-2 mb-8">
-            {incoming.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noRequestsYet")}</p>}
-            {incoming.map((r) => (
+            {(ownerTab === "active" ? incomingActive : incomingHistory).length === 0 && (
+              <div className="text-center py-6">
+                <Inbox size={28} color={COLORS.line} className="mx-auto mb-2" />
+                <p style={{ color: COLORS.muted }} className="text-sm">{ownerTab === "active" ? t("noActiveYet") : t("noHistoryYet")}</p>
+              </div>
+            )}
+            {(ownerTab === "active" ? incomingActive : incomingHistory).map((r) => (
               <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
@@ -1735,7 +1907,7 @@ export default function Margshri() {
             ))}
           </div>
 
-          <h3 style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("myPostedVehicles")}</h3>
+          <SectionHeading icon={Car} size="sm">{t("myPostedVehicles")}</SectionHeading>
           <div className="space-y-2">
             {vehicles.filter((v) => v.owner === name).map((v) => (
               <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 text-sm flex justify-between items-center">
@@ -2261,6 +2433,133 @@ export default function Margshri() {
               </button>
               <button onClick={submitReport} style={{ background: COLORS.coral, color: "white" }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
                 {t("submitComplaint")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFilterModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowFilterModal(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand, maxHeight: "85vh" }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl flex flex-col">
+            <div style={{ borderColor: COLORS.line }} className="flex items-center justify-between px-5 py-4 border-b">
+              <button onClick={() => setShowFilterModal(false)} style={{ color: COLORS.muted }}>
+                <X size={20} />
+              </button>
+              <p style={{ color: COLORS.night }} className="text-base font-bold">{t("filter")}</p>
+              <button
+                onClick={() => {
+                  setFilterTags({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
+                  setTimeOfDayFilter(null);
+                  setSortBy("time");
+                }}
+                style={{ color: COLORS.teal }}
+                className="text-xs font-bold"
+              >
+                {t("clearAll")}
+              </button>
+            </div>
+
+            <div className="overflow-y-auto px-5 py-4" style={{ flex: 1 }}>
+              <p style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("sortByHeading")}</p>
+              <div className="space-y-2 mb-5">
+                {[
+                  { key: "time", label: t("earliestDeparture"), icon: Clock },
+                  { key: "price", label: t("lowestPrice"), icon: MapPin },
+                  { key: "rating", label: t("sortRating"), icon: Star },
+                ].map((s) => {
+                  const SIcon = s.icon;
+                  return (
+                    <button
+                      key={s.key}
+                      onClick={() => setSortBy(s.key)}
+                      className="w-full flex items-center justify-between py-1.5"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          style={{ borderColor: sortBy === s.key ? COLORS.night : COLORS.line, background: sortBy === s.key ? COLORS.night : "transparent" }}
+                          className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                        >
+                          {sortBy === s.key && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </span>
+                        <span style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{s.label}</span>
+                      </div>
+                      <SIcon size={16} color={COLORS.muted} />
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={{ borderColor: COLORS.line }} className="border-t pt-4 mb-5">
+                <p style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("departureTime")}</p>
+                <div className="space-y-2">
+                  {[
+                    { key: "morning", label: t("morning") },
+                    { key: "afternoon", label: t("afternoon") },
+                    { key: "evening", label: t("evening") },
+                    { key: "night", label: t("night") },
+                  ].map((tod) => {
+                    const count = filteredVehicles.filter((v) => getTimeOfDay(v.timestamp) === tod.key).length;
+                    const active = timeOfDayFilter === tod.key;
+                    return (
+                      <button
+                        key={tod.key}
+                        onClick={() => setTimeOfDayFilter(active ? null : tod.key)}
+                        className="w-full flex items-center justify-between py-1.5"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            style={{ borderColor: active ? COLORS.night : COLORS.line, background: active ? COLORS.night : "transparent" }}
+                            className="w-4 h-4 rounded shrink-0 border-2 flex items-center justify-center"
+                          >
+                            {active && <Check size={11} color="white" />}
+                          </span>
+                          <span style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{tod.label}</span>
+                        </div>
+                        <span style={{ color: COLORS.muted }} className="text-xs">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ borderColor: COLORS.line }} className="border-t pt-4">
+                <p style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("amenities")}</p>
+                <div className="space-y-2">
+                  {[
+                    { key: "womenOnly", label: t("womenOnly") },
+                    { key: "nonSmoker", label: t("nonSmoker") },
+                    { key: "ac", label: t("ac") },
+                    { key: "luggage", label: t("luggage") },
+                  ].map((tagItem) => {
+                    const count = vehicles.filter((v) => v.mode === mode && v.type === search.type && v.tags && v.tags[tagItem.key]).length;
+                    const active = filterTags[tagItem.key];
+                    return (
+                      <button
+                        key={tagItem.key}
+                        onClick={() => setFilterTags({ ...filterTags, [tagItem.key]: !filterTags[tagItem.key] })}
+                        className="w-full flex items-center justify-between py-1.5"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            style={{ borderColor: active ? COLORS.night : COLORS.line, background: active ? COLORS.night : "transparent" }}
+                            className="w-4 h-4 rounded shrink-0 border-2 flex items-center justify-center"
+                          >
+                            {active && <Check size={11} color="white" />}
+                          </span>
+                          <span style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{tagItem.label}</span>
+                        </div>
+                        <span style={{ color: COLORS.muted }} className="text-xs">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ borderColor: COLORS.line }} className="p-4 border-t">
+              <button onClick={() => setShowFilterModal(false)} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-xl py-3 text-sm font-bold shadow-md">
+                {t("showResults")} ({filteredVehicles.length})
               </button>
             </div>
           </div>
