@@ -1174,6 +1174,9 @@ export default function Margshri() {
       <span style={{ color: COLORS.night, letterSpacing: "-0.02em" }} className="text-xl font-bold">
         Margshri
       </span>
+      <span style={{ background: COLORS.amber, color: COLORS.night }} className="text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+        शुभारंभ
+      </span>
     </button>
   );
 
@@ -1239,6 +1242,9 @@ export default function Margshri() {
             </div>
             <span style={{ color: COLORS.night, letterSpacing: "-0.03em" }} className="text-xl sm:text-2xl font-bold">
               Margshri
+            </span>
+            <span style={{ background: COLORS.amber, color: COLORS.night }} className="text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full">
+              शुभारंभ
             </span>
           </div>
           <button onClick={toggleLang} style={{ borderColor: COLORS.line, color: COLORS.night, background: "white" }} className="border rounded-full px-3 py-1.5 text-xs font-bold shadow-sm">
