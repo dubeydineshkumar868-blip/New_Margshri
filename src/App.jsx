@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -181,6 +181,12 @@ const TRANSLATIONS = {
     stepVerifyDesc: "Show your ID to each other when you meet.",
     stepRide: "Ride & Review",
     stepRideDesc: "Share the journey, then rate each other.",
+    appFeedback: "App Feedback",
+    appFeedbackDesc: "Have a suggestion or found something confusing? Tell us — this goes straight to the admin, not about any specific person.",
+    writeYourFeedback: "Write your feedback or suggestion...",
+    submitFeedback: "Submit Feedback",
+    feedbackTab: "Feedback",
+    noFeedbackAdmin: "No feedback yet.",
     fullRoute: "(full route)",
     yourFare: "Your fare",
     isReady: "is ready!",
@@ -354,6 +360,12 @@ const TRANSLATIONS = {
     stepVerifyDesc: "मिलते समय एक-दूसरे को अपनी ID दिखाएं।",
     stepRide: "राइड और रेटिंग",
     stepRideDesc: "यात्रा साझा करें, फिर एक-दूसरे को रेट करें।",
+    appFeedback: "ऐप फीडबैक",
+    appFeedbackDesc: "कोई सुझाव है या कुछ समझ नहीं आया? हमें बताएं — यह सीधे एडमिन के पास जाता है, किसी खास व्यक्ति के बारे में नहीं।",
+    writeYourFeedback: "अपना फीडबैक या सुझाव लिखें...",
+    submitFeedback: "फीडबैक सबमिट करें",
+    feedbackTab: "फीडबैक",
+    noFeedbackAdmin: "अभी कोई फीडबैक नहीं है।",
     fullRoute: "(पूरा रूट)",
     yourFare: "आपका किराया",
     isReady: "तैयार है!",
@@ -378,6 +390,7 @@ const REVIEWS_COLLECTION = "reviews";
 const PROFILES_COLLECTION = "profiles";
 const COMPLAINTS_COLLECTION = "complaints";
 const BLOCKS_COLLECTION = "blockedUsers";
+const APP_FEEDBACK_COLLECTION = "appFeedback";
 
 // Only these Google account emails can see the Admin Panel.
 // To add or change admins, just edit this list and redeploy.
@@ -653,6 +666,9 @@ function MargshriApp() {
   const [reviews, setReviews] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [blockedUsers, setBlockedUsers] = useState([]);
+  const [appFeedback, setAppFeedback] = useState([]);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
   const [adminTab, setAdminTab] = useState("overview");
   const [activeReport, setActiveReport] = useState(null); // { requestId, aboutName }
   const [reportText, setReportText] = useState("");
@@ -803,6 +819,11 @@ function MargshriApp() {
       (snap) => setBlockedUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => {}
     );
+    const unsubFeedback = onSnapshot(
+      collection(db, APP_FEEDBACK_COLLECTION),
+      (snap) => setAppFeedback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      () => {}
+    );
     return () => {
       unsubVehicles();
       unsubRequests();
@@ -811,6 +832,7 @@ function MargshriApp() {
       unsubReviews();
       unsubComplaints();
       unsubBlocks();
+      unsubFeedback();
     };
   }, []);
 
@@ -1089,6 +1111,27 @@ function MargshriApp() {
 
   const unblockUser = (email) => {
     deleteDoc(doc(db, BLOCKS_COLLECTION, email)).catch(() => {});
+  };
+
+  const submitFeedback = () => {
+    if (!feedbackText.trim()) return;
+    const newFeedback = {
+      userName: name || "Guest",
+      userEmail: user?.email || null,
+      message: feedbackText.trim(),
+      createdAt: Date.now(),
+    };
+    setAppFeedback((prev) => [...prev, { id: "temp-" + Date.now(), ...newFeedback }]);
+    addDoc(collection(db, APP_FEEDBACK_COLLECTION), newFeedback).catch(() => {
+      setErrorMsg("Feedback submit nahi hua, dubara try karo.");
+    });
+    setFeedbackText("");
+    setShowFeedbackModal(false);
+  };
+
+  const deleteFeedback = (id) => {
+    setAppFeedback((prev) => prev.filter((f) => f.id !== id));
+    deleteDoc(doc(db, APP_FEEDBACK_COLLECTION, id)).catch(() => {});
   };
 
   const deleteRequestAdmin = (id) => {
@@ -1416,13 +1459,17 @@ function MargshriApp() {
             {t("safetyLink")}
           </button>
 
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="flex items-center justify-center gap-3 mb-4 flex-wrap">
             <button onClick={() => setScreen("privacy")} style={{ color: COLORS.muted }} className="text-xs underline">
               Privacy Policy
             </button>
             <span style={{ color: COLORS.line }}>|</span>
             <button onClick={() => setScreen("terms")} style={{ color: COLORS.muted }} className="text-xs underline">
               Terms of Service
+            </button>
+            <span style={{ color: COLORS.line }}>|</span>
+            <button onClick={() => requireAuth(() => setShowFeedbackModal(true))} style={{ color: COLORS.muted }} className="text-xs underline">
+              {t("appFeedback")}
             </button>
           </div>
 
@@ -1476,6 +1523,14 @@ function MargshriApp() {
                 className="border rounded-full px-3 py-1.5 text-xs font-semibold"
               >
                 {myPhone ? `📞 ${myPhone}` : t("addPhone")}
+              </button>
+              <button
+                onClick={() => setShowFeedbackModal(true)}
+                style={{ color: COLORS.muted, borderColor: COLORS.line }}
+                className="border rounded-full p-2"
+                title={t("appFeedback")}
+              >
+                <Lightbulb size={14} />
               </button>
               <button onClick={logOut} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full px-3 py-1.5 text-xs font-semibold">
                 {t("signOut")}
@@ -2229,6 +2284,7 @@ function MargshriApp() {
               { key: "bookings", label: `${t("bookingsTab")} (${requests.length})` },
               { key: "complaints", label: `${t("complaintsTab")} (${complaints.filter((c) => c.status === "open").length})` },
               { key: "blocked", label: `${t("blockedTab")} (${blockedUsers.length})` },
+              { key: "feedback", label: `${t("feedbackTab")} (${appFeedback.length})` },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -2443,6 +2499,26 @@ function MargshriApp() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {adminTab === "feedback" && (
+            <div className="space-y-2">
+              {appFeedback.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noFeedbackAdmin")}</p>}
+              {appFeedback
+                .slice()
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+                .map((f) => (
+                  <div key={f.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
+                    <div className="flex justify-between items-start mb-1">
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{f.userName} {f.userEmail && <span style={{ color: COLORS.muted }} className="font-normal">· {f.userEmail}</span>}</p>
+                      <button onClick={() => deleteFeedback(f.id)} style={{ color: COLORS.coral }} className="text-xs font-semibold shrink-0">
+                        {t("delete")}
+                      </button>
+                    </div>
+                    <p style={{ color: COLORS.muted }} className="text-xs">{f.message}</p>
+                  </div>
+                ))}
             </div>
           )}
         </div>
@@ -2794,6 +2870,34 @@ function MargshriApp() {
                 {t("close")}
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {showFeedbackModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowFeedbackModal(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
+            <div className="flex items-center gap-2 mb-1">
+              <Lightbulb size={20} color={COLORS.amber} />
+              <p style={{ color: COLORS.night }} className="text-sm font-bold">{t("appFeedback")}</p>
+            </div>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-4">{t("appFeedbackDesc")}</p>
+            <textarea
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder={t("writeYourFeedback")}
+              style={{ borderColor: COLORS.line }}
+              className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-4 resize-none"
+              rows={4}
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowFeedbackModal(false)} style={{ borderColor: COLORS.line, color: COLORS.muted }} className="flex-1 border rounded-lg py-2.5 text-sm font-bold">
+                {t("cancel")}
+              </button>
+              <button onClick={submitFeedback} style={{ background: COLORS.amber, color: COLORS.night }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
+                {t("submitFeedback")}
+              </button>
+            </div>
           </div>
         </div>
       )}
