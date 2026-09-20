@@ -55,6 +55,14 @@ const TRANSLATIONS = {
     seats: "Seats",
     pricePerSeat: "Price per seat (₹)",
     perSeatSuffix: "₹/seat",
+    yourOffer: "Your offer:",
+    riderOffered: "Rider offered",
+    listedWas: "listed",
+    durationPlaceholder: "Estimated duration e.g. 3 hours",
+    durationHint: "How long will this ride take? Helps riders know when they'll arrive.",
+    estimatedArrival: "Estimated arrival",
+    totalEarnings: "Total Earnings",
+    fromCompletedRides: "from completed rides",
     postingFor: "Posting for:",
     modeChangeNote: "mode (change from top toggle)",
     routeType: "Route type",
@@ -234,6 +242,14 @@ const TRANSLATIONS = {
     seats: "सीटें",
     pricePerSeat: "प्रति सीट किराया (₹)",
     perSeatSuffix: "₹/सीट",
+    yourOffer: "आपका ऑफर:",
+    riderOffered: "यात्री ने ऑफर किया",
+    listedWas: "लिस्टेड था",
+    durationPlaceholder: "अनुमानित समय जैसे 3 घंटे",
+    durationHint: "इस राइड में कितना समय लगेगा? इससे यात्रियों को पता चलेगा वे कब पहुंचेंगे।",
+    estimatedArrival: "अनुमानित पहुंचने का समय",
+    totalEarnings: "कुल कमाई",
+    fromCompletedRides: "पूरी हुई राइड्स से",
     postingFor: "पोस्ट कर रहे हैं:",
     modeChangeNote: "मोड के लिए (ऊपर से बदलें)",
     routeType: "रूट का प्रकार",
@@ -697,10 +713,11 @@ function MargshriApp() {
   const [riderTab, setRiderTab] = useState("active");
   const [ownerTab, setOwnerTab] = useState("active");
   const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
-  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
   const [rform, setRform] = useState({ from: "", to: "", date: "", clock: "", seatsNeeded: 1 });
   const [seatCounts, setSeatCounts] = useState({});
   const [destSelections, setDestSelections] = useState({});
+  const [offerPrices, setOfferPrices] = useState({});
 
   const getSelectedDest = (v) => {
     if (destSelections[v.id]) return destSelections[v.id];
@@ -710,6 +727,11 @@ function MargshriApp() {
       if (matchedStop) return { name: matchedStop.name, price: matchedStop.price };
     }
     return { name: v.to, price: v.price };
+  };
+
+  const getOfferPrice = (v) => {
+    const listed = getSelectedDest(v).price;
+    return offerPrices[v.id] !== undefined ? offerPrices[v.id] : listed;
   };
 
   const getSeatCount = (vehicleId, max) => Math.min(seatCounts[vehicleId] || 1, max);
@@ -887,6 +909,7 @@ function MargshriApp() {
   const sendRequest = (vehicle) => {
     const seatsRequested = getSeatCount(vehicle.id, vehicle.seats);
     const dest = getSelectedDest(vehicle);
+    const offeredFare = getOfferPrice(vehicle);
     return withSync(async () => {
       const newReq = {
         riderName: name,
@@ -896,7 +919,8 @@ function MargshriApp() {
         vehicleId: vehicle.id,
         from: vehicle.from,
         to: dest.name,
-        fare: dest.price,
+        fare: offeredFare,
+        listedFare: dest.price,
         mode: vehicle.mode,
         type: vehicle.type,
         owner: vehicle.owner,
@@ -950,6 +974,7 @@ function MargshriApp() {
         totalSeats: Number(vform.seats) || 1,
         time: formatDateTime(vform.date, vform.clock),
         timestamp: new Date(`${vform.date}T${vform.clock}`).getTime() || 0,
+        duration: vform.duration.trim(),
         price: Number(vform.price) || 0,
         tags: vform.tags,
         routeType: vform.routeType,
@@ -957,7 +982,7 @@ function MargshriApp() {
       };
       // Show it immediately — don't make the user wait for the network round-trip
       setVehicles((prev) => [...prev, { id: "temp-" + Date.now(), ...newVehicle }]);
-      setVform({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+      setVform({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
       addDoc(collection(db, VEHICLES_COLLECTION), newVehicle).catch(() => {
         setErrorMsg("Vehicle save nahi ho paya, dubara try karo.");
       });
@@ -1207,6 +1232,9 @@ function MargshriApp() {
   const incoming = requests.filter((r) => myVehicleIds.includes(r.vehicleId));
   const incomingActive = incoming.filter((r) => ["pending", "accepted"].includes(r.status));
   const incomingHistory = incoming.filter((r) => ["completed", "rejected", "cancelled", "noshow"].includes(r.status));
+  const totalEarnings = incoming
+    .filter((r) => r.status === "completed")
+    .reduce((sum, r) => sum + (r.fare || 0) * (r.seats || 1), 0);
   const myRequests = requests.filter((r) => r.riderName === name);
   const myRequestsActive = myRequests.filter((r) => ["pending", "accepted"].includes(r.status));
   const myRequestsHistory = myRequests.filter((r) => ["completed", "rejected", "cancelled", "noshow"].includes(r.status));
@@ -1641,7 +1669,7 @@ function MargshriApp() {
                             </button>
                           )}
                         </p>
-                        <p style={{ color: COLORS.muted }} className="text-xs flex items-center gap-1"><Clock size={11} /> {v.time}</p>
+                        <p style={{ color: COLORS.muted }} className="text-xs flex items-center gap-1"><Clock size={11} /> {v.time}{v.duration ? ` · ~${v.duration}` : ""}</p>
                         {getReliability(v.owner) && (
                           <p style={{ color: getReliability(v.owner).pct >= 80 ? COLORS.teal : COLORS.coral }} className="text-xs font-semibold flex items-center gap-1 mt-0.5">
                             <ShieldCheck size={11} /> {getReliability(v.owner).pct}% reliable ({getReliability(v.owner).total} rides)
@@ -1674,6 +1702,11 @@ function MargshriApp() {
                             const stop = v.stops.find((s) => s.name === e.target.value);
                             const dest = stop ? { name: stop.name, price: stop.price } : { name: v.to, price: v.price };
                             setDestSelections((prev) => ({ ...prev, [v.id]: dest }));
+                            setOfferPrices((prev) => {
+                              const updated = { ...prev };
+                              delete updated[v.id];
+                              return updated;
+                            });
                           }}
                           style={{ borderColor: COLORS.line, color: COLORS.charcoal }}
                           className="flex-1 min-w-0 border rounded-lg px-2 py-1.5 text-xs outline-none"
@@ -1698,6 +1731,27 @@ function MargshriApp() {
                           {s.name} · ₹{s.price}
                         </span>
                       ))}
+                    </div>
+                  )}
+                  {!already && (
+                    <div className="flex items-center justify-between gap-2 mt-3">
+                      <span style={{ color: COLORS.muted }} className="text-xs shrink-0">{t("yourOffer")}</span>
+                      <div className="flex items-center gap-2">
+                        {getOfferPrice(v) !== getSelectedDest(v).price && (
+                          <span style={{ color: COLORS.muted, textDecoration: "line-through" }} className="text-xs">₹{getSelectedDest(v).price}</span>
+                        )}
+                        <div className="relative">
+                          <span style={{ color: COLORS.muted }} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none">₹</span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={getOfferPrice(v)}
+                            onChange={(e) => setOfferPrices((prev) => ({ ...prev, [v.id]: Number(e.target.value) || 0 }))}
+                            style={{ borderColor: COLORS.line, color: COLORS.charcoal }}
+                            className="w-20 border rounded-lg pl-5 pr-2 py-1 text-xs font-bold outline-none"
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
                   <div className="flex justify-between items-center mt-3">
@@ -1854,6 +1908,18 @@ function MargshriApp() {
 
       {screen === "owner" && dataLoaded && (
         <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+          {totalEarnings > 0 && (
+            <div style={{ background: COLORS.night }} className="rounded-2xl p-5 mb-6 flex items-center gap-4 shadow-md">
+              <div style={{ background: COLORS.amber }} className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                <Wallet size={22} color={COLORS.night} />
+              </div>
+              <div>
+                <p style={{ color: "rgba(255,255,255,0.7)" }} className="text-xs font-semibold">{t("totalEarnings")}</p>
+                <p style={{ color: "white" }} className="text-2xl font-bold">₹{totalEarnings.toLocaleString("en-IN")}</p>
+                <p style={{ color: "rgba(255,255,255,0.5)" }} className="text-[11px]">{t("fromCompletedRides")}</p>
+              </div>
+            </div>
+          )}
           <SectionHeading icon={Car}>{t("postYourVehicle")}</SectionHeading>
           <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-8">
             <div className="flex gap-2 mb-3">
@@ -1882,7 +1948,9 @@ function MargshriApp() {
                 <input type="number" placeholder={t("pricePerSeat")} value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="w-full border rounded-lg pl-3 pr-16 py-2 text-sm outline-none" />
                 <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("perSeatSuffix")}</span>
               </div>
+              <input type="text" placeholder={t("durationPlaceholder")} value={vform.duration} onChange={(e) => setVform({ ...vform, duration: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
             </div>
+            <p style={{ color: COLORS.muted }} className="text-[11px] -mt-2 mb-3">{t("durationHint")}</p>
             <p style={{ color: COLORS.muted }} className="text-xs mb-3">{t("postingFor")} <b style={{ color: COLORS.charcoal }}>{mode === "local" ? t("local") : t("longDistance")}</b> {t("modeChangeNote")}</p>
 
             <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold mb-1.5">{t("routeType")}</p>
@@ -2062,6 +2130,15 @@ function MargshriApp() {
                         )}
                       </p>
                       <p style={{ color: COLORS.muted }} className="text-xs">{r.from} <ArrowRight size={11} className="inline" /> {r.to} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</p>
+                      {r.fare != null && (
+                        r.listedFare != null && r.fare !== r.listedFare ? (
+                          <p style={{ color: "#B4700C" }} className="text-xs font-bold mt-0.5">
+                            {t("riderOffered")}: ₹{r.fare} <span style={{ color: COLORS.muted, fontWeight: 400 }}>({t("listedWas")} ₹{r.listedFare})</span>
+                          </p>
+                        ) : (
+                          <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold mt-0.5">₹{r.fare}</p>
+                        )
+                      )}
                     </div>
                   </div>
                 {r.status === "pending" ? (
