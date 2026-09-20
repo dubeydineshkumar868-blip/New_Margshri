@@ -56,9 +56,12 @@ const TRANSLATIONS = {
     pricePerSeat: "Price per seat (₹)",
     perSeatSuffix: "₹/seat",
     yourOffer: "Your offer:",
+    expired: "Expired",
     riderOffered: "Rider offered",
     listedWas: "listed",
     durationPlaceholder: "Estimated duration e.g. 3 hours",
+    vehicleNamePlaceholder: "Vehicle name/model e.g. Swift Dzire",
+    vehicleNumberPlaceholder: "Vehicle number e.g. UP16 AB 1234",
     durationHint: "How long will this ride take? Helps riders know when they'll arrive.",
     estimatedArrival: "Estimated arrival",
     totalEarnings: "Total Earnings",
@@ -243,9 +246,12 @@ const TRANSLATIONS = {
     pricePerSeat: "प्रति सीट किराया (₹)",
     perSeatSuffix: "₹/सीट",
     yourOffer: "आपका ऑफर:",
+    expired: "समय समाप्त",
     riderOffered: "यात्री ने ऑफर किया",
     listedWas: "लिस्टेड था",
     durationPlaceholder: "अनुमानित समय जैसे 3 घंटे",
+    vehicleNamePlaceholder: "वाहन का नाम/मॉडल जैसे Swift Dzire",
+    vehicleNumberPlaceholder: "वाहन नंबर जैसे UP16 AB 1234",
     durationHint: "इस राइड में कितना समय लगेगा? इससे यात्रियों को पता चलेगा वे कब पहुंचेंगे।",
     estimatedArrival: "अनुमानित पहुंचने का समय",
     totalEarnings: "कुल कमाई",
@@ -713,7 +719,7 @@ function MargshriApp() {
   const [riderTab, setRiderTab] = useState("active");
   const [ownerTab, setOwnerTab] = useState("active");
   const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
-  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
   const [rform, setRform] = useState({ from: "", to: "", date: "", clock: "", seatsNeeded: 1 });
   const [seatCounts, setSeatCounts] = useState({});
   const [destSelections, setDestSelections] = useState({});
@@ -936,6 +942,17 @@ function MargshriApp() {
 
   const respond = (id, status) => {
     const req = requests.find((r) => r.id === id);
+
+    // Guard: don't allow accepting more seats than are actually left on the vehicle
+    if (status === "accepted" && req) {
+      const vehicle = vehicles.find((v) => v.id === req.vehicleId);
+      const seatsBooked = req.seats || 1;
+      if (vehicle && seatsBooked > (vehicle.seats || 0)) {
+        setErrorMsg(`Sirf ${vehicle.seats || 0} seat(s) bachi hain, is request mein ${seatsBooked} maangi gayi hain — pehle isko reject karo ya rider se seats kam karne ko kaho.`);
+        return;
+      }
+    }
+
     setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     updateDoc(doc(db, REQUESTS_COLLECTION, id), { status }).catch(() => {
       setErrorMsg("Status save nahi ho paya, dubara try karo.");
@@ -967,6 +984,8 @@ function MargshriApp() {
         ownerPhoto: user?.photoURL || null,
         ownerPhone: myPhone || null,
         type: vform.type,
+        vehicleName: vform.vehicleName.trim(),
+        vehicleNumber: vform.vehicleNumber.trim().toUpperCase(),
         from: vform.from,
         to: vform.to,
         mode,
@@ -982,7 +1001,7 @@ function MargshriApp() {
       };
       // Show it immediately — don't make the user wait for the network round-trip
       setVehicles((prev) => [...prev, { id: "temp-" + Date.now(), ...newVehicle }]);
-      setVform({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+      setVform({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
       addDoc(collection(db, VEHICLES_COLLECTION), newVehicle).catch(() => {
         setErrorMsg("Vehicle save nahi ho paya, dubara try karo.");
       });
@@ -1256,6 +1275,7 @@ function MargshriApp() {
         v.mode === mode &&
         v.type === search.type &&
         v.seats > 0 &&
+        (!v.timestamp || v.timestamp >= Date.now()) &&
         (search.from === "" || v.from.toLowerCase().includes(search.from.toLowerCase())) &&
         (search.to === "" ||
           v.to.toLowerCase().includes(search.to.toLowerCase()) ||
@@ -1669,6 +1689,11 @@ function MargshriApp() {
                             </button>
                           )}
                         </p>
+                        {(v.vehicleName || v.vehicleNumber) && (
+                          <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold">
+                            {v.vehicleName}{v.vehicleName && v.vehicleNumber ? " · " : ""}{v.vehicleNumber}
+                          </p>
+                        )}
                         <p style={{ color: COLORS.muted }} className="text-xs flex items-center gap-1"><Clock size={11} /> {v.time}{v.duration ? ` · ~${v.duration}` : ""}</p>
                         {getReliability(v.owner) && (
                           <p style={{ color: getReliability(v.owner).pct >= 80 ? COLORS.teal : COLORS.coral }} className="text-xs font-semibold flex items-center gap-1 mt-0.5">
@@ -1938,6 +1963,8 @@ function MargshriApp() {
             <div className="grid grid-cols-2 gap-3 mb-3">
               <LocationInput placeholder={t("from")} value={vform.from} onChange={(v) => setVform({ ...vform, from: v })} />
               <LocationInput placeholder={t("to")} value={vform.to} onChange={(v) => setVform({ ...vform, to: v })} />
+              <input type="text" placeholder={t("vehicleNamePlaceholder")} value={vform.vehicleName} onChange={(e) => setVform({ ...vform, vehicleName: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
+              <input type="text" placeholder={t("vehicleNumberPlaceholder")} value={vform.vehicleNumber} onChange={(e) => setVform({ ...vform, vehicleNumber: e.target.value })} style={{ borderColor: COLORS.line, textTransform: "uppercase" }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
               <input type="date" value={vform.date} onChange={(e) => setVform({ ...vform, date: e.target.value })} style={{ borderColor: COLORS.line, color: vform.date ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
               <input type="time" value={vform.clock} onChange={(e) => setVform({ ...vform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: vform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
               <div className="relative">
@@ -2202,9 +2229,18 @@ function MargshriApp() {
 
           <SectionHeading icon={Car} size="sm">{t("myPostedVehicles")}</SectionHeading>
           <div className="space-y-2">
-            {vehicles.filter((v) => v.owner === name).map((v) => (
+            {vehicles.filter((v) => v.owner === name).map((v) => {
+              const isExpired = v.timestamp && v.timestamp < Date.now();
+              return (
               <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 text-sm flex justify-between items-center">
-                <span style={{ color: COLORS.charcoal }}>{v.from} → {v.to} · {v.time}</span>
+                <span style={{ color: COLORS.charcoal }}>
+                  {v.from} → {v.to} · {v.time}
+                  {isExpired && (
+                    <span style={{ background: "#FBE9E7", color: COLORS.coral }} className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ml-2 align-middle">
+                      {t("expired")}
+                    </span>
+                  )}
+                </span>
                 <div className="flex items-center gap-3">
                   <span style={{ color: v.seats === 0 ? COLORS.coral : COLORS.muted }} className="font-semibold">
                     {v.seats} of {v.totalSeats || v.seats} {t("seatsLeft")} · ₹{v.price}
@@ -2214,7 +2250,8 @@ function MargshriApp() {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
