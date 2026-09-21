@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
-import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 
 const COLORS = {
@@ -198,6 +198,11 @@ const TRANSLATIONS = {
     submitFeedback: "Submit Feedback",
     feedbackTab: "Feedback",
     noFeedbackAdmin: "No feedback yet.",
+    usersTab: "Users",
+    totalUsers: "Total Users",
+    noUsersAdmin: "No users yet.",
+    joinedLabel: "Joined:",
+    lastLoginLabel: "Last seen:",
     fullRoute: "(full route)",
     yourFare: "Your fare",
     isReady: "is ready!",
@@ -388,6 +393,11 @@ const TRANSLATIONS = {
     submitFeedback: "फीडबैक सबमिट करें",
     feedbackTab: "फीडबैक",
     noFeedbackAdmin: "अभी कोई फीडबैक नहीं है।",
+    usersTab: "यूज़र्स",
+    totalUsers: "कुल यूज़र्स",
+    noUsersAdmin: "अभी कोई यूज़र नहीं है।",
+    joinedLabel: "जुड़े:",
+    lastLoginLabel: "आखिरी बार:",
     fullRoute: "(पूरा रूट)",
     yourFare: "आपका किराया",
     isReady: "तैयार है!",
@@ -413,6 +423,7 @@ const PROFILES_COLLECTION = "profiles";
 const COMPLAINTS_COLLECTION = "complaints";
 const BLOCKS_COLLECTION = "blockedUsers";
 const APP_FEEDBACK_COLLECTION = "appFeedback";
+const USERS_COLLECTION = "users";
 
 // Only these Google account emails can see the Admin Panel.
 // To add or change admins, just edit this list and redeploy.
@@ -689,6 +700,7 @@ function MargshriApp() {
   const [complaints, setComplaints] = useState([]);
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [appFeedback, setAppFeedback] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [adminTab, setAdminTab] = useState("overview");
@@ -758,9 +770,25 @@ function MargshriApp() {
 
   // Real login state from Firebase Auth — persists automatically across visits.
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setAuthLoading(false);
+      if (u) {
+        try {
+          const ref = doc(db, USERS_COLLECTION, u.uid);
+          const snap = await getDoc(ref);
+          const data = {
+            name: u.displayName || u.email || "User",
+            email: u.email || null,
+            photoURL: u.photoURL || null,
+            lastLogin: Date.now(),
+          };
+          if (!snap.exists()) data.createdAt = Date.now();
+          await setDoc(ref, data, { merge: true });
+        } catch {
+          // non-critical — never block login on this
+        }
+      }
     });
     return unsub;
   }, []);
@@ -863,6 +891,20 @@ function MargshriApp() {
       unsubFeedback();
     };
   }, []);
+
+  // Only admins are allowed (by security rules) to read the full users list
+  useEffect(() => {
+    if (!user || !ADMIN_EMAILS.includes(user.email)) {
+      setAllUsers([]);
+      return;
+    }
+    const unsub = onSnapshot(
+      collection(db, USERS_COLLECTION),
+      (snap) => setAllUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      () => {}
+    );
+    return unsub;
+  }, [user]);
 
   const signInWithGoogle = () => {
     signInWithPopup(auth, googleProvider).catch((err) => {
@@ -2399,6 +2441,7 @@ function MargshriApp() {
               { key: "complaints", label: `${t("complaintsTab")} (${complaints.filter((c) => c.status === "open").length})` },
               { key: "blocked", label: `${t("blockedTab")} (${blockedUsers.length})` },
               { key: "feedback", label: `${t("feedbackTab")} (${appFeedback.length})` },
+              { key: "users", label: `${t("usersTab")} (${allUsers.length})` },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -2420,6 +2463,7 @@ function MargshriApp() {
                 { label: t("openComplaints"), value: complaints.filter((c) => c.status === "open").length },
                 { label: t("blockedUsers"), value: blockedUsers.length },
                 { label: t("totalReviews"), value: reviews.length },
+                { label: t("totalUsers"), value: allUsers.length },
               ].map((s, i) => (
                 <div key={i} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl p-4 text-center">
                   <p style={{ color: COLORS.night }} className="text-2xl font-bold">{s.value}</p>
@@ -2631,6 +2675,34 @@ function MargshriApp() {
                       </button>
                     </div>
                     <p style={{ color: COLORS.muted }} className="text-xs">{f.message}</p>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {adminTab === "users" && (
+            <div className="space-y-2">
+              {allUsers.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noUsersAdmin")}</p>}
+              {allUsers
+                .slice()
+                .sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0))
+                .map((u) => (
+                  <div key={u.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 flex items-center gap-3">
+                    <div style={{ background: COLORS.night }} className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                      {u.photoURL ? <img src={u.photoURL} alt="" className="w-full h-full object-cover" /> : <User size={16} color="white" />}
+                    </div>
+                    <div className="flex-1">
+                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{u.name}</p>
+                      <p style={{ color: COLORS.muted }} className="text-xs">{u.email}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p style={{ color: COLORS.muted }} className="text-[10px]">
+                        {t("joinedLabel")} {u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-IN") : "—"}
+                      </p>
+                      <p style={{ color: COLORS.muted }} className="text-[10px]">
+                        {t("lastLoginLabel")} {u.lastLogin ? new Date(u.lastLogin).toLocaleDateString("en-IN") : "—"}
+                      </p>
+                    </div>
                   </div>
                 ))}
             </div>
