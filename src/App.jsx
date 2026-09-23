@@ -647,8 +647,20 @@ function MargshriApp() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const errorTimerRef = React.useRef(null);
+  const showError = (msg) => {
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    setErrorMsg(msg);
+    errorTimerRef.current = setTimeout(() => setErrorMsg(""), 5000);
+  };
 
   const [screen, setScreen] = useState("landing");
+
+  // Clear any lingering error banner whenever the person navigates to a different screen
+  useEffect(() => {
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    setErrorMsg("");
+  }, [screen]);
   const [authLoading, setAuthLoading] = useState(true);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
@@ -818,7 +830,7 @@ function MargshriApp() {
     if (!user || !phoneInput.trim()) return;
     setMyPhone(phoneInput.trim());
     setDoc(doc(db, PROFILES_COLLECTION, user.uid), { phone: phoneInput.trim() }, { merge: true }).catch(() => {
-      setErrorMsg("Phone number save nahi hua, dubara try karo.");
+      showError("Phone number save nahi hua, dubara try karo.");
     });
     setShowPhoneModal(false);
     setPhoneInput("");
@@ -841,29 +853,29 @@ function MargshriApp() {
         }
       },
       () => {
-        setErrorMsg("Firebase se connect nahi ho paya. Config aur Firestore setup check karo.");
+        showError("Firebase se connect nahi ho paya. Config aur Firestore setup check karo.");
         setDataLoaded(true);
       }
     );
     const unsubRequests = onSnapshot(
       collection(db, REQUESTS_COLLECTION),
       (snap) => setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      () => setErrorMsg("Requests load nahi ho paaye.")
+      () => showError("Requests load nahi ho paaye.")
     );
     const unsubRiderPosts = onSnapshot(
       collection(db, RIDER_POSTS_COLLECTION),
       (snap) => setRiderPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      () => setErrorMsg("Rider requests load nahi ho paaye.")
+      () => showError("Rider requests load nahi ho paaye.")
     );
     const unsubMessages = onSnapshot(
       collection(db, MESSAGES_COLLECTION),
       (snap) => setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      () => setErrorMsg("Messages load nahi ho paaye.")
+      () => showError("Messages load nahi ho paaye.")
     );
     const unsubReviews = onSnapshot(
       collection(db, REVIEWS_COLLECTION),
       (snap) => setReviews(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      () => setErrorMsg("Reviews load nahi ho paaye.")
+      () => showError("Reviews load nahi ho paaye.")
     );
     const unsubComplaints = onSnapshot(
       collection(db, COMPLAINTS_COLLECTION),
@@ -908,7 +920,7 @@ function MargshriApp() {
 
   const signInWithGoogle = () => {
     signInWithPopup(auth, googleProvider).catch((err) => {
-      setErrorMsg(`Login error: ${err.code || err.message}`);
+      showError(`Login error: ${err.code || err.message}`);
     });
   };
 
@@ -948,7 +960,7 @@ function MargshriApp() {
     try {
       await fn();
     } catch {
-      setErrorMsg("Save nahi ho paya, dubara try karo.");
+      showError("Save nahi ho paya, dubara try karo.");
     } finally {
       setSyncing(false);
     }
@@ -977,7 +989,7 @@ function MargshriApp() {
       };
       setRequests((prev) => [...prev, { id: "temp-" + Date.now(), ...newReq }]);
       addDoc(collection(db, REQUESTS_COLLECTION), newReq).catch(() => {
-        setErrorMsg("Request save nahi ho paya, dubara try karo.");
+        showError("Request save nahi ho paya, dubara try karo.");
       });
     });
   };
@@ -990,14 +1002,14 @@ function MargshriApp() {
       const vehicle = vehicles.find((v) => v.id === req.vehicleId);
       const seatsBooked = req.seats || 1;
       if (vehicle && seatsBooked > (vehicle.seats || 0)) {
-        setErrorMsg(`Sirf ${vehicle.seats || 0} seat(s) bachi hain, is request mein ${seatsBooked} maangi gayi hain — pehle isko reject karo ya rider se seats kam karne ko kaho.`);
+        showError(`Sirf ${vehicle.seats || 0} seat(s) bachi hain, is request mein ${seatsBooked} maangi gayi hain — pehle isko reject karo ya rider se seats kam karne ko kaho.`);
         return;
       }
     }
 
     setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     updateDoc(doc(db, REQUESTS_COLLECTION, id), { status }).catch(() => {
-      setErrorMsg("Status save nahi ho paya, dubara try karo.");
+      showError("Status save nahi ho paya, dubara try karo.");
     });
 
     // On acceptance, deduct the booked seats from the vehicle's available seats
@@ -1008,7 +1020,7 @@ function MargshriApp() {
         const newSeats = Math.max((vehicle.seats || 0) - seatsBooked, 0);
         setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? { ...v, seats: newSeats } : v)));
         updateDoc(doc(db, VEHICLES_COLLECTION, vehicle.id), { seats: newSeats }).catch(() => {
-          setErrorMsg("Seats update nahi ho paya.");
+          showError("Seats update nahi ho paya.");
         });
       }
     }
@@ -1017,7 +1029,7 @@ function MargshriApp() {
   const postVehicle = () =>
     withSync(async () => {
       if (!vform.from.trim() || !vform.to.trim() || !vform.date || !vform.clock) {
-        setErrorMsg("From, To, Date, aur Time — sab bharna zaroori hai.");
+        showError("From, To, Date, aur Time — sab bharna zaroori hai.");
         return;
       }
       const newVehicle = {
@@ -1045,14 +1057,14 @@ function MargshriApp() {
       setVehicles((prev) => [...prev, { id: "temp-" + Date.now(), ...newVehicle }]);
       setVform({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
       addDoc(collection(db, VEHICLES_COLLECTION), newVehicle).catch(() => {
-        setErrorMsg("Vehicle save nahi ho paya, dubara try karo.");
+        showError("Vehicle save nahi ho paya, dubara try karo.");
       });
     });
 
   const postRiderRequest = () =>
     withSync(async () => {
       if (!rform.from.trim() || !rform.to.trim() || !rform.date || !rform.clock) {
-        setErrorMsg("From, To, Date, aur Time — sab bharna zaroori hai.");
+        showError("From, To, Date, aur Time — sab bharna zaroori hai.");
         return;
       }
       const newPost = {
@@ -1063,6 +1075,7 @@ function MargshriApp() {
         from: rform.from,
         to: rform.to,
         time: formatDateTime(rform.date, rform.clock),
+        timestamp: new Date(`${rform.date}T${rform.clock}`).getTime() || 0,
         mode,
         type: search.type,
         seatsNeeded: Number(rform.seatsNeeded) || 1,
@@ -1072,7 +1085,7 @@ function MargshriApp() {
       setRiderPosts((prev) => [...prev, { id: "temp-" + Date.now(), ...newPost }]);
       setRform({ from: "", to: "", date: "", clock: "", seatsNeeded: 1 });
       addDoc(collection(db, RIDER_POSTS_COLLECTION), newPost).catch(() => {
-        setErrorMsg("Request save nahi ho paya, dubara try karo.");
+        showError("Request save nahi ho paya, dubara try karo.");
       });
     });
 
@@ -1080,7 +1093,7 @@ function MargshriApp() {
     const updates = { status: "matched", ownerName: name, ownerId: user?.uid || null, ownerPhone: myPhone || null, ownerPhoto: user?.photoURL || null };
     setRiderPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, ...updates } : p)));
     updateDoc(doc(db, RIDER_POSTS_COLLECTION, postId), updates).catch(() => {
-      setErrorMsg("Status save nahi ho paya, dubara try karo.");
+      showError("Status save nahi ho paya, dubara try karo.");
     });
   };
 
@@ -1108,7 +1121,7 @@ function MargshriApp() {
     setMessages((prev) => [...prev, { id: "temp-" + Date.now(), ...newMsg }]);
     setMessageText("");
     addDoc(collection(db, MESSAGES_COLLECTION), newMsg).catch(() => {
-      setErrorMsg("Message send nahi hua, dubara try karo.");
+      showError("Message send nahi hua, dubara try karo.");
     });
   };
 
@@ -1116,7 +1129,7 @@ function MargshriApp() {
     const req = requests.find((r) => r.id === id);
     setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: "cancelled" } : r)));
     updateDoc(doc(db, REQUESTS_COLLECTION, id), { status: "cancelled" }).catch(() => {
-      setErrorMsg("Cancel nahi ho paya, dubara try karo.");
+      showError("Cancel nahi ho paya, dubara try karo.");
     });
     // If it was already accepted, give the seats back to the vehicle
     if (req && req.status === "accepted") {
@@ -1133,14 +1146,14 @@ function MargshriApp() {
   const deleteVehicle = (id) => {
     setVehicles((prev) => prev.filter((v) => v.id !== id));
     deleteDoc(doc(db, VEHICLES_COLLECTION, id)).catch(() => {
-      setErrorMsg("Vehicle remove nahi ho paya, dubara try karo.");
+      showError("Vehicle remove nahi ho paya, dubara try karo.");
     });
   };
 
   const cancelRiderPost = (id) => {
     setRiderPosts((prev) => prev.filter((p) => p.id !== id));
     deleteDoc(doc(db, RIDER_POSTS_COLLECTION, id)).catch(() => {
-      setErrorMsg("Request cancel nahi ho paya, dubara try karo.");
+      showError("Request cancel nahi ho paya, dubara try karo.");
     });
   };
 
@@ -1174,7 +1187,7 @@ function MargshriApp() {
     };
     setComplaints((prev) => [...prev, { id: "temp-" + Date.now(), ...newReport }]);
     addDoc(collection(db, COMPLAINTS_COLLECTION), newReport).catch(() => {
-      setErrorMsg("Complaint submit nahi hui, dubara try karo.");
+      showError("Complaint submit nahi hui, dubara try karo.");
     });
     setActiveReport(null);
     setReportText("");
@@ -1189,7 +1202,7 @@ function MargshriApp() {
     if (!blockEmailInput.trim()) return;
     const email = blockEmailInput.trim().toLowerCase();
     setDoc(doc(db, BLOCKS_COLLECTION, email), { reason: blockReasonInput.trim() || "Koi reason nahi diya gaya", blockedAt: Date.now() }).catch(() => {
-      setErrorMsg("Block nahi ho paya, dubara try karo.");
+      showError("Block nahi ho paya, dubara try karo.");
     });
     setBlockEmailInput("");
     setBlockReasonInput("");
@@ -1209,7 +1222,7 @@ function MargshriApp() {
     };
     setAppFeedback((prev) => [...prev, { id: "temp-" + Date.now(), ...newFeedback }]);
     addDoc(collection(db, APP_FEEDBACK_COLLECTION), newFeedback).catch(() => {
-      setErrorMsg("Feedback submit nahi hua, dubara try karo.");
+      showError("Feedback submit nahi hua, dubara try karo.");
     });
     setFeedbackText("");
     setShowFeedbackModal(false);
@@ -1223,14 +1236,14 @@ function MargshriApp() {
   const deleteRequestAdmin = (id) => {
     setRequests((prev) => prev.filter((r) => r.id !== id));
     deleteDoc(doc(db, REQUESTS_COLLECTION, id)).catch(() => {
-      setErrorMsg("Booking delete nahi hui, dubara try karo.");
+      showError("Booking delete nahi hui, dubara try karo.");
     });
   };
 
   const deleteComplaint = (id) => {
     setComplaints((prev) => prev.filter((c) => c.id !== id));
     deleteDoc(doc(db, COMPLAINTS_COLLECTION, id)).catch(() => {
-      setErrorMsg("Complaint delete nahi hui, dubara try karo.");
+      showError("Complaint delete nahi hui, dubara try karo.");
     });
   };
 
@@ -1265,7 +1278,7 @@ function MargshriApp() {
     };
     setReviews((prev) => [...prev, { id: "temp-" + Date.now(), ...newReview }]);
     addDoc(collection(db, REVIEWS_COLLECTION), newReview).catch(() => {
-      setErrorMsg("Review save nahi hua, dubara try karo.");
+      showError("Review save nahi hua, dubara try karo.");
     });
     setActiveReview(null);
     setReviewRating(5);
@@ -1300,7 +1313,12 @@ function MargshriApp() {
   const myRequestsActive = myRequests.filter((r) => ["pending", "accepted"].includes(r.status));
   const myRequestsHistory = myRequests.filter((r) => ["completed", "rejected", "cancelled", "noshow"].includes(r.status));
   const myRiderPosts = riderPosts.filter((p) => p.riderName === name);
-  const openRiderPostsForOwner = riderPosts.filter((p) => p.mode === mode && (p.status === "open" || p.ownerName === name));
+  const openRiderPostsForOwner = riderPosts.filter(
+    (p) =>
+      p.mode === mode &&
+      (p.status === "open" || p.ownerName === name) &&
+      (p.status !== "open" || !p.timestamp || p.timestamp >= Date.now())
+  );
   const activeTagFilters = Object.entries(filterTags).filter(([, v]) => v).map(([k]) => k);
   const getTimeOfDay = (timestamp) => {
     if (!timestamp) return null;
@@ -1635,8 +1653,18 @@ function MargshriApp() {
       </div>
 
       {errorMsg && (
-        <div style={{ background: "#FBE9E7", color: COLORS.coral }} className="text-xs font-semibold text-center py-2">
-          {errorMsg}
+        <div style={{ background: "#FBE9E7", color: COLORS.coral }} className="flex items-center justify-center gap-2 text-xs font-semibold text-center py-2 px-4">
+          <span>{errorMsg}</span>
+          <button
+            onClick={() => {
+              if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+              setErrorMsg("");
+            }}
+            style={{ color: COLORS.coral }}
+            className="shrink-0"
+          >
+            <X size={13} />
+          </button>
         </div>
       )}
 
@@ -1925,12 +1953,19 @@ function MargshriApp() {
             <>
               <SectionHeading icon={PackageSearch} size="sm">{t("myPostedRequests")}</SectionHeading>
               <div className="space-y-2">
-                {myRiderPosts.map((p) => (
+                {myRiderPosts.map((p) => {
+                  const isExpired = p.status === "open" && p.timestamp && p.timestamp < Date.now();
+                  return (
                   <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
                     <div className="flex justify-between items-center">
                       <span style={{ color: COLORS.charcoal }} className="text-sm">
                         {p.from} <ArrowRight size={12} className="inline" /> {p.to} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}
                         {p.status === "matched" && p.ownerName ? ` · ${p.ownerName} ${t("isReady")}` : ""}
+                        {isExpired && (
+                          <span style={{ background: "#FBE9E7", color: COLORS.coral }} className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ml-2 align-middle">
+                            {t("expired")}
+                          </span>
+                        )}
                       </span>
                       <div className="flex items-center gap-2">
                         {p.status === "open" && (
@@ -1960,7 +1995,8 @@ function MargshriApp() {
                       </>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
