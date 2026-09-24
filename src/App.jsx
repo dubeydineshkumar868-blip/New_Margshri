@@ -62,6 +62,22 @@ const TRANSLATIONS = {
     durationPlaceholder: "Estimated duration e.g. 3 hours",
     vehicleNamePlaceholder: "Vehicle name/model e.g. Swift Dzire",
     vehicleNumberPlaceholder: "Vehicle number e.g. UP16 AB 1234",
+    bookingTypeHeading: "Booking type",
+    approvalRequired: "Approval Required",
+    instantBooking: "Instant Booking",
+    instantBookingHint: "Requests are booked immediately, without your approval, if seats are available.",
+    approvalRequiredHint: "You'll need to accept each request yourself.",
+    instantBookingBadge: "⚡ Instant Booking",
+    settingsTab: "Settings",
+    announcementSection: "Announcement Banner",
+    announcementActiveLabel: "Show announcement on homepage",
+    announcementPlaceholder: "e.g. 🎉 New: Instant Booking is now live!",
+    adsenseSection: "Google AdSense",
+    adsenseHint: "Once your AdSense application is approved, paste your Client ID and Slot ID here — ads will start showing automatically, no code changes needed.",
+    adsenseClientPlaceholder: "Client ID e.g. ca-pub-1234567890123456",
+    adsenseSlotPlaceholder: "Slot ID e.g. 1234567890",
+    saveSettingsBtn: "Save Settings",
+    settingsSavedMsg: "✅ Saved!",
     durationHint: "How long will this ride take? Helps riders know when they'll arrive.",
     estimatedArrival: "Estimated arrival",
     totalEarnings: "Total Earnings",
@@ -257,6 +273,22 @@ const TRANSLATIONS = {
     durationPlaceholder: "अनुमानित समय जैसे 3 घंटे",
     vehicleNamePlaceholder: "वाहन का नाम/मॉडल जैसे Swift Dzire",
     vehicleNumberPlaceholder: "वाहन नंबर जैसे UP16 AB 1234",
+    bookingTypeHeading: "बुकिंग का प्रकार",
+    approvalRequired: "मंज़ूरी ज़रूरी",
+    instantBooking: "तुरंत बुकिंग",
+    instantBookingHint: "अगर सीटें उपलब्ध हैं, तो रिक्वेस्ट बिना आपकी मंज़ूरी के तुरंत बुक हो जाएगी।",
+    approvalRequiredHint: "आपको हर रिक्वेस्ट खुद स्वीकार करनी होगी।",
+    instantBookingBadge: "⚡ तुरंत बुकिंग",
+    settingsTab: "सेटिंग्स",
+    announcementSection: "घोषणा बैनर",
+    announcementActiveLabel: "होमपेज पर घोषणा दिखाएं",
+    announcementPlaceholder: "जैसे 🎉 नया: Instant Booking अब उपलब्ध है!",
+    adsenseSection: "Google AdSense",
+    adsenseHint: "जब आपका AdSense आवेदन स्वीकृत हो जाए, यहां Client ID और Slot ID डालें — ads अपने आप दिखने लगेंगे, कोई कोड बदलने की ज़रूरत नहीं।",
+    adsenseClientPlaceholder: "Client ID जैसे ca-pub-1234567890123456",
+    adsenseSlotPlaceholder: "Slot ID जैसे 1234567890",
+    saveSettingsBtn: "सेटिंग्स सेव करें",
+    settingsSavedMsg: "✅ सेव हो गया!",
     durationHint: "इस राइड में कितना समय लगेगा? इससे यात्रियों को पता चलेगा वे कब पहुंचेंगे।",
     estimatedArrival: "अनुमानित पहुंचने का समय",
     totalEarnings: "कुल कमाई",
@@ -424,6 +456,8 @@ const COMPLAINTS_COLLECTION = "complaints";
 const BLOCKS_COLLECTION = "blockedUsers";
 const APP_FEEDBACK_COLLECTION = "appFeedback";
 const USERS_COLLECTION = "users";
+const SETTINGS_COLLECTION = "settings";
+const SETTINGS_DOC_ID = "app";
 
 // Only these Google account emails can see the Admin Panel.
 // To add or change admins, just edit this list and redeploy.
@@ -445,31 +479,26 @@ function formatDateTime(dateStr, timeStr) {
   return `${dateLabel}, ${timeLabel}`;
 }
 
-// Fill these in once your Google AdSense application is approved —
-// leave them empty for now, and no ad space will show (nothing broken, nothing to undo).
-const ADSENSE_CLIENT_ID = ""; // e.g. "ca-pub-1234567890123456"
-const ADSENSE_SLOT_ID = ""; // e.g. "1234567890"
-
-function AdSlot() {
+function AdSlot({ clientId, slotId }) {
   const ref = React.useRef(null);
   useEffect(() => {
-    if (!ADSENSE_CLIENT_ID || !ADSENSE_SLOT_ID) return;
+    if (!clientId || !slotId) return;
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch {
       // AdSense script not loaded yet — safe to ignore
     }
-  }, []);
+  }, [clientId, slotId]);
 
-  if (!ADSENSE_CLIENT_ID || !ADSENSE_SLOT_ID) return null;
+  if (!clientId || !slotId) return null;
 
   return (
     <div ref={ref} className="my-3">
       <ins
         className="adsbygoogle"
         style={{ display: "block" }}
-        data-ad-client={ADSENSE_CLIENT_ID}
-        data-ad-slot={ADSENSE_SLOT_ID}
+        data-ad-client={clientId}
+        data-ad-slot={slotId}
         data-ad-format="auto"
         data-full-width-responsive="true"
       />
@@ -713,6 +742,8 @@ function MargshriApp() {
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [appFeedback, setAppFeedback] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [appSettings, setAppSettings] = useState({});
+  const [settingsDraft, setSettingsDraft] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [adminTab, setAdminTab] = useState("overview");
@@ -743,7 +774,7 @@ function MargshriApp() {
   const [riderTab, setRiderTab] = useState("active");
   const [ownerTab, setOwnerTab] = useState("active");
   const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
-  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", instantBooking: false, tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
   const [rform, setRform] = useState({ from: "", to: "", date: "", clock: "", seatsNeeded: 1 });
   const [seatCounts, setSeatCounts] = useState({});
   const [destSelections, setDestSelections] = useState({});
@@ -892,6 +923,11 @@ function MargshriApp() {
       (snap) => setAppFeedback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => {}
     );
+    const unsubSettings = onSnapshot(
+      doc(db, SETTINGS_COLLECTION, SETTINGS_DOC_ID),
+      (snap) => setAppSettings(snap.exists() ? snap.data() : {}),
+      () => {}
+    );
     return () => {
       unsubVehicles();
       unsubRequests();
@@ -901,6 +937,7 @@ function MargshriApp() {
       unsubComplaints();
       unsubBlocks();
       unsubFeedback();
+      unsubSettings();
     };
   }, []);
 
@@ -917,6 +954,20 @@ function MargshriApp() {
     );
     return unsub;
   }, [user]);
+
+  // Once admin fills in an AdSense Client ID via Settings, load the AdSense script
+  // automatically — no more editing index.html required.
+  useEffect(() => {
+    const clientId = appSettings.adsenseClientId;
+    if (!clientId) return;
+    if (document.querySelector("script[data-adsbygoogle-id]")) return;
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}`;
+    script.crossOrigin = "anonymous";
+    script.setAttribute("data-adsbygoogle-id", "true");
+    document.head.appendChild(script);
+  }, [appSettings.adsenseClientId]);
 
   const signInWithGoogle = () => {
     signInWithPopup(auth, googleProvider).catch((err) => {
@@ -970,6 +1021,13 @@ function MargshriApp() {
     const seatsRequested = getSeatCount(vehicle.id, vehicle.seats);
     const dest = getSelectedDest(vehicle);
     const offeredFare = getOfferPrice(vehicle);
+
+    // Guard: even for instant booking, never let a request exceed available seats
+    if (vehicle.instantBooking && seatsRequested > (vehicle.seats || 0)) {
+      showError(`Sirf ${vehicle.seats || 0} seat(s) bachi hain.`);
+      return;
+    }
+
     return withSync(async () => {
       const newReq = {
         riderName: name,
@@ -984,13 +1042,22 @@ function MargshriApp() {
         mode: vehicle.mode,
         type: vehicle.type,
         owner: vehicle.owner,
-        status: "pending",
+        status: vehicle.instantBooking ? "accepted" : "pending",
         seats: seatsRequested,
       };
       setRequests((prev) => [...prev, { id: "temp-" + Date.now(), ...newReq }]);
       addDoc(collection(db, REQUESTS_COLLECTION), newReq).catch(() => {
         showError("Request save nahi ho paya, dubara try karo.");
       });
+
+      // Instant booking: deduct seats right away, same as a normal accept would
+      if (vehicle.instantBooking) {
+        const newSeats = Math.max((vehicle.seats || 0) - seatsRequested, 0);
+        setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? { ...v, seats: newSeats } : v)));
+        updateDoc(doc(db, VEHICLES_COLLECTION, vehicle.id), { seats: newSeats }).catch(() => {
+          showError("Seats update nahi ho paya.");
+        });
+      }
     });
   };
 
@@ -1049,13 +1116,14 @@ function MargshriApp() {
         timestamp: new Date(`${vform.date}T${vform.clock}`).getTime() || 0,
         duration: vform.duration.trim(),
         price: Number(vform.price) || 0,
+        instantBooking: vform.instantBooking,
         tags: vform.tags,
         routeType: vform.routeType,
         stops: vform.routeType === "multi" ? vform.stops.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), price: Number(s.price) || 0 })) : [],
       };
       // Show it immediately — don't make the user wait for the network round-trip
       setVehicles((prev) => [...prev, { id: "temp-" + Date.now(), ...newVehicle }]);
-      setVform({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+      setVform({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", instantBooking: false, tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
       addDoc(collection(db, VEHICLES_COLLECTION), newVehicle).catch(() => {
         showError("Vehicle save nahi ho paya, dubara try karo.");
       });
@@ -1210,6 +1278,29 @@ function MargshriApp() {
 
   const unblockUser = (email) => {
     deleteDoc(doc(db, BLOCKS_COLLECTION, email)).catch(() => {});
+  };
+
+  const [settingsSaved, setSettingsSaved] = useState(false);
+
+  // Keep the admin's editable draft in sync with the live settings doc
+  useEffect(() => {
+    if (settingsDraft === null) {
+      setSettingsDraft({
+        announcementActive: appSettings.announcementActive || false,
+        announcementText: appSettings.announcementText || "",
+        adsenseClientId: appSettings.adsenseClientId || "",
+        adsenseSlotId: appSettings.adsenseSlotId || "",
+      });
+    }
+  }, [appSettings, settingsDraft]);
+  const saveSettings = () => {
+    if (!settingsDraft) return;
+    setDoc(doc(db, SETTINGS_COLLECTION, SETTINGS_DOC_ID), settingsDraft, { merge: true })
+      .then(() => {
+        setSettingsSaved(true);
+        setTimeout(() => setSettingsSaved(false), 3000);
+      })
+      .catch(() => showError("Settings save nahi hui, dubara try karo."));
   };
 
   const submitFeedback = () => {
@@ -1421,6 +1512,12 @@ function MargshriApp() {
           style={{ width: 260, height: 260, background: COLORS.teal, opacity: 0.15, filter: "blur(70px)", top: 200, right: -80 }}
         />
 
+        {appSettings.announcementActive && appSettings.announcementText && (
+          <div style={{ background: COLORS.amber, color: COLORS.night }} className="relative z-10 text-center text-sm font-semibold py-2.5 px-6">
+            📢 {appSettings.announcementText}
+          </div>
+        )}
+
         {/* Top bar */}
         <div className="max-w-6xl mx-auto flex justify-between items-center px-6 pt-6 relative z-10">
           <div className="flex items-center gap-2.5">
@@ -1582,7 +1679,7 @@ function MargshriApp() {
           </div>
 
           <div className="max-w-sm mx-auto">
-            <AdSlot />
+            <AdSlot clientId={appSettings.adsenseClientId} slotId={appSettings.adsenseSlotId} />
           </div>
 
           {isAdmin && (
@@ -1758,6 +1855,11 @@ function MargshriApp() {
                               <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {getAvgRating(v.owner).avg} ({getAvgRating(v.owner).count})
                             </button>
                           )}
+                          {v.instantBooking && (
+                            <span style={{ background: "#E4F3EF", color: COLORS.teal }} className="text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                              {t("instantBookingBadge")}
+                            </span>
+                          )}
                         </p>
                         {(v.vehicleName || v.vehicleNumber) && (
                           <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold">
@@ -1874,14 +1976,14 @@ function MargshriApp() {
                             +
                           </button>
                         </div>
-                        <button onClick={() => requireAuth(() => sendRequest(v))} disabled={syncing} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
-                          {t("sendRequest")}
+                        <button onClick={() => requireAuth(() => sendRequest(v))} disabled={syncing} style={{ background: v.instantBooking ? COLORS.teal : COLORS.amber, color: v.instantBooking ? "white" : COLORS.night }} className="text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
+                          {v.instantBooking ? `⚡ ${t("instantBooking")}` : t("sendRequest")}
                         </button>
                       </div>
                     )}
                   </div>
                 </div>
-                {(index + 1) % 3 === 0 && <AdSlot />}
+                {(index + 1) % 3 === 0 && <AdSlot clientId={appSettings.adsenseClientId} slotId={appSettings.adsenseSlotId} />}
                 </React.Fragment>
               );
             })}
@@ -2057,6 +2159,27 @@ function MargshriApp() {
             </div>
             <p style={{ color: COLORS.muted }} className="text-[11px] -mt-2 mb-3">{t("durationHint")}</p>
             <p style={{ color: COLORS.muted }} className="text-xs mb-3">{t("postingFor")} <b style={{ color: COLORS.charcoal }}>{mode === "local" ? t("local") : t("longDistance")}</b> {t("modeChangeNote")}</p>
+
+            <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold mb-1.5">{t("bookingTypeHeading")}</p>
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setVform({ ...vform, instantBooking: false })}
+                style={!vform.instantBooking ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+              >
+                {t("approvalRequired")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setVform({ ...vform, instantBooking: true })}
+                style={vform.instantBooking ? { background: COLORS.teal, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1"
+              >
+                ⚡ {t("instantBooking")}
+              </button>
+            </div>
+            <p style={{ color: COLORS.muted }} className="text-[11px] -mt-2 mb-3">{vform.instantBooking ? t("instantBookingHint") : t("approvalRequiredHint")}</p>
 
             <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold mb-1.5">{t("routeType")}</p>
             <div className="flex gap-2 mb-3">
@@ -2478,6 +2601,7 @@ function MargshriApp() {
               { key: "blocked", label: `${t("blockedTab")} (${blockedUsers.length})` },
               { key: "feedback", label: `${t("feedbackTab")} (${appFeedback.length})` },
               { key: "users", label: `${t("usersTab")} (${allUsers.length})` },
+              { key: "settings", label: t("settingsTab") },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -2741,6 +2865,59 @@ function MargshriApp() {
                     </div>
                   </div>
                 ))}
+            </div>
+          )}
+
+          {adminTab === "settings" && settingsDraft && (
+            <div className="space-y-5 max-w-lg">
+              <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-5">
+                <p style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("announcementSection")}</p>
+                <label className="flex items-center gap-2 mb-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settingsDraft.announcementActive}
+                    onChange={(e) => setSettingsDraft({ ...settingsDraft, announcementActive: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <span style={{ color: COLORS.charcoal }} className="text-sm">{t("announcementActiveLabel")}</span>
+                </label>
+                <textarea
+                  value={settingsDraft.announcementText}
+                  onChange={(e) => setSettingsDraft({ ...settingsDraft, announcementText: e.target.value })}
+                  placeholder={t("announcementPlaceholder")}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2 text-sm outline-none resize-none"
+                  rows={2}
+                />
+              </div>
+
+              <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-5">
+                <p style={{ color: COLORS.night }} className="text-sm font-bold mb-2">{t("adsenseSection")}</p>
+                <p style={{ color: COLORS.muted }} className="text-xs mb-3">{t("adsenseHint")}</p>
+                <input
+                  type="text"
+                  value={settingsDraft.adsenseClientId}
+                  onChange={(e) => setSettingsDraft({ ...settingsDraft, adsenseClientId: e.target.value.trim() })}
+                  placeholder={t("adsenseClientPlaceholder")}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-2"
+                />
+                <input
+                  type="text"
+                  value={settingsDraft.adsenseSlotId}
+                  onChange={(e) => setSettingsDraft({ ...settingsDraft, adsenseSlotId: e.target.value.trim() })}
+                  placeholder={t("adsenseSlotPlaceholder")}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2 text-sm outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button onClick={saveSettings} style={{ background: COLORS.night, color: "white" }} className="rounded-lg px-5 py-2.5 text-sm font-bold shadow-md">
+                  {t("saveSettingsBtn")}
+                </button>
+                {settingsSaved && <span style={{ color: COLORS.teal }} className="text-sm font-semibold">{t("settingsSavedMsg")}</span>}
+              </div>
             </div>
           )}
         </div>
