@@ -650,7 +650,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ background: COLORS.sand, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }} className="w-full flex items-center justify-center p-6">
+        <div style={{ background: COLORS.sand, minHeight: "100dvh", fontFamily: "ui-sans-serif, system-ui" }} className="w-full flex items-center justify-center p-6">
           <div className="text-center max-w-sm">
             <div style={{ background: COLORS.coral }} className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <X size={26} color="white" />
@@ -1495,7 +1495,7 @@ function MargshriApp() {
 
   if (authLoading) {
     return (
-      <div style={{ background: COLORS.sand, minHeight: 560 }} className="w-full flex items-center justify-center">
+      <div style={{ background: COLORS.sand, minHeight: "100dvh" }} className="w-full flex items-center justify-center">
         <Loader2 size={24} className="animate-spin" color={COLORS.muted} />
       </div>
     );
@@ -1504,7 +1504,7 @@ function MargshriApp() {
   if (isBlocked) {
     const myBlock = blockedUsers.find((b) => b.id === user.email);
     return (
-      <div style={{ background: COLORS.sand, minHeight: 560 }} className="w-full flex items-center justify-center p-6">
+      <div style={{ background: COLORS.sand, minHeight: "100dvh" }} className="w-full flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
           <Ban size={40} color={COLORS.coral} className="mx-auto mb-3" />
           <p style={{ color: COLORS.night }} className="text-lg font-bold mb-2">{t("youAreBlocked")}</p>
@@ -1717,7 +1717,7 @@ function MargshriApp() {
   }
 
   return (
-    <div style={{ background: `linear-gradient(180deg, ${COLORS.sand} 0%, #F2E9D8 100%)`, minHeight: 560, fontFamily: "ui-sans-serif, system-ui" }} className="w-full">
+    <div style={{ background: `linear-gradient(180deg, ${COLORS.sand} 0%, #F2E9D8 100%)`, minHeight: "100dvh", fontFamily: "ui-sans-serif, system-ui" }} className="w-full">
       <div style={{ background: "white" }} className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 flex-wrap gap-2 sm:gap-3 shadow-sm relative z-10">
         <Logo />
         <div className="flex items-center gap-3">
