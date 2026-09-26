@@ -493,14 +493,12 @@ function AdSlot({ clientId, slotId }) {
   if (!clientId || !slotId) return null;
 
   return (
-    <div ref={ref} className="my-3">
+    <div ref={ref} className="my-3 flex justify-center" style={{ maxHeight: 280, overflow: "hidden" }}>
       <ins
         className="adsbygoogle"
-        style={{ display: "block" }}
+        style={{ display: "inline-block", width: 300, height: 250 }}
         data-ad-client={clientId}
         data-ad-slot={slotId}
-        data-ad-format="auto"
-        data-full-width-responsive="true"
       />
     </div>
   );
