@@ -683,7 +683,27 @@ function MargshriApp() {
     errorTimerRef.current = setTimeout(() => setErrorMsg(""), 5000);
   };
 
-  const [screen, setScreen] = useState("landing");
+  const pathToScreen = { "/privacy": "privacy", "/terms": "terms" };
+  const screenToPath = { privacy: "/privacy", terms: "/terms" };
+  const [screen, setScreen] = useState(() => pathToScreen[window.location.pathname] || "landing");
+
+  // Keep the browser URL in sync so /privacy and /terms are real, directly-linkable,
+  // shareable pages (required for things like Play Store's Privacy Policy URL field).
+  useEffect(() => {
+    const targetPath = screenToPath[screen] || "/";
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({}, "", targetPath);
+    }
+  }, [screen]);
+
+  // Support the browser's back/forward buttons for these pages
+  useEffect(() => {
+    const onPopState = () => {
+      setScreen(pathToScreen[window.location.pathname] || "landing");
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   // Clear any lingering error banner whenever the person navigates to a different screen
   useEffect(() => {
