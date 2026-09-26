@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "in.margshri.twa",
+        "sha256_cert_fingerprints": ["4B:EB:C1:20:71:AF:B4:C9:93:41:B1:D2:4D:FC:0F:8F:DE:EE:BA:D5:C8:EC:6D:22:CC:8E:12:F3:7E:1B:A1:B1"]
+      }
+    }]
