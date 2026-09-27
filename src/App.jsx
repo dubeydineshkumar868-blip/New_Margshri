@@ -1734,9 +1734,9 @@ function MargshriApp() {
           )}
           {user ? (
             <>
-              <div style={{ background: "white", borderColor: COLORS.line }} className="flex items-center gap-2 border rounded-full px-3 py-1.5 text-sm">
-                <User size={14} color={COLORS.muted} />
-                <span style={{ color: COLORS.charcoal }} className="font-medium">{name}</span>
+              <div style={{ background: "white", borderColor: COLORS.line }} className="flex items-center gap-2 border rounded-full px-3 py-1.5 text-sm max-w-[140px] sm:max-w-none">
+                <User size={14} color={COLORS.muted} className="shrink-0" />
+                <span style={{ color: COLORS.charcoal }} className="font-medium truncate">{name}</span>
               </div>
               <button
                 onClick={() => {
