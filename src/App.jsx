@@ -1716,7 +1716,8 @@ function MargshriApp() {
 
   return (
     <div style={{ background: `linear-gradient(180deg, ${COLORS.sand} 0%, #F2E9D8 100%)`, minHeight: "100dvh", fontFamily: "ui-sans-serif, system-ui" }} className="w-full">
-      <div style={{ background: "white" }} className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 flex-wrap gap-2 sm:gap-3 shadow-sm relative z-10">
+      <div style={{ background: "white" }} className="shadow-sm relative z-10">
+        <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 flex-wrap gap-2 sm:gap-3 max-w-6xl mx-auto">
         <Logo />
         <div className="flex items-center gap-3">
           <button onClick={() => setScreen("landing")} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full p-2">
@@ -1765,6 +1766,7 @@ function MargshriApp() {
             </button>
           )}
         </div>
+        </div>
       </div>
 
       {errorMsg && (
@@ -1790,7 +1792,7 @@ function MargshriApp() {
       )}
 
       {screen === "rider" && dataLoaded && (
-        <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-2xl lg:max-w-5xl mx-auto">
           <SectionHeading icon={Search}>{t("findRide")}</SectionHeading>
           <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-6">
             <div className="grid grid-cols-2 gap-3 mb-3">
@@ -1830,7 +1832,7 @@ function MargshriApp() {
             </button>
           </div>
 
-          <div className="space-y-3 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-8">
             {filteredVehicles.length === 0 && (
               <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 text-center mb-3">
                 <PackageSearch size={28} color={COLORS.line} className="mx-auto mb-2" />
@@ -2022,7 +2024,7 @@ function MargshriApp() {
                   </button>
                 ))}
               </div>
-              <div className="space-y-2 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-8">
                 {(riderTab === "active" ? myRequestsActive : myRequestsHistory).length === 0 && (
                   <p style={{ color: COLORS.muted }} className="text-sm py-2">{riderTab === "active" ? t("noActiveYet") : t("noHistoryYet")}</p>
                 )}
@@ -2130,7 +2132,7 @@ function MargshriApp() {
       )}
 
       {screen === "owner" && dataLoaded && (
-        <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-2xl lg:max-w-5xl mx-auto">
           {totalEarnings > 0 && (
             <div style={{ background: COLORS.night }} className="rounded-2xl p-5 mb-6 flex items-center gap-4 shadow-md">
               <div style={{ background: COLORS.amber }} className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
@@ -2275,7 +2277,7 @@ function MargshriApp() {
           </div>
 
           <SectionHeading icon={UsersIcon} size="sm">{t("ridersLookingForRide")}</SectionHeading>
-          <div className="space-y-2 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-8">
             {openRiderPostsForOwner.length === 0 && (
               <div className="text-center py-6">
                 <UsersIcon size={28} color={COLORS.line} className="mx-auto mb-2" />
@@ -2352,7 +2354,7 @@ function MargshriApp() {
               </button>
             ))}
           </div>
-          <div className="space-y-2 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-8">
             {(ownerTab === "active" ? incomingActive : incomingHistory).length === 0 && (
               <div className="text-center py-6">
                 <Inbox size={28} color={COLORS.line} className="mx-auto mb-2" />
@@ -2447,7 +2449,7 @@ function MargshriApp() {
           </div>
 
           <SectionHeading icon={Car} size="sm">{t("myPostedVehicles")}</SectionHeading>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
             {vehicles.filter((v) => v.owner === name).map((v) => {
               const isExpired = v.timestamp && v.timestamp < Date.now();
               return (
@@ -2604,7 +2606,7 @@ function MargshriApp() {
       )}
 
       {screen === "admin" && isAdmin && (
-        <div className="p-4 sm:p-6 max-w-3xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-3xl lg:max-w-6xl mx-auto">
           <div className="flex items-center gap-2 mb-5">
             <LayoutDashboard size={20} color={COLORS.night} />
             <h2 style={{ color: COLORS.night }} className="text-lg font-bold">{t("adminPanel")}</h2>
