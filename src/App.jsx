@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb, Menu } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -215,6 +215,7 @@ const TRANSLATIONS = {
     feedbackTab: "Feedback",
     noFeedbackAdmin: "No feedback yet.",
     usersTab: "Users",
+    home: "Home",
     totalUsers: "Total Users",
     noUsersAdmin: "No users yet.",
     joinedLabel: "Joined:",
@@ -426,6 +427,7 @@ const TRANSLATIONS = {
     feedbackTab: "फीडबैक",
     noFeedbackAdmin: "अभी कोई फीडबैक नहीं है।",
     usersTab: "यूज़र्स",
+    home: "होम",
     totalUsers: "कुल यूज़र्स",
     noUsersAdmin: "अभी कोई यूज़र नहीं है।",
     joinedLabel: "जुड़े:",
@@ -684,6 +686,7 @@ function MargshriApp() {
   const pathToScreen = { "/privacy": "privacy", "/terms": "terms" };
   const screenToPath = { privacy: "/privacy", terms: "/terms" };
   const [screen, setScreen] = useState(() => pathToScreen[window.location.pathname] || "landing");
+  const [showSidebar, setShowSidebar] = useState(false);
 
   // Keep the browser URL in sync so /privacy and /terms are real, directly-linkable,
   // shareable pages (required for things like Play Store's Privacy Policy URL field).
@@ -707,6 +710,7 @@ function MargshriApp() {
   useEffect(() => {
     if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
     setErrorMsg("");
+    setShowSidebar(false);
   }, [screen]);
   const [authLoading, setAuthLoading] = useState(true);
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -1717,57 +1721,107 @@ function MargshriApp() {
   return (
     <div style={{ background: `linear-gradient(180deg, ${COLORS.sand} 0%, #F2E9D8 100%)`, minHeight: "100dvh", fontFamily: "ui-sans-serif, system-ui" }} className="w-full">
       <div style={{ background: "white" }} className="shadow-sm relative z-10">
-        <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 flex-wrap gap-2 sm:gap-3 max-w-6xl mx-auto">
-        <Logo />
-        <div className="flex items-center gap-3">
-          <button onClick={() => setScreen("landing")} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full p-2">
-            <Home size={16} />
+        <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 max-w-6xl mx-auto">
+          <Logo />
+          <button
+            onClick={() => setShowSidebar(true)}
+            style={{ borderColor: COLORS.line, color: COLORS.night }}
+            className="border rounded-full p-2 shrink-0"
+          >
+            <Menu size={18} />
           </button>
-          <button onClick={toggleLang} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full px-3 py-1.5 text-xs font-bold">
-            {lang === "en" ? "हिं" : "EN"}
-          </button>
-          {screen !== "admin" && <ModeToggle />}
-          {isAdmin && screen !== "admin" && (
-            <button onClick={() => setScreen("admin")} style={{ borderColor: COLORS.line, color: COLORS.night }} className="border rounded-full p-2">
-              <LayoutDashboard size={14} />
-            </button>
-          )}
-          {user ? (
-            <>
-              <div style={{ background: "white", borderColor: COLORS.line }} className="flex items-center gap-2 border rounded-full px-3 py-1.5 text-sm max-w-[140px] sm:max-w-none">
-                <User size={14} color={COLORS.muted} className="shrink-0" />
-                <span style={{ color: COLORS.charcoal }} className="font-medium truncate">{name}</span>
-              </div>
-              <button
-                onClick={() => {
-                  setPhoneInput(myPhone);
-                  setShowPhoneModal(true);
-                }}
-                style={{ color: myPhone ? COLORS.teal : COLORS.coral, borderColor: COLORS.line }}
-                className="border rounded-full px-3 py-1.5 text-xs font-semibold"
-              >
-                {myPhone ? `📞 ${myPhone}` : t("addPhone")}
-              </button>
-              <button
-                onClick={() => setShowFeedbackModal(true)}
-                style={{ color: COLORS.muted, borderColor: COLORS.line }}
-                className="border rounded-full p-2"
-                title={t("appFeedback")}
-              >
-                <Lightbulb size={14} />
-              </button>
-              <button onClick={logOut} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-full px-3 py-1.5 text-xs font-semibold">
-                {t("signOut")}
-              </button>
-            </>
-          ) : (
-            <button onClick={signInWithGoogle} style={{ background: COLORS.night, color: "white" }} className="rounded-full px-4 py-1.5 text-xs font-bold">
-              {t("login")}
-            </button>
-          )}
-        </div>
         </div>
       </div>
+
+      {showSidebar && (
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowSidebar(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full max-w-xs h-full overflow-y-auto shadow-xl flex flex-col">
+            <div style={{ borderColor: COLORS.line }} className="flex items-center justify-between px-5 py-4 border-b">
+              <Logo />
+              <button onClick={() => setShowSidebar(false)} style={{ color: COLORS.muted }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 p-5 space-y-2">
+              {user && (
+                <div style={{ borderColor: COLORS.line }} className="flex items-center gap-3 border rounded-xl px-3 py-3 mb-3 bg-white">
+                  <div style={{ background: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                    {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : <User size={16} color="white" />}
+                  </div>
+                  <span style={{ color: COLORS.charcoal }} className="font-semibold text-sm break-words">{name}</span>
+                </div>
+              )}
+
+              <button
+                onClick={() => setScreen("landing")}
+                style={{ color: COLORS.charcoal }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold hover:bg-white"
+              >
+                <Home size={18} /> {t("home")}
+              </button>
+
+              <button
+                onClick={toggleLang}
+                style={{ color: COLORS.charcoal }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold hover:bg-white"
+              >
+                <span style={{ width: 18 }} className="text-center font-bold">{lang === "en" ? "हिं" : "EN"}</span>
+                {lang === "en" ? "हिंदी में देखें" : "View in English"}
+              </button>
+
+              {isAdmin && screen !== "admin" && (
+                <button
+                  onClick={() => setScreen("admin")}
+                  style={{ color: COLORS.charcoal }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold hover:bg-white"
+                >
+                  <LayoutDashboard size={18} /> {t("adminPanel")}
+                </button>
+              )}
+
+              {user && (
+                <>
+                  <button
+                    onClick={() => {
+                      setPhoneInput(myPhone);
+                      setShowPhoneModal(true);
+                      setShowSidebar(false);
+                    }}
+                    style={{ color: myPhone ? COLORS.teal : COLORS.coral }}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold hover:bg-white"
+                  >
+                    📞 {myPhone ? myPhone : t("addPhone")}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowFeedbackModal(true);
+                      setShowSidebar(false);
+                    }}
+                    style={{ color: COLORS.charcoal }}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold hover:bg-white"
+                  >
+                    <Lightbulb size={18} /> {t("appFeedback")}
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div style={{ borderColor: COLORS.line }} className="p-5 border-t">
+              {user ? (
+                <button onClick={logOut} style={{ borderColor: COLORS.line, color: COLORS.coral }} className="w-full border rounded-xl py-2.5 text-sm font-bold">
+                  {t("signOut")}
+                </button>
+              ) : (
+                <button onClick={signInWithGoogle} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-xl py-2.5 text-sm font-bold">
+                  {t("login")}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {errorMsg && (
         <div style={{ background: "#FBE9E7", color: COLORS.coral }} className="flex items-center justify-center gap-2 text-xs font-semibold text-center py-2 px-4">
@@ -1793,6 +1847,7 @@ function MargshriApp() {
 
       {screen === "rider" && dataLoaded && (
         <div className="p-4 sm:p-6 max-w-2xl lg:max-w-5xl mx-auto">
+          <div className="mb-4"><ModeToggle /></div>
           <SectionHeading icon={Search}>{t("findRide")}</SectionHeading>
           <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-6">
             <div className="grid grid-cols-2 gap-3 mb-3">
@@ -2145,6 +2200,7 @@ function MargshriApp() {
               </div>
             </div>
           )}
+          <div className="mb-4"><ModeToggle /></div>
           <SectionHeading icon={Car}>{t("postYourVehicle")}</SectionHeading>
           <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-4 mb-8">
             <div className="flex gap-2 mb-3">
