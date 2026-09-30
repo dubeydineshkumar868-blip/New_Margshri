@@ -463,7 +463,7 @@ const SETTINGS_DOC_ID = "app";
 
 // Only these Google account emails can see the Admin Panel.
 // To add or change admins, just edit this list and redeploy.
-const ADMIN_EMAILS = ["dubeydineshkumar868@gmail.com"];
+const ADMIN_EMAILS = ["margshri26@gmail.com"];
 
 const seedVehicles = [
   { owner: "Ramesh", type: "car", from: "Rohini", to: "Connaught Place", mode: "local", seats: 3, time: "Today, 9:00 AM", price: 60 },
