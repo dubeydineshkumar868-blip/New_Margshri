@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb, Menu } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb, Menu, Navigation } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -224,6 +224,15 @@ const TRANSLATIONS = {
     yourFare: "Your fare",
     isReady: "is ready!",
     stopsInstructions: "Add stops between {from} and {to}, in order, with your fare.",
+    routeTraffic: "Route & traffic",
+    trafficReminderTitle: "Leaving soon",
+    trafficReminderText: "Check traffic before you leave. Google Maps shows jams on the way and suggests faster routes.",
+    quickUpdateLabel: "Quick update to rider",
+    qOnWay: "🚗 I've started, on my way.",
+    qLate15: "🚦 Traffic jam on the route, about 15 min late.",
+    qLate30: "🚦 Heavy traffic, about 30 min late.",
+    qRouteChanged: "🔀 Taking another route to avoid traffic.",
+    qReached: "📍 I've reached the pickup point.",
     aapkaKahanUtrenge: "Where will you get off? (pick your stop)",
     safetyTitle: "Safety & Disclaimer",
     safetyIntro: "Margshri only connects people with each other — we do not do ID verification (KYC), background checks, or any safety check ourselves.",
@@ -436,6 +445,15 @@ const TRANSLATIONS = {
     yourFare: "आपका किराया",
     isReady: "तैयार है!",
     stopsInstructions: "{from} से {to} के बीच के स्टॉप जोड़ें, क्रम में, अपने किराए के साथ।",
+    routeTraffic: "रास्ता और ट्रैफ़िक",
+    trafficReminderTitle: "जल्द निकलना है",
+    trafficReminderText: "निकलने से पहले ट्रैफ़िक देख लें। Google Maps रास्ते का जाम दिखाता है और तेज़ रास्ता बताता है।",
+    quickUpdateLabel: "सवारी को तुरंत अपडेट",
+    qOnWay: "🚗 मैं निकल गया हूँ, रास्ते में हूँ।",
+    qLate15: "🚦 रास्ते में जाम है, लगभग 15 मिनट लेट।",
+    qLate30: "🚦 भारी ट्रैफ़िक है, लगभग 30 मिनट लेट।",
+    qRouteChanged: "🔀 जाम से बचने के लिए दूसरा रास्ता ले रहा हूँ।",
+    qReached: "📍 मैं पिकअप पॉइंट पर पहुँच गया हूँ।",
     aapkaKahanUtrenge: "आप कहाँ उतरेंगे? (अपना स्टॉप चुनें)",
     safetyTitle: "सुरक्षा व अस्वीकरण",
     safetyIntro: "Margshri सिर्फ लोगों को एक-दूसरे से जोड़ता है — हम ID वेरिफिकेशन (KYC), बैकग्राउंड चेक, या कोई भी सेफ्टी चेक खुद नहीं करते।",
@@ -463,7 +481,7 @@ const SETTINGS_DOC_ID = "app";
 
 // Only these Google account emails can see the Admin Panel.
 // To add or change admins, just edit this list and redeploy.
-const ADMIN_EMAILS = ["margshri26@gmail.com"];
+const ADMIN_EMAILS = ["dubeydineshkumar868@gmail.com"];
 
 const seedVehicles = [
   { owner: "Ramesh", type: "car", from: "Rohini", to: "Connaught Place", mode: "local", seats: 3, time: "Today, 9:00 AM", price: 60 },
@@ -519,6 +537,36 @@ function RouteLine({ compact, stopCount = 0 }) {
       {dots}
       <circle cx="196" cy="10" r="4" fill={COLORS.coral} />
     </svg>
+  );
+}
+
+// Builds a Google Maps directions link (free, no API key). Google Maps itself
+// shows live traffic, jams and faster alternate routes when it opens.
+function buildRouteUrl(from, to, stops = []) {
+  const place = (x) => {
+    const v = (x || "").trim();
+    return /india/i.test(v) ? v : `${v}, India`;
+  };
+  if (!from || !to) return null;
+  const params = new URLSearchParams({ api: "1", origin: place(from), destination: place(to), travelmode: "driving" });
+  const waypoints = (stops || []).map((s) => (typeof s === "string" ? s : s?.name)).filter(Boolean).slice(0, 9);
+  if (waypoints.length) params.set("waypoints", waypoints.map(place).join("|"));
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
+function RouteButton({ from, to, stops, label }) {
+  const url = buildRouteUrl(from, to, stops);
+  if (!url) return null;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: COLORS.night, borderColor: COLORS.line, background: "#F3EFE6" }}
+      className="inline-flex items-center gap-1.5 border rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+    >
+      <Navigation size={12} /> {label}
+    </a>
   );
 }
 
@@ -1199,17 +1247,18 @@ function MargshriApp() {
   const hasUnreadMessages = (requestId) =>
     messages.some((m) => m.requestId === requestId && m.senderName !== name && (m.createdAt || 0) > (chatSeen[requestId] || 0));
 
-  const sendMessage = () => {
-    if (!messageText.trim() || !activeChat) return;
+  const sendMessage = (presetText) => {
+    const text = typeof presetText === "string" ? presetText : messageText;
+    if (!text.trim() || !activeChat) return;
     const newMsg = {
       requestId: activeChat.requestId,
       senderName: name,
       senderId: user?.uid || null,
-      text: messageText.trim(),
+      text: text.trim(),
       createdAt: Date.now(),
     };
     setMessages((prev) => [...prev, { id: "temp-" + Date.now(), ...newMsg }]);
-    setMessageText("");
+    if (typeof presetText !== "string") setMessageText("");
     addDoc(collection(db, MESSAGES_COLLECTION), newMsg).catch(() => {
       showError("Message send nahi hua, dubara try karo.");
     });
@@ -2114,6 +2163,11 @@ function MargshriApp() {
                         📞 {t("callOwner")}: {bookedVehicle.ownerPhone}
                       </a>
                     )}
+                    {r.status === "accepted" && (
+                      <div className="mt-2">
+                        <RouteButton from={bookedVehicle?.from || r.from} to={bookedVehicle?.to || r.to} stops={bookedVehicle?.stops} label={t("routeTraffic")} />
+                      </div>
+                    )}
                     {["accepted", "completed"].includes(r.status) && (
                       <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
                         {t("idCheckReminder")}
@@ -2166,6 +2220,9 @@ function MargshriApp() {
                             📞 {t("callOwner")}: {p.ownerPhone}
                           </a>
                         )}
+                        <div className="mt-2">
+                          <RouteButton from={p.from} to={p.to} label={t("routeTraffic")} />
+                        </div>
                         <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
                           {t("idCheckReminder")}
                         </p>
@@ -2387,6 +2444,9 @@ function MargshriApp() {
                           📞 {t("callRider")}: {p.riderPhone}
                         </a>
                       )}
+                      <div className="mt-2">
+                        <RouteButton from={p.from} to={p.to} label={t("routeTraffic")} />
+                      </div>
                       <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
                         {t("idCheckReminder")}
                       </p>
@@ -2396,6 +2456,30 @@ function MargshriApp() {
               );
             })}
           </div>
+
+          {(() => {
+            const now = Date.now();
+            const soon = vehicles
+              .filter((v) => v.owner === name && v.timestamp && v.timestamp > now && v.timestamp - now < 12 * 60 * 60 * 1000)
+              .sort((a, b) => a.timestamp - b.timestamp);
+            if (soon.length === 0) return null;
+            return (
+              <div style={{ background: "#FDF1DE", borderColor: "#F4D9AE" }} className="border rounded-xl px-4 py-3 mb-5">
+                <p style={{ color: COLORS.night }} className="text-sm font-bold flex items-center gap-1.5">
+                  <Navigation size={14} /> {t("trafficReminderTitle")}
+                </p>
+                <p style={{ color: "#8A5A08" }} className="text-xs mt-1 mb-2">{t("trafficReminderText")}</p>
+                <div className="space-y-2">
+                  {soon.map((v) => (
+                    <div key={v.id} className="flex items-center justify-between gap-2 flex-wrap">
+                      <span style={{ color: COLORS.charcoal }} className="text-xs font-semibold">{v.from} → {v.to} · {v.time}</span>
+                      <RouteButton from={v.from} to={v.to} stops={v.stops} label={t("routeTraffic")} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           <SectionHeading icon={Inbox} size="sm">{t("incomingRequests")}</SectionHeading>
           <div className="flex gap-2 mb-3">
@@ -2495,6 +2579,14 @@ function MargshriApp() {
                     📞 {t("callRider")}: {r.riderPhone}
                   </a>
                 )}
+                {r.status === "accepted" && (() => {
+                  const veh = vehicles.find((v) => v.id === r.vehicleId);
+                  return (
+                    <div className="mt-2">
+                      <RouteButton from={veh?.from || r.from} to={veh?.to || r.to} stops={veh?.stops} label={t("routeTraffic")} />
+                    </div>
+                  );
+                })()}
                 {["accepted", "completed"].includes(r.status) && (
                   <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
                     {t("idCheckReminder")}
@@ -2518,7 +2610,8 @@ function MargshriApp() {
                     </span>
                   )}
                 </span>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap justify-end">
+                  {!isExpired && <RouteButton from={v.from} to={v.to} stops={v.stops} label={t("routeTraffic")} />}
                   <span style={{ color: v.seats === 0 ? COLORS.coral : COLORS.muted }} className="font-semibold">
                     {v.seats} of {v.totalSeats || v.seats} {t("seatsLeft")} · ₹{v.price}
                   </span>
@@ -3031,6 +3124,32 @@ function MargshriApp() {
                   </div>
                 ))}
             </div>
+            {(() => {
+              const chatReq = requests.find((r) => r.id === activeChat.requestId);
+              const chatVeh = chatReq && vehicles.find((v) => v.id === chatReq.vehicleId);
+              const chatPost = riderPosts.find((p) => p.id === activeChat.requestId);
+              const iAmDriver =
+                (chatReq && chatReq.status === "accepted" && chatVeh && chatVeh.owner === name) ||
+                (chatPost && chatPost.status === "matched" && chatPost.ownerId && chatPost.ownerId === user?.uid);
+              if (!iAmDriver) return null;
+              return (
+                <div style={{ borderColor: COLORS.line }} className="px-3 pt-2 border-t">
+                  <p style={{ color: COLORS.muted }} className="text-[11px] font-semibold mb-1.5">{t("quickUpdateLabel")}</p>
+                  <div className="flex gap-1.5 overflow-x-auto pb-2">
+                    {["qOnWay", "qLate15", "qLate30", "qRouteChanged", "qReached"].map((k) => (
+                      <button
+                        key={k}
+                        onClick={() => sendMessage(t(k))}
+                        style={{ borderColor: COLORS.line, color: COLORS.night }}
+                        className="shrink-0 bg-white border rounded-full px-3 py-1 text-xs whitespace-nowrap"
+                      >
+                        {t(k)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
             <div style={{ borderColor: COLORS.line }} className="flex items-center gap-2 p-3 border-t">
               <input
                 value={messageText}
@@ -3040,7 +3159,7 @@ function MargshriApp() {
                 style={{ borderColor: COLORS.line }}
                 className="flex-1 border rounded-full px-4 py-2 text-sm outline-none"
               />
-              <button onClick={sendMessage} style={{ background: COLORS.amber, color: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
+              <button onClick={() => sendMessage()} style={{ background: COLORS.amber, color: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
                 <Send size={15} />
               </button>
             </div>
