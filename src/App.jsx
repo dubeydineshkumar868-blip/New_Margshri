@@ -481,7 +481,7 @@ const SETTINGS_DOC_ID = "app";
 
 // Only these Google account emails can see the Admin Panel.
 // To add or change admins, just edit this list and redeploy.
-const ADMIN_EMAILS = ["margshri26@gmail.com"];
+const ADMIN_EMAILS = ["dubeydineshkumar868@gmail.com", "margshri26@gmail.com"];
 
 const seedVehicles = [
   { owner: "Ramesh", type: "car", from: "Rohini", to: "Connaught Place", mode: "local", seats: 3, time: "Today, 9:00 AM", price: 60 },
@@ -954,29 +954,29 @@ function MargshriApp() {
         }
       },
       () => {
-        showError("Firebase se connect nahi ho paya. Config aur Firestore setup check karo.");
+        if (user) showError("Firebase se connect nahi ho paya. Config aur Firestore setup check karo.");
         setDataLoaded(true);
       }
     );
     const unsubRequests = onSnapshot(
       collection(db, REQUESTS_COLLECTION),
       (snap) => setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      () => showError("Requests load nahi ho paaye.")
+      () => { if (user) showError("Requests load nahi ho paaye."); }
     );
     const unsubRiderPosts = onSnapshot(
       collection(db, RIDER_POSTS_COLLECTION),
       (snap) => setRiderPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      () => showError("Rider requests load nahi ho paaye.")
+      () => { if (user) showError("Rider requests load nahi ho paaye."); }
     );
     const unsubMessages = onSnapshot(
       collection(db, MESSAGES_COLLECTION),
       (snap) => setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      () => showError("Messages load nahi ho paaye.")
+      () => { if (user) showError("Messages load nahi ho paaye."); }
     );
     const unsubReviews = onSnapshot(
       collection(db, REVIEWS_COLLECTION),
       (snap) => setReviews(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      () => showError("Reviews load nahi ho paaye.")
+      () => { if (user) showError("Reviews load nahi ho paaye."); }
     );
     const unsubComplaints = onSnapshot(
       collection(db, COMPLAINTS_COLLECTION),
@@ -1009,7 +1009,7 @@ function MargshriApp() {
       unsubFeedback();
       unsubSettings();
     };
-  }, []);
+  }, [user?.uid]);
 
   // Only admins are allowed (by security rules) to read the full users list
   useEffect(() => {
@@ -1038,6 +1038,21 @@ function MargshriApp() {
     script.setAttribute("data-adsbygoogle-id", "true");
     document.head.appendChild(script);
   }, [appSettings.adsenseClientId]);
+
+  // Vercel Web Analytics (free): counts visitors on the live site. Must also be
+  // switched on once in Vercel → Project → Analytics → Enable.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") return;
+    if (document.querySelector('script[data-vercel-insights]')) return;
+    window.va = window.va || function (...params) { (window.vaq = window.vaq || []).push(params); };
+    const s = document.createElement("script");
+    s.defer = true;
+    s.src = "/_vercel/insights/script.js";
+    s.setAttribute("data-vercel-insights", "true");
+    document.head.appendChild(s);
+  }, []);
 
   const signInWithGoogle = () => {
     signInWithPopup(auth, googleProvider).catch((err) => {
