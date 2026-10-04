@@ -51,6 +51,12 @@ const TRANSLATIONS = {
     installFeat1: "No Play Store needed",
     installFeat2: "Installs in 10 seconds",
     installFeat3: "Works like a real app",
+    shareApp: "Share Margshri",
+    shareTitle: "Share Margshri with friends",
+    shareSub: "The more people on your route, the easier it is to find a ride.",
+    shareMessage: "🚗 I use Margshri, a free carpool app for bike, car and bus. Share the ride, split the fuel and toll cost. No commission! Try it:",
+    shareCopy: "Copy link",
+    shareCopied: "Link copied!",
     adminPanel: "Admin Panel",
     addPhone: "+ Add phone",
     local: "Local",
@@ -291,6 +297,12 @@ const TRANSLATIONS = {
     installFeat1: "प्ले स्टोर की ज़रूरत नहीं",
     installFeat2: "10 सेकंड में इंस्टॉल",
     installFeat3: "असली ऐप जैसा",
+    shareApp: "Margshri शेयर करें",
+    shareTitle: "दोस्तों के साथ Margshri शेयर करें",
+    shareSub: "आपके रास्ते पर जितने ज़्यादा लोग, उतनी आसानी से सवारी मिलेगी।",
+    shareMessage: "🚗 मैं Margshri इस्तेमाल करता हूँ, बाइक, कार और बस के लिए मुफ़्त कारपूल ऐप। रास्ता शेयर करो, पेट्रोल-टोल का खर्च बाँटो। कोई कमीशन नहीं! आप भी देखें:",
+    shareCopy: "लिंक कॉपी करें",
+    shareCopied: "लिंक कॉपी हो गया!",
     adminPanel: "एडमिन पैनल",
     addPhone: "+ फ़ोन नंबर जोड़ें",
     local: "लोकल",
@@ -860,6 +872,42 @@ function MargshriApp() {
   const [appSettings, setAppSettings] = useState({});
   const [settingsDraft, setSettingsDraft] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const SHARE_URL = "https://margshri.in";
+
+  // Phones (and the Android app) open the native share sheet with WhatsApp etc.
+  // Laptops, or if the native sheet is unavailable, get our own share options.
+  const shareApp = async () => {
+    setShowSidebar(false);
+    const text = t("shareMessage");
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Margshri", text, url: SHARE_URL });
+        return;
+      } catch (err) {
+        if (err && err.name === "AbortError") return; // person closed the sheet
+      }
+    }
+    setShareCopied(false);
+    setShowShareModal(true);
+  };
+
+  const copyShareLink = async () => {
+    const full = `${t("shareMessage")} ${SHARE_URL}`;
+    try {
+      await navigator.clipboard.writeText(full);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = full;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch {}
+      document.body.removeChild(ta);
+    }
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2500);
+  };
   const [feedbackText, setFeedbackText] = useState("");
   const [adminTab, setAdminTab] = useState("overview");
   const [activeReport, setActiveReport] = useState(null); // { requestId, aboutName }
@@ -1628,6 +1676,146 @@ function MargshriApp() {
     );
   }
 
+  // Modals that must work on every screen, including the landing page.
+  const renderGlobalModals = () => (
+    <>
+      {showShareModal && (() => {
+        const msg = t("shareMessage");
+        const enc = encodeURIComponent;
+        const options = [
+          { label: "WhatsApp", bg: "#25D366", href: `https://wa.me/?text=${enc(`${msg} ${SHARE_URL}`)}` },
+          { label: "Facebook", bg: "#1877F2", href: `https://www.facebook.com/sharer/sharer.php?u=${enc(SHARE_URL)}` },
+          { label: "Telegram", bg: "#229ED9", href: `https://t.me/share/url?url=${enc(SHARE_URL)}&text=${enc(msg)}` },
+          { label: "X", bg: "#111111", href: `https://twitter.com/intent/tweet?text=${enc(msg)}&url=${enc(SHARE_URL)}` },
+        ];
+        return (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: "rgba(27,42,74,0.5)" }} onClick={() => setShowShareModal(false)}>
+            <div onClick={(e) => e.stopPropagation()} style={{ background: "white" }} className="w-full max-w-sm rounded-2xl p-5 shadow-xl">
+              <div className="flex items-start justify-between gap-3 mb-1">
+                <p style={{ color: COLORS.night }} className="text-base font-bold">{t("shareTitle")}</p>
+                <button onClick={() => setShowShareModal(false)} style={{ color: COLORS.muted }}>
+                  <X size={18} />
+                </button>
+              </div>
+              <p style={{ color: COLORS.muted }} className="text-xs mb-4">{t("shareSub")}</p>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {options.map((o) => (
+                  <a
+                    key={o.label}
+                    href={o.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ background: o.bg, color: "white" }}
+                    className="rounded-xl py-2.5 text-sm font-bold text-center"
+                  >
+                    {o.label}
+                  </a>
+                ))}
+              </div>
+              <button
+                onClick={copyShareLink}
+                style={{ borderColor: COLORS.line, color: shareCopied ? COLORS.teal : COLORS.night }}
+                className="w-full border rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-2"
+              >
+                {shareCopied ? <Check size={16} /> : <ClipboardList size={16} />}
+                {shareCopied ? t("shareCopied") : t("shareCopy")}
+              </button>
+              <p style={{ color: COLORS.muted }} className="text-xs text-center mt-3">margshri.in</p>
+            </div>
+          </div>
+        );
+      })()}
+
+      {showIOSHint && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowIOSHint(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
+            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("installOnIphoneTitle")}</p>
+            <div className="space-y-3 mb-4">
+              <div className="flex items-start gap-2">
+                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
+                <p style={{ color: COLORS.charcoal }} className="text-sm">{t("installStep1")}</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>
+                <p style={{ color: COLORS.charcoal }} className="text-sm">{t("installStep2")}</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</span>
+                <p style={{ color: COLORS.charcoal }} className="text-sm">{t("installStep3")}</p>
+              </div>
+            </div>
+            <button onClick={() => setShowIOSHint(false)} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold">
+              {t("gotIt")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(showSafetyModal || (user && !safetyAcknowledged)) && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.6)" }}>
+          <div style={{ background: COLORS.sand }} className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldCheck size={22} color={COLORS.coral} />
+              <p style={{ color: COLORS.night }} className="text-base font-bold">{t("safetyTitle")}</p>
+            </div>
+            <div className="space-y-3 mb-5">
+              <p style={{ color: COLORS.charcoal }} className="text-sm">
+                {t("safetyIntro")}
+              </p>
+              <ul style={{ color: COLORS.charcoal }} className="text-sm list-disc pl-5 space-y-1.5">
+                <li>{t("safetyPoint1")}</li>
+                <li>{t("safetyPoint2")}</li>
+                <li>{t("safetyPoint3")}</li>
+                <li>{t("safetyPoint4")}</li>
+                <li>{t("safetyPoint5")}</li>
+              </ul>
+              <p style={{ color: COLORS.muted }} className="text-xs">
+                {t("safetyAgeNote")}
+              </p>
+            </div>
+            {user && !safetyAcknowledged ? (
+              <button onClick={acknowledgeSafety} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-3 text-sm font-bold">
+                {t("understood")}
+              </button>
+            ) : (
+              <button onClick={() => setShowSafetyModal(false)} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-3 text-sm font-bold">
+                {t("close")}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showFeedbackModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowFeedbackModal(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
+            <div className="flex items-center gap-2 mb-1">
+              <Lightbulb size={20} color={COLORS.amber} />
+              <p style={{ color: COLORS.night }} className="text-sm font-bold">{t("appFeedback")}</p>
+            </div>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-4">{t("appFeedbackDesc")}</p>
+            <textarea
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder={t("writeYourFeedback")}
+              style={{ borderColor: COLORS.line }}
+              className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-4 resize-none"
+              rows={4}
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowFeedbackModal(false)} style={{ borderColor: COLORS.line, color: COLORS.muted }} className="flex-1 border rounded-lg py-2.5 text-sm font-bold">
+                {t("cancel")}
+              </button>
+              <button onClick={submitFeedback} style={{ background: COLORS.amber, color: COLORS.night }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
+                {t("submitFeedback")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   if (screen === "landing") {
     return (
       <div
@@ -1698,6 +1886,14 @@ function MargshriApp() {
                 {t("installApp")}
               </button>
             )}
+
+            <button
+              onClick={shareApp}
+              style={{ borderColor: COLORS.night, color: COLORS.night, background: "white" }}
+              className="w-full max-w-sm mx-auto lg:mx-0 flex items-center justify-center gap-2 border-2 rounded-xl py-2.5 font-bold text-sm mb-4"
+            >
+              <Share size={16} /> {t("shareApp")}
+            </button>
 
             <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto lg:mx-0 lg:max-w-md">
               <button
@@ -1927,6 +2123,7 @@ function MargshriApp() {
             </button>
           )}
         </div>
+        {renderGlobalModals()}
       </div>
     );
   }
@@ -1972,6 +2169,14 @@ function MargshriApp() {
                 className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold hover:bg-white"
               >
                 <Home size={18} /> {t("home")}
+              </button>
+
+              <button
+                onClick={shareApp}
+                style={{ color: COLORS.charcoal }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold hover:bg-white"
+              >
+                <Share size={18} /> {t("shareApp")}
               </button>
 
               <button
@@ -3384,31 +3589,6 @@ function MargshriApp() {
         </div>
       )}
 
-      {showIOSHint && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowIOSHint(false)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
-            <p style={{ color: COLORS.night }} className="text-sm font-bold mb-3">{t("installOnIphoneTitle")}</p>
-            <div className="space-y-3 mb-4">
-              <div className="flex items-start gap-2">
-                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
-                <p style={{ color: COLORS.charcoal }} className="text-sm">{t("installStep1")}</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>
-                <p style={{ color: COLORS.charcoal }} className="text-sm">{t("installStep2")}</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</span>
-                <p style={{ color: COLORS.charcoal }} className="text-sm">{t("installStep3")}</p>
-              </div>
-            </div>
-            <button onClick={() => setShowIOSHint(false)} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold">
-              {t("gotIt")}
-            </button>
-          </div>
-        </div>
-      )}
-
       {activeReport && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setActiveReport(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
@@ -3597,68 +3777,7 @@ function MargshriApp() {
         </div>
       )}
 
-      {(showSafetyModal || (user && !safetyAcknowledged)) && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.6)" }}>
-          <div style={{ background: COLORS.sand }} className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck size={22} color={COLORS.coral} />
-              <p style={{ color: COLORS.night }} className="text-base font-bold">{t("safetyTitle")}</p>
-            </div>
-            <div className="space-y-3 mb-5">
-              <p style={{ color: COLORS.charcoal }} className="text-sm">
-                {t("safetyIntro")}
-              </p>
-              <ul style={{ color: COLORS.charcoal }} className="text-sm list-disc pl-5 space-y-1.5">
-                <li>{t("safetyPoint1")}</li>
-                <li>{t("safetyPoint2")}</li>
-                <li>{t("safetyPoint3")}</li>
-                <li>{t("safetyPoint4")}</li>
-                <li>{t("safetyPoint5")}</li>
-              </ul>
-              <p style={{ color: COLORS.muted }} className="text-xs">
-                {t("safetyAgeNote")}
-              </p>
-            </div>
-            {user && !safetyAcknowledged ? (
-              <button onClick={acknowledgeSafety} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-3 text-sm font-bold">
-                {t("understood")}
-              </button>
-            ) : (
-              <button onClick={() => setShowSafetyModal(false)} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-3 text-sm font-bold">
-                {t("close")}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {showFeedbackModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.4)" }} onClick={() => setShowFeedbackModal(false)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5">
-            <div className="flex items-center gap-2 mb-1">
-              <Lightbulb size={20} color={COLORS.amber} />
-              <p style={{ color: COLORS.night }} className="text-sm font-bold">{t("appFeedback")}</p>
-            </div>
-            <p style={{ color: COLORS.muted }} className="text-xs mb-4">{t("appFeedbackDesc")}</p>
-            <textarea
-              value={feedbackText}
-              onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder={t("writeYourFeedback")}
-              style={{ borderColor: COLORS.line }}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-4 resize-none"
-              rows={4}
-            />
-            <div className="flex gap-2">
-              <button onClick={() => setShowFeedbackModal(false)} style={{ borderColor: COLORS.line, color: COLORS.muted }} className="flex-1 border rounded-lg py-2.5 text-sm font-bold">
-                {t("cancel")}
-              </button>
-              <button onClick={submitFeedback} style={{ background: COLORS.amber, color: COLORS.night }} className="flex-1 rounded-lg py-2.5 text-sm font-bold">
-                {t("submitFeedback")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {renderGlobalModals()}
     </div>
   );
 }
