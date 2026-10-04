@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb, Menu, Navigation } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb, Menu, Navigation, Smartphone, Laptop, MoreVertical, Share, PlusSquare, Download, Globe } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -32,6 +32,25 @@ const TRANSLATIONS = {
     loginNote: "You don't need to log in to browse. You'll be asked to log in with Google when you book or post.",
     safetyLink: "Read Safety & Disclaimer",
     installApp: "📲 Install App (Home Screen)",
+    installGuideTitle: "Install the Margshri app in 10 seconds",
+    installGuideSub: "No Play Store needed. Install straight from the website, works like a real app.",
+    tabAndroid: "Android",
+    tabIphone: "iPhone",
+    tabLaptop: "Laptop / PC",
+    andStep1: "Open margshri.in in Chrome",
+    andStep2: "Tap the 3-dot menu (⋮) at the top right",
+    andStep3: "Tap \"Add to Home screen\" or \"Install app\", then \"Install\"",
+    iosStep1: "Open margshri.in in Safari",
+    iosStep2: "Tap the Share button (square with an arrow) at the bottom",
+    iosStep3: "Scroll down, tap \"Add to Home Screen\", then \"Add\"",
+    pcStep1: "Open margshri.in in Chrome or Edge",
+    pcStep2: "Click the install icon (⊕) at the right end of the address bar",
+    pcStep3: "Click \"Install\". Margshri opens in its own window, and an icon is added to your desktop",
+    installNow: "Install now",
+    installDone: "The Margshri icon will appear on your home screen. Tap it to open the app.",
+    installFeat1: "No Play Store needed",
+    installFeat2: "Installs in 10 seconds",
+    installFeat3: "Works like a real app",
     adminPanel: "Admin Panel",
     addPhone: "+ Add phone",
     local: "Local",
@@ -253,6 +272,25 @@ const TRANSLATIONS = {
     loginNote: "सब कुछ देखने के लिए लॉगिन ज़रूरी नहीं। बुकिंग या पोस्ट करते समय Google से लॉगिन करने को कहा जाएगा।",
     safetyLink: "सुरक्षा व अस्वीकरण पढ़ें",
     installApp: "📲 ऐप इंस्टॉल करें (होम स्क्रीन पर)",
+    installGuideTitle: "सिर्फ़ 10 सेकंड में Margshri ऐप इंस्टॉल करें",
+    installGuideSub: "प्ले स्टोर की ज़रूरत नहीं। सीधे वेबसाइट से इंस्टॉल करें, असली ऐप जैसा चलता है।",
+    tabAndroid: "Android",
+    tabIphone: "iPhone",
+    tabLaptop: "लैपटॉप / PC",
+    andStep1: "Chrome में margshri.in खोलें",
+    andStep2: "ऊपर दाईं ओर 3 बिंदु वाले मेन्यू (⋮) पर टैप करें",
+    andStep3: "\"होम स्क्रीन पर जोड़ें\" या \"ऐप इंस्टॉल करें\" पर टैप करें, फिर \"इंस्टॉल\"",
+    iosStep1: "Safari में margshri.in खोलें",
+    iosStep2: "नीचे शेयर बटन (तीर वाला चौकोर) पर टैप करें",
+    iosStep3: "नीचे स्क्रॉल करके \"Add to Home Screen\" पर टैप करें, फिर \"Add\"",
+    pcStep1: "Chrome या Edge में margshri.in खोलें",
+    pcStep2: "एड्रेस बार के दाईं ओर इंस्टॉल आइकन (⊕) पर क्लिक करें",
+    pcStep3: "\"Install\" पर क्लिक करें। Margshri अपनी अलग विंडो में खुलेगा और डेस्कटॉप पर आइकन बन जाएगा",
+    installNow: "अभी इंस्टॉल करें",
+    installDone: "होम स्क्रीन पर Margshri का आइकन आ जाएगा। उस पर टैप करके ऐप खोलें।",
+    installFeat1: "प्ले स्टोर की ज़रूरत नहीं",
+    installFeat2: "10 सेकंड में इंस्टॉल",
+    installFeat3: "असली ऐप जैसा",
     adminPanel: "एडमिन पैनल",
     addPhone: "+ फ़ोन नंबर जोड़ें",
     local: "लोकल",
@@ -765,6 +803,13 @@ function MargshriApp() {
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSHint, setShowIOSHint] = useState(false);
+  const [installTab, setInstallTab] = useState(() => {
+    if (typeof navigator === "undefined") return "android";
+    const ua = navigator.userAgent || "";
+    if (/iphone|ipad|ipod/i.test(ua)) return "iphone";
+    if (/android/i.test(ua)) return "android";
+    return "laptop";
+  });
 
   useEffect(() => {
     const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
@@ -1641,9 +1686,12 @@ function MargshriApp() {
               </div>
             </div>
 
-            {!isStandalone && (installPrompt || isIOS) && (
+            {!isStandalone && (
               <button
-                onClick={handleInstallClick}
+                onClick={() => {
+                  if (installPrompt) handleInstallClick();
+                  else document.getElementById("install-guide")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
                 style={{ background: COLORS.night, color: "white" }}
                 className="w-full max-w-sm mx-auto lg:mx-0 flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm mb-4 shadow-md lg:block"
               >
@@ -1743,6 +1791,107 @@ function MargshriApp() {
             </div>
           </div>
         </div>
+
+        {/* Install guide (hidden when already opened as the installed app / Android TWA) */}
+        {!isStandalone && (
+          <div id="install-guide" className="relative z-10">
+            <div className="max-w-6xl mx-auto px-6 py-10 lg:py-14">
+              <div className="text-center mb-6">
+                <div style={{ background: COLORS.amber }} className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <Download size={22} color={COLORS.night} />
+                </div>
+                <p style={{ color: COLORS.night }} className="text-xl lg:text-2xl font-bold">{t("installGuideTitle")}</p>
+                <p style={{ color: COLORS.muted }} className="text-sm mt-1.5 max-w-md mx-auto">{t("installGuideSub")}</p>
+              </div>
+
+              <div style={{ background: "white", borderColor: COLORS.line }} className="max-w-xl mx-auto border rounded-2xl shadow-sm overflow-hidden">
+                <div style={{ borderColor: COLORS.line }} className="grid grid-cols-3 border-b">
+                  {[
+                    { id: "android", icon: Smartphone, label: t("tabAndroid") },
+                    { id: "iphone", icon: Smartphone, label: t("tabIphone") },
+                    { id: "laptop", icon: Laptop, label: t("tabLaptop") },
+                  ].map((tab) => {
+                    const active = installTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setInstallTab(tab.id)}
+                        style={{
+                          color: active ? COLORS.night : COLORS.muted,
+                          background: active ? "#FDF1DE" : "white",
+                          borderBottom: active ? `3px solid ${COLORS.amber}` : "3px solid transparent",
+                        }}
+                        className="flex items-center justify-center gap-1.5 py-3 text-sm font-bold"
+                      >
+                        <tab.icon size={15} /> {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="p-5 space-y-4">
+                  {(installTab === "android"
+                    ? [
+                        { icon: Globe, text: t("andStep1") },
+                        { icon: MoreVertical, text: t("andStep2") },
+                        { icon: PlusSquare, text: t("andStep3") },
+                      ]
+                    : installTab === "iphone"
+                    ? [
+                        { icon: Globe, text: t("iosStep1") },
+                        { icon: Share, text: t("iosStep2") },
+                        { icon: PlusSquare, text: t("iosStep3") },
+                      ]
+                    : [
+                        { icon: Globe, text: t("pcStep1") },
+                        { icon: Download, text: t("pcStep2") },
+                        { icon: Laptop, text: t("pcStep3") },
+                      ]
+                  ).map((step, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div style={{ background: COLORS.amber, color: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                        {i + 1}
+                      </div>
+                      <div style={{ background: "#F3EFE6" }} className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
+                        <step.icon size={16} color={COLORS.night} />
+                      </div>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed pt-1.5">{step.text}</p>
+                    </div>
+                  ))}
+
+                  {installPrompt && installTab !== "iphone" && (
+                    <button
+                      onClick={handleInstallClick}
+                      style={{ background: COLORS.night, color: "white" }}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm shadow-md"
+                    >
+                      <Download size={16} /> {t("installNow")}
+                    </button>
+                  )}
+
+                  <p style={{ color: COLORS.teal, background: "#E6F3F1" }} className="text-xs font-semibold rounded-lg px-3 py-2">
+                    ✅ {t("installDone")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 max-w-xl mx-auto mt-5">
+                {[
+                  { icon: Check, text: t("installFeat1") },
+                  { icon: Clock, text: t("installFeat2") },
+                  { icon: ShieldCheck, text: t("installFeat3") },
+                ].map((f, i) => (
+                  <div key={i} className="text-center">
+                    <div style={{ borderColor: COLORS.amber }} className="w-9 h-9 rounded-full border-2 flex items-center justify-center mx-auto mb-1.5">
+                      <f.icon size={16} color={COLORS.night} />
+                    </div>
+                    <p style={{ color: COLORS.night }} className="text-xs font-semibold leading-snug">{f.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="max-w-6xl mx-auto px-6 py-8 relative z-10">
