@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb, Menu, Navigation, Smartphone, Laptop, MoreVertical, Share, PlusSquare, Download, Globe } from "lucide-react";
+import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb, Menu, Navigation, Smartphone, Laptop, MoreVertical, Share, PlusSquare, Download, Globe, Gift, Trophy, Copy } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -57,6 +57,40 @@ const TRANSLATIONS = {
     shareMessage: "🚗 I use Margshri, a free carpool app for bike, car and bus. Share the ride, split the fuel and toll cost. No commission! Try it:",
     shareCopy: "Copy link",
     shareCopied: "Link copied!",
+    shareUseCode: "Use my referral code:",
+    onbTitle: "One last step",
+    onbSub: "Add your mobile number. It is shown to the other person only after a ride request is accepted, so you can coordinate the pickup.",
+    onbPhoneLabel: "Mobile number",
+    onbPhoneError: "Enter a valid 10-digit Indian mobile number.",
+    onbRefLabel: "Referral code (optional)",
+    onbRefPlaceholder: "e.g. MS7K2QPX",
+    onbRefInvalid: "This referral code doesn't exist. Check it, or leave it blank.",
+    onbRefSelf: "You can't use your own referral code.",
+    onbContinue: "Continue",
+    onbLogout: "Log out",
+    refMenu: "Invite friends",
+    refPosterTitle: "Invite friends, become a Champion",
+    refPosterSub: "Every friend who joins with your code brings more rides to your route.",
+    refYourCode: "Your referral code",
+    refCopyCode: "Copy",
+    refCopied: "Copied!",
+    refJoined: "friends joined with your code",
+    refNext: "{n} more to become {badge}",
+    refMaxed: "You've reached the top badge. Thank you!",
+    refBadges: "Badges",
+    badgeSaathi: "Margshri Saathi",
+    badgeChampion: "Margshri Champion",
+    badgeStar: "Margshri Star",
+    refLeaderboard: "Top inviters this month",
+    refLeaderEmpty: "No one yet. Be the first!",
+    refShareBtn: "Share my code",
+    refLater: "Later",
+    refProgramSection: "Referral program",
+    refPrizeHint: "Optional. If you write a prize here (e.g. \"Top 3 every month get a Margshri T-shirt\"), it is shown on the referral poster. Leave blank for no prize.",
+    refPrizePlaceholder: "e.g. Top 3 every month get a Margshri T-shirt",
+    refAdminBoard: "Referral leaderboard",
+    refThisMonth: "This month",
+    refTotal: "Total",
     adminPanel: "Admin Panel",
     addPhone: "+ Add phone",
     local: "Local",
@@ -303,6 +337,40 @@ const TRANSLATIONS = {
     shareMessage: "🚗 मैं Margshri इस्तेमाल करता हूँ, बाइक, कार और बस के लिए मुफ़्त कारपूल ऐप। रास्ता शेयर करो, पेट्रोल-टोल का खर्च बाँटो। कोई कमीशन नहीं! आप भी देखें:",
     shareCopy: "लिंक कॉपी करें",
     shareCopied: "लिंक कॉपी हो गया!",
+    shareUseCode: "मेरा रेफ़रल कोड डालें:",
+    onbTitle: "बस एक आख़िरी कदम",
+    onbSub: "अपना मोबाइल नंबर जोड़ें। यह सामने वाले को सिर्फ़ राइड रिक्वेस्ट स्वीकार होने के बाद दिखता है, ताकि पिकअप तय हो सके।",
+    onbPhoneLabel: "मोबाइल नंबर",
+    onbPhoneError: "सही 10 अंकों का भारतीय मोबाइल नंबर डालें।",
+    onbRefLabel: "रेफ़रल कोड (ज़रूरी नहीं)",
+    onbRefPlaceholder: "जैसे MS7K2QPX",
+    onbRefInvalid: "यह रेफ़रल कोड मौजूद नहीं है। जाँच लें, या खाली छोड़ दें।",
+    onbRefSelf: "आप अपना ही रेफ़रल कोड नहीं डाल सकते।",
+    onbContinue: "आगे बढ़ें",
+    onbLogout: "लॉग आउट",
+    refMenu: "दोस्तों को बुलाएँ",
+    refPosterTitle: "दोस्त लाओ, चैंपियन बनो",
+    refPosterSub: "आपके कोड से जुड़ने वाला हर दोस्त आपके रास्ते पर और सवारियाँ लाता है।",
+    refYourCode: "आपका रेफ़रल कोड",
+    refCopyCode: "कॉपी",
+    refCopied: "कॉपी हो गया!",
+    refJoined: "दोस्त आपके कोड से जुड़े",
+    refNext: "{badge} बनने के लिए {n} और",
+    refMaxed: "आप सबसे ऊँचे बैज पर पहुँच गए। धन्यवाद!",
+    refBadges: "बैज",
+    badgeSaathi: "मार्गश्री साथी",
+    badgeChampion: "मार्गश्री चैंपियन",
+    badgeStar: "मार्गश्री स्टार",
+    refLeaderboard: "इस महीने के टॉप",
+    refLeaderEmpty: "अभी कोई नहीं। पहले आप बनिए!",
+    refShareBtn: "अपना कोड शेयर करें",
+    refLater: "बाद में",
+    refProgramSection: "रेफ़रल प्रोग्राम",
+    refPrizeHint: "ज़रूरी नहीं। अगर यहाँ इनाम लिखेंगे (जैसे \"हर महीने टॉप 3 को Margshri टी-शर्ट\"), तो वह रेफ़रल पोस्टर पर दिखेगा। इनाम न देना हो तो खाली छोड़ें।",
+    refPrizePlaceholder: "जैसे हर महीने टॉप 3 को Margshri टी-शर्ट",
+    refAdminBoard: "रेफ़रल लीडरबोर्ड",
+    refThisMonth: "इस महीने",
+    refTotal: "कुल",
     adminPanel: "एडमिन पैनल",
     addPhone: "+ फ़ोन नंबर जोड़ें",
     local: "लोकल",
@@ -527,6 +595,45 @@ const BLOCKS_COLLECTION = "blockedUsers";
 const APP_FEEDBACK_COLLECTION = "appFeedback";
 const USERS_COLLECTION = "users";
 const SETTINGS_COLLECTION = "settings";
+const REFERRALS_COLLECTION = "referrals"; // doc id = new user's uid (one referral per person)
+const REFERRAL_CODES_COLLECTION = "referralCodes"; // doc id = code → { uid, name }
+
+// Same uid always gives the same code, e.g. "MS7K2QPX". No confusing 0/O/1/I.
+const REFERRAL_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function makeReferralCode(uid) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < uid.length; i++) {
+    h ^= uid.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += REFERRAL_ALPHABET[h & 31];
+    h = h >>> 5;
+    if (i === 3) h = (h ^ Math.imul(uid.length + 7, 2654435761)) >>> 0;
+  }
+  return "MS" + code;
+}
+
+// Accepts 98765 43210, +91 9876543210, 09876543210 → "9876543210", else null.
+function normalizeIndianPhone(raw) {
+  let d = (raw || "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("91")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+  return /^[6-9]\d{9}$/.test(d) ? d : null;
+}
+
+const REFERRAL_TIERS = [
+  { min: 3, key: "badgeSaathi", emoji: "🥉" },
+  { min: 10, key: "badgeChampion", emoji: "🥈" },
+  { min: 25, key: "badgeStar", emoji: "🥇" },
+];
+const REFERRAL_WINDOW_MS = 3 * 24 * 60 * 60 * 1000; // new accounts can add a code within 3 days
+function getReferralBadge(count) {
+  let badge = null;
+  for (const tier of REFERRAL_TIERS) if (count >= tier.min) badge = tier;
+  return badge;
+}
 const SETTINGS_DOC_ID = "app";
 
 // Only these Google account emails can see the Admin Panel.
@@ -873,17 +980,32 @@ function MargshriApp() {
   const [settingsDraft, setSettingsDraft] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [myReferralCode, setMyReferralCode] = useState("");
+  const [myReferredBy, setMyReferredBy] = useState("");
+  const [userCreatedAt, setUserCreatedAt] = useState(null);
+  const [referrals, setReferrals] = useState([]);
+  const [referralCodes, setReferralCodes] = useState({});
+  const [onbPhone, setOnbPhone] = useState("");
+  const [onbRef, setOnbRef] = useState("");
+  const [onbError, setOnbError] = useState("");
+  const [onbSaving, setOnbSaving] = useState(false);
+  const [showReferralPoster, setShowReferralPoster] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const SHARE_URL = "https://margshri.in";
 
   // Phones (and the Android app) open the native share sheet with WhatsApp etc.
   // Laptops, or if the native sheet is unavailable, get our own share options.
+  const shareLink = myReferralCode ? `${SHARE_URL}/?ref=${myReferralCode}` : SHARE_URL;
+  const shareText = myReferralCode ? `${t("shareMessage")} ${t("shareUseCode")} ${myReferralCode}` : t("shareMessage");
+
   const shareApp = async () => {
     setShowSidebar(false);
-    const text = t("shareMessage");
+    const text = shareText;
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Margshri", text, url: SHARE_URL });
+        await navigator.share({ title: "Margshri", text, url: shareLink });
         return;
       } catch (err) {
         if (err && err.name === "AbortError") return; // person closed the sheet
@@ -894,7 +1016,7 @@ function MargshriApp() {
   };
 
   const copyShareLink = async () => {
-    const full = `${t("shareMessage")} ${SHARE_URL}`;
+    const full = `${shareText} ${shareLink}`;
     try {
       await navigator.clipboard.writeText(full);
     } catch {
@@ -990,6 +1112,7 @@ function MargshriApp() {
             lastLogin: Date.now(),
           };
           if (!snap.exists()) data.createdAt = Date.now();
+          setUserCreatedAt(snap.exists() ? snap.data().createdAt || 0 : data.createdAt);
           await setDoc(ref, data, { merge: true });
         } catch {
           // non-critical — never block login on this
@@ -1001,15 +1124,21 @@ function MargshriApp() {
 
   // Load this person's saved phone number + safety acknowledgment once they're logged in
   useEffect(() => {
+    setProfileLoaded(false);
     if (!user) {
       setMyPhone("");
       setSafetyAcknowledged(true);
+      setMyReferralCode("");
+      setMyReferredBy("");
       return;
     }
     const unsub = onSnapshot(doc(db, PROFILES_COLLECTION, user.uid), (snap) => {
       const data = snap.exists() ? snap.data() : {};
       setMyPhone(data.phone || "");
       setSafetyAcknowledged(!!data.safetyAcknowledged);
+      setMyReferralCode(data.referralCode || "");
+      setMyReferredBy(data.referredBy || "");
+      setProfileLoaded(true);
     });
     return unsub;
   }, [user]);
@@ -1022,12 +1151,163 @@ function MargshriApp() {
 
   const savePhone = () => {
     if (!user || !phoneInput.trim()) return;
-    setMyPhone(phoneInput.trim());
-    setDoc(doc(db, PROFILES_COLLECTION, user.uid), { phone: phoneInput.trim() }, { merge: true }).catch(() => {
+    const phone = normalizeIndianPhone(phoneInput);
+    if (!phone) {
+      showError(t("onbPhoneError"));
+      return;
+    }
+    setMyPhone(phone);
+    setDoc(doc(db, PROFILES_COLLECTION, user.uid), { phone }, { merge: true }).catch(() => {
       showError("Phone number save nahi hua, dubara try karo.");
     });
     setShowPhoneModal(false);
     setPhoneInput("");
+  };
+
+  // Give every logged-in person their own referral code (once).
+  useEffect(() => {
+    if (!user || !profileLoaded || myReferralCode) return;
+    const firstName = (user.displayName || "").split(" ")[0] || "Margshri user";
+    (async () => {
+      try {
+        // Rare clash with someone else's code → try a variant.
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const code = makeReferralCode(attempt === 0 ? user.uid : `${user.uid}#${attempt}`);
+          const existing = await getDoc(doc(db, REFERRAL_CODES_COLLECTION, code));
+          if (existing.exists() && existing.data().uid !== user.uid) continue;
+          await setDoc(doc(db, REFERRAL_CODES_COLLECTION, code), { uid: user.uid, name: firstName, createdAt: Date.now() });
+          await setDoc(doc(db, PROFILES_COLLECTION, user.uid), { referralCode: code }, { merge: true });
+          return;
+        }
+      } catch {}
+    })();
+  }, [user, profileLoaded, myReferralCode]);
+
+  // Referral codes (public, for names on the leaderboard) and referrals (login only).
+  useEffect(() => {
+    const unsubCodes = onSnapshot(
+      collection(db, REFERRAL_CODES_COLLECTION),
+      (snap) => {
+        const map = {};
+        snap.docs.forEach((d) => (map[d.id] = d.data()));
+        setReferralCodes(map);
+      },
+      () => {}
+    );
+    let unsubRefs = () => {};
+    if (user) {
+      unsubRefs = onSnapshot(
+        collection(db, REFERRALS_COLLECTION),
+        (snap) => setReferrals(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+        () => {}
+      );
+    } else {
+      setReferrals([]);
+    }
+    return () => {
+      unsubCodes();
+      unsubRefs();
+    };
+  }, [user?.uid]);
+
+  // Remember a ?ref=CODE from a shared link until the person signs up.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const ref = (params.get("ref") || "").trim().toUpperCase();
+      if (ref) {
+        localStorage.setItem("margshri-ref", ref);
+        params.delete("ref");
+        const q = params.toString();
+        window.history.replaceState(null, "", window.location.pathname + (q ? `?${q}` : "") + window.location.hash);
+      }
+    } catch {}
+  }, []);
+
+  const needsOnboarding = !!user && profileLoaded && !myPhone;
+  const canAddReferral = !myReferredBy && !!userCreatedAt && Date.now() - userCreatedAt < REFERRAL_WINDOW_MS;
+
+  useEffect(() => {
+    if (!needsOnboarding) return;
+    try {
+      setOnbRef(localStorage.getItem("margshri-ref") || "");
+    } catch {}
+    setOnbError("");
+  }, [needsOnboarding]);
+
+  const saveOnboarding = async () => {
+    if (!user || onbSaving) return;
+    const phone = normalizeIndianPhone(onbPhone);
+    if (!phone) {
+      setOnbError(t("onbPhoneError"));
+      return;
+    }
+    const code = onbRef.trim().toUpperCase();
+    let referredBy = null;
+    setOnbSaving(true);
+    setOnbError("");
+    if (code && canAddReferral) {
+      if (code === myReferralCode) {
+        setOnbError(t("onbRefSelf"));
+        setOnbSaving(false);
+        return;
+      }
+      try {
+        const codeSnap = await getDoc(doc(db, REFERRAL_CODES_COLLECTION, code));
+        if (!codeSnap.exists()) {
+          setOnbError(t("onbRefInvalid"));
+          setOnbSaving(false);
+          return;
+        }
+        if (codeSnap.data().uid === user.uid) {
+          setOnbError(t("onbRefSelf"));
+          setOnbSaving(false);
+          return;
+        }
+        await setDoc(doc(db, REFERRALS_COLLECTION, user.uid), {
+          referrerCode: code,
+          referrerUid: codeSnap.data().uid,
+          newUserId: user.uid,
+          newUserName: user.displayName || "",
+          createdAt: Date.now(),
+        });
+        referredBy = code;
+      } catch {
+        // Referral couldn't be recorded (e.g. old account). Never block signup for it.
+      }
+    }
+    try {
+      await setDoc(doc(db, PROFILES_COLLECTION, user.uid), referredBy ? { phone, referredBy } : { phone }, { merge: true });
+      setMyPhone(phone);
+      try { localStorage.removeItem("margshri-ref"); } catch {}
+    } catch {
+      setOnbError("Phone number save nahi hua, dubara try karo.");
+    }
+    setOnbSaving(false);
+  };
+
+  // Referral stats
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+  const myReferralCount = myReferralCode ? referrals.filter((r) => r.referrerCode === myReferralCode).length : 0;
+  const myBadge = getReferralBadge(myReferralCount);
+  const nextTier = REFERRAL_TIERS.find((tier) => myReferralCount < tier.min) || null;
+  const buildBoard = (sinceMs) => {
+    const counts = {};
+    referrals.forEach((r) => {
+      if (sinceMs && (r.createdAt || 0) < sinceMs) return;
+      counts[r.referrerCode] = (counts[r.referrerCode] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([code, count]) => ({ code, count, name: referralCodes[code]?.name || "—", uid: referralCodes[code]?.uid }))
+      .sort((a, b) => b.count - a.count);
+  };
+
+  // Referral poster opens only from the menu (no automatic popup).
+
+  const copyReferralCode = async () => {
+    try { await navigator.clipboard.writeText(myReferralCode); } catch {}
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
   };
 
   // Real-time listeners start immediately in the background. Landing screen doesn't
@@ -1469,6 +1749,7 @@ function MargshriApp() {
         announcementText: appSettings.announcementText || "",
         adsenseClientId: appSettings.adsenseClientId || "",
         adsenseSlotId: appSettings.adsenseSlotId || "",
+        referralPrizeText: appSettings.referralPrizeText || "",
       });
     }
   }, [appSettings, settingsDraft]);
@@ -1679,6 +1960,171 @@ function MargshriApp() {
   // Modals that must work on every screen, including the landing page.
   const renderGlobalModals = () => (
     <>
+      {showReferralPoster && myReferralCode && (() => {
+        const board = buildBoard(monthStart).slice(0, 5);
+        const prize = (appSettings.referralPrizeText || "").trim();
+        const pct = nextTier ? Math.round((myReferralCount / nextTier.min) * 100) : 100;
+        return (
+          <div className="fixed inset-0 flex items-center justify-center p-4" style={{ background: "rgba(27,42,74,0.6)", zIndex: 55 }} onClick={() => setShowReferralPoster(false)}>
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl max-h-[92dvh] overflow-y-auto" style={{ background: COLORS.sand }}>
+              {/* poster head */}
+              <div style={{ background: COLORS.night }} className="relative px-6 pt-6 pb-7 text-center">
+                <button onClick={() => setShowReferralPoster(false)} style={{ color: "rgba(255,255,255,0.7)" }} className="absolute top-4 right-4" aria-label="close">
+                  <X size={20} />
+                </button>
+                <div style={{ background: COLORS.amber }} className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 rotate-[-6deg] shadow-lg">
+                  <Gift size={30} color={COLORS.night} />
+                </div>
+                <p style={{ color: "white" }} className="text-2xl font-extrabold leading-tight">{t("refPosterTitle")}</p>
+                <p style={{ color: "rgba(255,255,255,0.75)" }} className="text-sm mt-2 leading-relaxed">{t("refPosterSub")}</p>
+              </div>
+
+              <div className="px-5 pb-5 -mt-4">
+                {/* code ticket */}
+                <div style={{ background: "white", borderColor: COLORS.amber }} className="border-2 border-dashed rounded-2xl px-4 py-3 shadow-sm">
+                  <p style={{ color: COLORS.muted }} className="text-[11px] font-semibold text-center">{t("refYourCode")}</p>
+                  <div className="flex items-center justify-center gap-3 mt-1">
+                    <span style={{ color: COLORS.night, letterSpacing: "0.12em" }} className="text-2xl font-extrabold font-mono">{myReferralCode}</span>
+                    <button
+                      onClick={copyReferralCode}
+                      style={{ background: codeCopied ? "#E6F3F1" : "#FDF1DE", color: codeCopied ? COLORS.teal : COLORS.night }}
+                      className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold"
+                    >
+                      {codeCopied ? <Check size={13} /> : <Copy size={13} />} {codeCopied ? t("refCopied") : t("refCopyCode")}
+                    </button>
+                  </div>
+                </div>
+
+                {/* progress */}
+                <div className="mt-4">
+                  <div className="flex items-baseline gap-2">
+                    <span style={{ color: COLORS.night }} className="text-3xl font-extrabold">{myReferralCount}</span>
+                    <span style={{ color: COLORS.charcoal }} className="text-sm">{t("refJoined")}</span>
+                  </div>
+                  <div style={{ background: "#E9E2D3" }} className="h-2.5 rounded-full mt-2 overflow-hidden">
+                    <div style={{ width: `${Math.max(4, pct)}%`, background: COLORS.amber }} className="h-full rounded-full" />
+                  </div>
+                  <p style={{ color: COLORS.muted }} className="text-xs mt-1.5">
+                    {nextTier
+                      ? t("refNext").replace("{n}", String(nextTier.min - myReferralCount)).replace("{badge}", `${nextTier.emoji} ${t(nextTier.key)}`)
+                      : t("refMaxed")}
+                  </p>
+                </div>
+
+                {/* badge tiers */}
+                <p style={{ color: COLORS.night }} className="text-xs font-bold mt-4 mb-2">{t("refBadges")}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {REFERRAL_TIERS.map((tier) => {
+                    const got = myReferralCount >= tier.min;
+                    return (
+                      <div
+                        key={tier.key}
+                        style={{ background: got ? "#FDF1DE" : "white", borderColor: got ? COLORS.amber : COLORS.line, opacity: got ? 1 : 0.75 }}
+                        className="border rounded-xl px-2 py-2.5 text-center"
+                      >
+                        <div className="text-2xl leading-none">{tier.emoji}</div>
+                        <p style={{ color: COLORS.night }} className="text-[11px] font-bold mt-1.5 leading-tight">{t(tier.key)}</p>
+                        <p style={{ color: COLORS.muted }} className="text-[10px] mt-0.5">{tier.min}+</p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {prize && (
+                  <div style={{ background: COLORS.amber, color: COLORS.night }} className="rounded-xl px-3 py-2.5 mt-4 flex items-start gap-2">
+                    <Gift size={16} className="shrink-0 mt-0.5" />
+                    <p className="text-sm font-bold leading-snug">{prize}</p>
+                  </div>
+                )}
+
+                {/* leaderboard */}
+                <div style={{ background: "white", borderColor: COLORS.line }} className="border rounded-2xl mt-4 px-4 py-3">
+                  <p style={{ color: COLORS.night }} className="text-xs font-bold flex items-center gap-1.5 mb-2">
+                    <Trophy size={14} color={COLORS.amber} /> {t("refLeaderboard")}
+                  </p>
+                  {board.length === 0 ? (
+                    <p style={{ color: COLORS.muted }} className="text-xs">{t("refLeaderEmpty")}</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {board.map((row, i) => (
+                        <div key={row.code} className="flex items-center gap-2 text-sm">
+                          <span style={{ color: i === 0 ? COLORS.amber : COLORS.muted }} className="w-5 font-extrabold">{i + 1}</span>
+                          <span style={{ color: COLORS.charcoal, fontWeight: row.code === myReferralCode ? 700 : 500 }} className="flex-1 truncate">
+                            {row.name}{row.code === myReferralCode ? " (you)" : ""}
+                          </span>
+                          <span style={{ color: COLORS.night }} className="font-bold">{row.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => { setShowReferralPoster(false); shareApp(); }}
+                  style={{ background: COLORS.night, color: "white" }}
+                  className="w-full rounded-xl py-3 font-bold text-sm mt-4 flex items-center justify-center gap-2 shadow-md"
+                >
+                  <Share size={16} /> {t("refShareBtn")}
+                </button>
+                <button onClick={() => setShowReferralPoster(false)} style={{ color: COLORS.muted }} className="w-full py-2.5 text-sm font-semibold mt-1">
+                  {t("refLater")}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {needsOnboarding && (
+        <div className="fixed inset-0 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.6)", zIndex: 60 }}>
+          <div style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 shadow-xl">
+            <p style={{ color: COLORS.night }} className="text-base font-bold mb-1">{t("onbTitle")}</p>
+            <p style={{ color: COLORS.muted }} className="text-xs mb-4 leading-relaxed">{t("onbSub")}</p>
+
+            <label style={{ color: COLORS.night }} className="text-xs font-bold block mb-1">{t("onbPhoneLabel")} *</label>
+            <div style={{ borderColor: COLORS.line, background: "white" }} className="flex items-center border rounded-lg mb-3 overflow-hidden">
+              <span style={{ color: COLORS.muted, borderColor: COLORS.line }} className="px-3 py-2.5 text-sm border-r">+91</span>
+              <input
+                type="tel"
+                inputMode="numeric"
+                autoFocus
+                value={onbPhone}
+                onChange={(e) => setOnbPhone(e.target.value)}
+                placeholder="98765 43210"
+                className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent"
+              />
+            </div>
+
+            {canAddReferral && (
+              <>
+                <label style={{ color: COLORS.night }} className="text-xs font-bold block mb-1">{t("onbRefLabel")}</label>
+                <input
+                  type="text"
+                  value={onbRef}
+                  onChange={(e) => setOnbRef(e.target.value.toUpperCase())}
+                  placeholder={t("onbRefPlaceholder")}
+                  style={{ borderColor: COLORS.line, letterSpacing: "0.08em" }}
+                  className="w-full border rounded-lg px-3 py-2.5 text-sm outline-none mb-3 bg-white font-mono"
+                />
+              </>
+            )}
+
+            {onbError && <p style={{ color: COLORS.coral }} className="text-xs font-semibold mb-3">{onbError}</p>}
+
+            <button
+              onClick={saveOnboarding}
+              disabled={onbSaving}
+              style={{ background: COLORS.amber, color: COLORS.night, opacity: onbSaving ? 0.7 : 1 }}
+              className="w-full rounded-lg py-3 text-sm font-bold flex items-center justify-center gap-2"
+            >
+              {onbSaving && <Loader2 size={16} className="animate-spin" />} {t("onbContinue")}
+            </button>
+            <button onClick={logOut} style={{ color: COLORS.muted }} className="w-full py-2.5 text-xs font-semibold mt-1 underline">
+              {t("onbLogout")}
+            </button>
+          </div>
+        </div>
+      )}
       {showShareModal && (() => {
         const msg = t("shareMessage");
         const enc = encodeURIComponent;
@@ -2159,7 +2605,14 @@ function MargshriApp() {
                   <div style={{ background: COLORS.night }} className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0">
                     {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : <User size={16} color="white" />}
                   </div>
-                  <span style={{ color: COLORS.charcoal }} className="font-semibold text-sm break-words">{name}</span>
+                  <div className="min-w-0">
+                    <span style={{ color: COLORS.charcoal }} className="font-semibold text-sm break-words block">{name}</span>
+                    {myBadge && (
+                      <span style={{ color: COLORS.night, background: "#FDF1DE" }} className="inline-block text-[11px] font-bold rounded-full px-2 py-0.5 mt-1">
+                        {myBadge.emoji} {t(myBadge.key)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -2178,6 +2631,19 @@ function MargshriApp() {
               >
                 <Share size={18} /> {t("shareApp")}
               </button>
+
+              {user && myReferralCode && (
+                <button
+                  onClick={() => { setShowSidebar(false); setShowReferralPoster(true); }}
+                  style={{ color: COLORS.night, background: "#FDF1DE" }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold"
+                >
+                  <Gift size={18} /> {t("refMenu")}
+                  {myReferralCount > 0 && (
+                    <span style={{ background: COLORS.amber }} className="ml-auto text-xs rounded-full px-2 py-0.5">{myReferralCount}</span>
+                  )}
+                </button>
+              )}
 
               <button
                 onClick={toggleLang}
@@ -3448,6 +3914,57 @@ function MargshriApp() {
                   style={{ borderColor: COLORS.line }}
                   className="w-full border rounded-lg px-3 py-2 text-sm outline-none"
                 />
+              </div>
+
+              <div style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-2xl p-5">
+                <p style={{ color: COLORS.night }} className="text-sm font-bold mb-2 flex items-center gap-1.5"><Gift size={15} /> {t("refProgramSection")}</p>
+                <p style={{ color: COLORS.muted }} className="text-xs mb-3">{t("refPrizeHint")}</p>
+                <input
+                  type="text"
+                  value={settingsDraft.referralPrizeText}
+                  onChange={(e) => setSettingsDraft({ ...settingsDraft, referralPrizeText: e.target.value })}
+                  placeholder={t("refPrizePlaceholder")}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2 text-sm outline-none mb-4"
+                />
+                <p style={{ color: COLORS.night }} className="text-xs font-bold mb-2 flex items-center gap-1.5"><Trophy size={13} color={COLORS.amber} /> {t("refAdminBoard")}</p>
+                {(() => {
+                  const total = buildBoard(0);
+                  const month = buildBoard(monthStart);
+                  if (total.length === 0) return <p style={{ color: COLORS.muted }} className="text-xs">{t("refLeaderEmpty")}</p>;
+                  return (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr style={{ color: COLORS.muted }}>
+                            <th className="text-left font-semibold py-1">#</th>
+                            <th className="text-left font-semibold py-1">Name</th>
+                            <th className="text-left font-semibold py-1">Code</th>
+                            <th className="text-right font-semibold py-1">{t("refThisMonth")}</th>
+                            <th className="text-right font-semibold py-1">{t("refTotal")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {total.map((row, i) => {
+                            const u = allUsers.find((x) => x.id === row.uid);
+                            return (
+                              <tr key={row.code} style={{ borderColor: COLORS.line }} className="border-t">
+                                <td className="py-1.5" style={{ color: COLORS.muted }}>{i + 1}</td>
+                                <td className="py-1.5" style={{ color: COLORS.charcoal }}>
+                                  {u?.name || row.name}
+                                  {u?.email && <span style={{ color: COLORS.muted }} className="block text-[10px]">{u.email}</span>}
+                                </td>
+                                <td className="py-1.5 font-mono" style={{ color: COLORS.night }}>{row.code}</td>
+                                <td className="py-1.5 text-right font-bold" style={{ color: COLORS.night }}>{month.find((m) => m.code === row.code)?.count || 0}</td>
+                                <td className="py-1.5 text-right" style={{ color: COLORS.charcoal }}>{row.count}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="flex items-center gap-3">
