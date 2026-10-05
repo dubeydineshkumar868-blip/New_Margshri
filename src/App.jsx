@@ -638,7 +638,7 @@ const SETTINGS_DOC_ID = "app";
 
 // Only these Google account emails can see the Admin Panel.
 // To add or change admins, just edit this list and redeploy.
-const ADMIN_EMAILS = ["dubeydineshkumar868@gmail.com", "margshri26@gmail.com"];
+const ADMIN_EMAILS = ["margshri26@gmail.com"];
 
 const seedVehicles = [
   { owner: "Ramesh", type: "car", from: "Rohini", to: "Connaught Place", mode: "local", seats: 3, time: "Today, 9:00 AM", price: 60 },
@@ -1302,7 +1302,19 @@ function MargshriApp() {
       .sort((a, b) => b.count - a.count);
   };
 
-  // Referral poster opens only from the menu (no automatic popup).
+  // Referral poster pops up by itself (max once every 5 days) after signup is complete.
+  // Any time in between, it can be opened from the menu.
+  useEffect(() => {
+    if (!user || !profileLoaded || !myPhone || !myReferralCode || screen === "admin") return;
+    let last = 0;
+    try { last = Number(localStorage.getItem("margshri-ref-poster-at") || 0); } catch {}
+    if (Date.now() - last < 5 * 24 * 60 * 60 * 1000) return;
+    const timer = setTimeout(() => {
+      setShowReferralPoster(true);
+      try { localStorage.setItem("margshri-ref-poster-at", String(Date.now())); } catch {}
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [user, profileLoaded, myPhone, myReferralCode, screen]);
 
   const copyReferralCode = async () => {
     try { await navigator.clipboard.writeText(myReferralCode); } catch {}
