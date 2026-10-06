@@ -93,6 +93,11 @@ const TRANSLATIONS = {
     refTotal: "Total",
     adminPanel: "Admin Panel",
     addPhone: "+ Add phone",
+    usersTotal: "Total users",
+    usersWithPhone: "with mobile",
+    noPhoneYet: "No mobile yet",
+    referredByLabel: "Joined via",
+    editPhone: "Change mobile number",
     local: "Local",
     longDistance: "Long Distance",
     findRide: "Find a ride",
@@ -373,6 +378,11 @@ const TRANSLATIONS = {
     refTotal: "कुल",
     adminPanel: "एडमिन पैनल",
     addPhone: "+ फ़ोन नंबर जोड़ें",
+    usersTotal: "कुल यूज़र",
+    usersWithPhone: "मोबाइल के साथ",
+    noPhoneYet: "अभी मोबाइल नहीं",
+    referredByLabel: "किसके कोड से",
+    editPhone: "मोबाइल नंबर बदलें",
     local: "लोकल",
     longDistance: "लॉन्ग डिस्टेंस",
     findRide: "राइड खोजें",
@@ -980,6 +990,7 @@ function MargshriApp() {
   const [settingsDraft, setSettingsDraft] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [allProfiles, setAllProfiles] = useState({});
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [myReferralCode, setMyReferralCode] = useState("");
   const [myReferredBy, setMyReferredBy] = useState("");
@@ -998,7 +1009,9 @@ function MargshriApp() {
   // Phones (and the Android app) open the native share sheet with WhatsApp etc.
   // Laptops, or if the native sheet is unavailable, get our own share options.
   const shareLink = myReferralCode ? `${SHARE_URL}/?ref=${myReferralCode}` : SHARE_URL;
-  const shareText = myReferralCode ? `${t("shareMessage")} ${t("shareUseCode")} ${myReferralCode}` : t("shareMessage");
+  // Message stays clean (no code in the text); the link itself carries the code
+  // so the friend is still credited automatically.
+  const shareText = t("shareMessage");
 
   const shareApp = async () => {
     setShowSidebar(false);
@@ -1407,7 +1420,19 @@ function MargshriApp() {
       (snap) => setAllUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => {}
     );
-    return unsub;
+    const unsubProfiles = onSnapshot(
+      collection(db, PROFILES_COLLECTION),
+      (snap) => {
+        const map = {};
+        snap.docs.forEach((d) => (map[d.id] = d.data()));
+        setAllProfiles(map);
+      },
+      () => {}
+    );
+    return () => {
+      unsub();
+      unsubProfiles();
+    };
   }, [user]);
 
   // Once admin fills in an AdSense Client ID via Settings, load the AdSense script
@@ -2619,6 +2644,11 @@ function MargshriApp() {
                   </div>
                   <div className="min-w-0">
                     <span style={{ color: COLORS.charcoal }} className="font-semibold text-sm break-words block">{name}</span>
+                    {myPhone && (
+                      <span style={{ color: COLORS.muted }} className="text-xs block mt-0.5">
+                        📞 +91 {/^\d{10}$/.test(myPhone) ? `${myPhone.slice(0, 5)} ${myPhone.slice(5)}` : myPhone}
+                      </span>
+                    )}
                     {myBadge && (
                       <span style={{ color: COLORS.night, background: "#FDF1DE" }} className="inline-block text-[11px] font-bold rounded-full px-2 py-0.5 mt-1">
                         {myBadge.emoji} {t(myBadge.key)}
@@ -2684,10 +2714,10 @@ function MargshriApp() {
                       setShowPhoneModal(true);
                       setShowSidebar(false);
                     }}
-                    style={{ color: myPhone ? COLORS.teal : COLORS.coral }}
+                    style={{ color: myPhone ? COLORS.charcoal : COLORS.coral }}
                     className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold hover:bg-white"
                   >
-                    📞 {myPhone ? myPhone : t("addPhone")}
+                    <span style={{ width: 18 }} className="text-center">📞</span> {myPhone ? t("editPhone") : t("addPhone")}
                   </button>
 
                   <button
@@ -3858,6 +3888,14 @@ function MargshriApp() {
 
           {adminTab === "users" && (
             <div className="space-y-2">
+              {allUsers.length > 0 && (
+                <p style={{ color: COLORS.night }} className="text-sm font-bold mb-1">
+                  {t("usersTotal")}: {allUsers.length}
+                  <span style={{ color: COLORS.muted }} className="font-semibold">
+                    {" "}· {allUsers.filter((u) => allProfiles[u.id]?.phone).length} {t("usersWithPhone")}
+                  </span>
+                </p>
+              )}
               {allUsers.length === 0 && <p style={{ color: COLORS.muted }} className="text-sm">{t("noUsersAdmin")}</p>}
               {allUsers
                 .slice()
@@ -3867,9 +3905,24 @@ function MargshriApp() {
                     <div style={{ background: COLORS.night }} className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden shrink-0">
                       {u.photoURL ? <img src={u.photoURL} alt="" className="w-full h-full object-cover" /> : <User size={16} color="white" />}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold">{u.name}</p>
-                      <p style={{ color: COLORS.muted }} className="text-xs">{u.email}</p>
+                      <p style={{ color: COLORS.muted }} className="text-xs break-all">{u.email}</p>
+                      {allProfiles[u.id]?.phone ? (
+                        <a href={`tel:${allProfiles[u.id].phone}`} style={{ color: COLORS.teal }} className="text-xs font-bold inline-block mt-0.5">
+                          📞 {allProfiles[u.id].phone}
+                        </a>
+                      ) : (
+                        <p style={{ color: COLORS.coral }} className="text-xs mt-0.5">📞 {t("noPhoneYet")}</p>
+                      )}
+                      {(allProfiles[u.id]?.referralCode || allProfiles[u.id]?.referredBy) && (
+                        <p style={{ color: COLORS.muted }} className="text-[11px] mt-0.5">
+                          {allProfiles[u.id]?.referralCode && <span className="font-mono">🎁 {allProfiles[u.id].referralCode}</span>}
+                          {allProfiles[u.id]?.referredBy && (
+                            <span> · {t("referredByLabel")}: {referralCodes[allProfiles[u.id].referredBy]?.name || ""} <span className="font-mono">{allProfiles[u.id].referredBy}</span></span>
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right shrink-0">
                       <p style={{ color: COLORS.muted }} className="text-[10px]">
