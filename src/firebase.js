@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCIhHdQLY4187bNJyP6tPYFZoG9eOwaMmc",
-  authDomain: "margshri.in", // login popup shows margshri.in (proxied to Firebase via vercel.json)
+ authDomain: "margshri-ef82b.firebaseapp.com",
   projectId: "margshri-ef82b",
   storageBucket: "margshri-ef82b.firebasestorage.app",
   messagingSenderId: "832248851426",
