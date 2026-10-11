@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb, Menu, Navigation, Smartphone, Laptop, MoreVertical, Share, PlusSquare, Download, Globe, Gift, Trophy, Copy } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updateProfile } from "firebase/auth";
 
 const COLORS = {
   night: "#1B2A4A",
@@ -58,7 +58,30 @@ const TRANSLATIONS = {
     shareCopy: "Copy link",
     shareCopied: "Link copied!",
     shareUseCode: "Use my referral code:",
-    onbTitle: "One last step",
+    onbTitle: "Add your mobile number",
+    loginTitle: "Log in to Margshri",
+    loginSub: "Choose how you want to continue.",
+    loginOr: "or with email",
+    loginEmailPlaceholder: "your@email.com",
+    loginSendLink: "Send login link",
+    loginSending: "Sending…",
+    loginSentTitle: "Check your email",
+    loginSentText: "We sent a login link to {email}. Open it on this phone and tap the link. Check Spam if you don't see it.",
+    loginEmailInvalid: "Enter a valid email address.",
+    loginEmailFailed: "Couldn't send the link. Try again, or continue with Google.",
+    loginConfirmTitle: "Confirm your email",
+    loginConfirmText: "You opened the login link on a different device or browser. Enter the same email to finish logging in.",
+    loginConfirmBtn: "Finish login",
+    loginLinkExpired: "This login link has expired or was already used. Send a new one.",
+    loginUseDifferent: "Use a different email",
+    onbNameLabel: "Your name",
+    onbNamePlaceholder: "e.g. Ramesh Kumar",
+    onbNameError: "Enter your name (at least 2 letters).",
+    onbAgree: "By continuing, you agree to the safety rules: Margshri does not verify IDs, so check ID when you meet.",
+    onbHaveCode: "Have a referral code?",
+    loginEmailInstead: "No Google account? Log in with email",
+    onbAgreeRead: "Read safety rules",
+    onbAgreeError: "Please tick the safety box to continue.",
     onbSub: "Add your mobile number. It is shown to the other person only after a ride request is accepted, so you can coordinate the pickup.",
     onbPhoneLabel: "Mobile number",
     onbPhoneError: "Enter a valid 10-digit Indian mobile number.",
@@ -343,7 +366,30 @@ const TRANSLATIONS = {
     shareCopy: "लिंक कॉपी करें",
     shareCopied: "लिंक कॉपी हो गया!",
     shareUseCode: "मेरा रेफ़रल कोड डालें:",
-    onbTitle: "बस एक आख़िरी कदम",
+    onbTitle: "अपना मोबाइल नंबर जोड़ें",
+    loginTitle: "Margshri में लॉगिन करें",
+    loginSub: "आगे बढ़ने का तरीका चुनें।",
+    loginOr: "या ईमेल से",
+    loginEmailPlaceholder: "aapka@email.com",
+    loginSendLink: "लॉगिन लिंक भेजें",
+    loginSending: "भेजा जा रहा है…",
+    loginSentTitle: "अपना ईमेल देखें",
+    loginSentText: "हमने {email} पर लॉगिन लिंक भेजा है। इसी फ़ोन पर ईमेल खोलकर लिंक पर टैप करें। न दिखे तो Spam में देखें।",
+    loginEmailInvalid: "सही ईमेल पता डालें।",
+    loginEmailFailed: "लिंक नहीं भेजा जा सका। दोबारा कोशिश करें, या Google से जारी रखें।",
+    loginConfirmTitle: "अपना ईमेल पक्का करें",
+    loginConfirmText: "आपने लॉगिन लिंक किसी दूसरे फ़ोन या ब्राउज़र में खोला है। लॉगिन पूरा करने के लिए वही ईमेल डालें।",
+    loginConfirmBtn: "लॉगिन पूरा करें",
+    loginLinkExpired: "यह लॉगिन लिंक पुराना हो गया है या पहले इस्तेमाल हो चुका है। नया लिंक भेजें।",
+    loginUseDifferent: "दूसरा ईमेल डालें",
+    onbNameLabel: "आपका नाम",
+    onbNamePlaceholder: "जैसे रमेश कुमार",
+    onbNameError: "अपना नाम डालें (कम से कम 2 अक्षर)।",
+    onbAgree: "आगे बढ़कर आप सुरक्षा नियमों से सहमत हैं: Margshri ID की जाँच नहीं करता, इसलिए मिलते समय ID ज़रूर देखें।",
+    onbHaveCode: "रेफ़रल कोड है?",
+    loginEmailInstead: "Google अकाउंट नहीं है? ईमेल से लॉगिन करें",
+    onbAgreeRead: "सुरक्षा नियम पढ़ें",
+    onbAgreeError: "आगे बढ़ने के लिए सुरक्षा वाला बॉक्स टिक करें।",
     onbSub: "अपना मोबाइल नंबर जोड़ें। यह सामने वाले को सिर्फ़ राइड रिक्वेस्ट स्वीकार होने के बाद दिखता है, ताकि पिकअप तय हो सके।",
     onbPhoneLabel: "मोबाइल नंबर",
     onbPhoneError: "सही 10 अंकों का भारतीय मोबाइल नंबर डालें।",
@@ -964,7 +1010,7 @@ function MargshriApp() {
     }
   };
   const [user, setUser] = useState(null);
-  const name = user?.displayName || user?.email || "";
+  const name = user?.displayName || user?.email || ""; // re-read on every render (setNameTick forces one after a name change)
   const [myPhone, setMyPhone] = useState("");
   const [safetyAcknowledged, setSafetyAcknowledged] = useState(true);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
@@ -1001,6 +1047,15 @@ function MargshriApp() {
   const [onbRef, setOnbRef] = useState("");
   const [onbError, setOnbError] = useState("");
   const [onbSaving, setOnbSaving] = useState(false);
+  const [onbName, setOnbName] = useState("");
+  const [onbAgree, setOnbAgree] = useState(false);
+  const [onbShowRules, setOnbShowRules] = useState(false);
+  const [onbShowRef, setOnbShowRef] = useState(false);
+  const [nameTick, setNameTick] = useState(0); // re-render after the display name is saved
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginStage, setLoginStage] = useState("choose"); // choose | sending | sent | confirm | finishing
+  const [loginErr, setLoginErr] = useState("");
   const [showReferralPoster, setShowReferralPoster] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -1179,7 +1234,7 @@ function MargshriApp() {
 
   // Give every logged-in person their own referral code (once).
   useEffect(() => {
-    if (!user || !profileLoaded || myReferralCode) return;
+    if (!user || !profileLoaded || myReferralCode || !myPhone || !(user.displayName || "").trim()) return;
     const firstName = (user.displayName || "").split(" ")[0] || "Margshri user";
     (async () => {
       try {
@@ -1237,23 +1292,41 @@ function MargshriApp() {
     } catch {}
   }, []);
 
-  const needsOnboarding = !!user && profileLoaded && !myPhone;
+  const needsName = !!user && !(user.displayName || "").trim();
+  const needsOnboarding = !!user && profileLoaded && (!myPhone || needsName);
   const canAddReferral = !myReferredBy && !!userCreatedAt && Date.now() - userCreatedAt < REFERRAL_WINDOW_MS;
 
   useEffect(() => {
     if (!needsOnboarding) return;
     try {
-      setOnbRef(localStorage.getItem("margshri-ref") || "");
+      const savedRef = localStorage.getItem("margshri-ref") || "";
+      setOnbRef(savedRef);
+      setOnbShowRef(!!savedRef);
     } catch {}
     setOnbError("");
   }, [needsOnboarding]);
 
   const saveOnboarding = async () => {
     if (!user || onbSaving) return;
-    const phone = normalizeIndianPhone(onbPhone);
+    const newName = onbName.trim().replace(/\s+/g, " ");
+    if (needsName && newName.length < 2) {
+      setOnbError(t("onbNameError"));
+      return;
+    }
+    const phone = myPhone || normalizeIndianPhone(onbPhone);
     if (!phone) {
       setOnbError(t("onbPhoneError"));
       return;
+    }
+    if (needsName) {
+      try {
+        await updateProfile(user, { displayName: newName });
+        setNameTick((n) => n + 1);
+        setDoc(doc(db, USERS_COLLECTION, user.uid), { name: newName }, { merge: true }).catch(() => {});
+      } catch {
+        setOnbError("Naam save nahi hua, dubara try karo.");
+        return;
+      }
     }
     const code = onbRef.trim().toUpperCase();
     let referredBy = null;
@@ -1290,8 +1363,11 @@ function MargshriApp() {
       }
     }
     try {
-      await setDoc(doc(db, PROFILES_COLLECTION, user.uid), referredBy ? { phone, referredBy } : { phone }, { merge: true });
+      const profileUpdate = { phone, safetyAcknowledged: true };
+      if (referredBy) profileUpdate.referredBy = referredBy;
+      await setDoc(doc(db, PROFILES_COLLECTION, user.uid), profileUpdate, { merge: true });
       setMyPhone(phone);
+      setSafetyAcknowledged(true);
       try { localStorage.removeItem("margshri-ref"); } catch {}
     } catch {
       setOnbError("Phone number save nahi hua, dubara try karo.");
@@ -1319,6 +1395,7 @@ function MargshriApp() {
   // Any time in between, it can be opened from the menu.
   useEffect(() => {
     if (!user || !profileLoaded || !myPhone || !myReferralCode || screen === "admin") return;
+    if (userCreatedAt && Date.now() - userCreatedAt < 24 * 60 * 60 * 1000) return; // not on signup day
     let last = 0;
     try { last = Number(localStorage.getItem("margshri-ref-poster-at") || 0); } catch {}
     if (Date.now() - last < 5 * 24 * 60 * 60 * 1000) return;
@@ -1464,11 +1541,111 @@ function MargshriApp() {
     document.head.appendChild(s);
   }, []);
 
+  // Phones, the installed app and the Android (TWA) app open the Google popup in a
+  // separate tab, which loses the login state ("missing initial state" error).
+  // There we sign in with a same-page redirect instead. Desktop keeps the popup.
+  // (Redirect needs authDomain = margshri.in + the /__/auth proxy in vercel.json.)
+  const useRedirectLogin = () => {
+    try {
+      const ua = navigator.userAgent || "";
+      const mobile = /android|iphone|ipad|ipod|mobile/i.test(ua);
+      const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+      const twa = (document.referrer || "").startsWith("android-app://");
+      return mobile || !!standalone || twa;
+    } catch {
+      return false;
+    }
+  };
+
+  // Finish a redirect login when the page comes back from Google, and show any error.
+  useEffect(() => {
+    getRedirectResult(auth).catch((err) => {
+      if (err && err.code && err.code !== "auth/no-auth-event") {
+        showError(`Login error: ${err.code}`);
+      }
+    });
+  }, []);
+
   const signInWithGoogle = () => {
+    if (useRedirectLogin()) {
+      signInWithRedirect(auth, googleProvider).catch((err) => {
+        showError(`Login error: ${err.code || err.message}`);
+      });
+      return;
+    }
     signInWithPopup(auth, googleProvider).catch((err) => {
+      // Popup blocked or closed early → fall back to redirect.
+      if (err && (err.code === "auth/popup-blocked" || err.code === "auth/operation-not-supported-in-this-environment")) {
+        signInWithRedirect(auth, googleProvider).catch(() => {});
+        return;
+      }
+      if (err && err.code === "auth/popup-closed-by-user") return;
       showError(`Login error: ${err.code || err.message}`);
     });
   };
+
+  // ---- Email link (passwordless) login: free on the Spark plan ----
+  const EMAIL_KEY = "margshri-email-for-login";
+  const openLogin = () => {
+    setLoginErr("");
+    setLoginStage("choose");
+    setShowLoginModal(true);
+  };
+
+  const sendEmailLoginLink = async () => {
+    const email = loginEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      setLoginErr(t("loginEmailInvalid"));
+      return;
+    }
+    setLoginErr("");
+    setLoginStage("sending");
+    try {
+      await sendSignInLinkToEmail(auth, email, { url: `${window.location.origin}/`, handleCodeInApp: true });
+      try { localStorage.setItem(EMAIL_KEY, email); } catch {}
+      setLoginStage("sent");
+    } catch {
+      setLoginErr(t("loginEmailFailed"));
+      setLoginStage("email");
+    }
+  };
+
+  const finishEmailLogin = async (email) => {
+    setLoginStage("finishing");
+    setLoginErr("");
+    try {
+      await signInWithEmailLink(auth, email, window.location.href);
+      try { localStorage.removeItem(EMAIL_KEY); } catch {}
+      setShowLoginModal(false);
+    } catch (err) {
+      const code = err && err.code;
+      if (code === "auth/invalid-email") {
+        setLoginErr(t("loginEmailInvalid"));
+        setLoginStage("confirm");
+        return;
+      }
+      setLoginErr(t("loginLinkExpired"));
+      setLoginStage("choose");
+    } finally {
+      // Remove the one-time code from the address bar.
+      try { window.history.replaceState(null, "", `${window.location.pathname}`); } catch {}
+    }
+  };
+
+  // When someone opens the login link from their email, finish the login here.
+  useEffect(() => {
+    let isLink = false;
+    try { isLink = isSignInWithEmailLink(auth, window.location.href); } catch {}
+    if (!isLink) return;
+    let saved = "";
+    try { saved = localStorage.getItem(EMAIL_KEY) || ""; } catch {}
+    setShowLoginModal(true);
+    if (saved) {
+      finishEmailLogin(saved);
+    } else {
+      setLoginStage("confirm");
+    }
+  }, []);
 
   const logOut = () => {
     signOut(auth);
@@ -1997,6 +2174,107 @@ function MargshriApp() {
   // Modals that must work on every screen, including the landing page.
   const renderGlobalModals = () => (
     <>
+      {showLoginModal && !user && (
+        <div className="fixed inset-0 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.6)", zIndex: 65 }} onClick={() => loginStage !== "finishing" && setShowLoginModal(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <p style={{ color: COLORS.night }} className="text-base font-bold">
+                  {loginStage === "sent" ? t("loginSentTitle") : loginStage === "confirm" ? t("loginConfirmTitle") : t("loginTitle")}
+                </p>
+                {loginStage === "choose" && <p style={{ color: COLORS.muted }} className="text-xs mt-0.5">{t("loginSub")}</p>}
+              </div>
+              {loginStage !== "finishing" && (
+                <button onClick={() => setShowLoginModal(false)} style={{ color: COLORS.muted }} aria-label="close"><X size={18} /></button>
+              )}
+            </div>
+
+            {loginStage === "finishing" && (
+              <div className="flex justify-center py-6"><Loader2 size={26} className="animate-spin" color={COLORS.night} /></div>
+            )}
+
+            {(loginStage === "choose" || loginStage === "sending" || loginStage === "email") && (
+              <>
+                {loginStage === "choose" && (<>
+                <button
+                  onClick={() => { setShowLoginModal(false); signInWithGoogle(); }}
+                  style={{ background: "white", borderColor: COLORS.line, color: COLORS.charcoal }}
+                  className="w-full border rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+                  {t("continueGoogle")}
+                </button>
+
+                <div className="flex items-center gap-3 my-4">
+                  <div style={{ background: COLORS.line }} className="h-px flex-1" />
+                  <span style={{ color: COLORS.muted }} className="text-xs">{t("loginOr")}</span>
+                  <div style={{ background: COLORS.line }} className="h-px flex-1" />
+                </div>
+                </>)}
+
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoFocus={loginStage === "email"}
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendEmailLoginLink()}
+                  placeholder={t("loginEmailPlaceholder")}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2.5 text-sm outline-none bg-white mb-2"
+                />
+                <button
+                  onClick={sendEmailLoginLink}
+                  disabled={loginStage === "sending"}
+                  style={{ background: COLORS.amber, color: COLORS.night, opacity: loginStage === "sending" ? 0.7 : 1 }}
+                  className="w-full rounded-lg py-2.5 text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  {loginStage === "sending" && <Loader2 size={15} className="animate-spin" />}
+                  {loginStage === "sending" ? t("loginSending") : t("loginSendLink")}
+                </button>
+              </>
+            )}
+
+            {loginStage === "sent" && (
+              <>
+                <p style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed mb-4">
+                  ✉️ {t("loginSentText").replace("{email}", loginEmail.trim().toLowerCase())}
+                </p>
+                <button onClick={() => { setLoginStage("email"); setLoginErr(""); }} style={{ color: COLORS.teal }} className="text-xs font-semibold underline">
+                  {t("loginUseDifferent")}
+                </button>
+              </>
+            )}
+
+            {loginStage === "confirm" && (
+              <>
+                <p style={{ color: COLORS.muted }} className="text-xs leading-relaxed mb-3">{t("loginConfirmText")}</p>
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder={t("loginEmailPlaceholder")}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2.5 text-sm outline-none bg-white mb-2"
+                />
+                <button
+                  onClick={() => finishEmailLogin(loginEmail.trim().toLowerCase())}
+                  style={{ background: COLORS.amber, color: COLORS.night }}
+                  className="w-full rounded-lg py-2.5 text-sm font-bold"
+                >
+                  {t("loginConfirmBtn")}
+                </button>
+              </>
+            )}
+
+            {loginErr && <p style={{ color: COLORS.coral }} className="text-xs font-semibold mt-3">{loginErr}</p>}
+          </div>
+        </div>
+      )}
+
       {showReferralPoster && myReferralCode && (() => {
         const board = buildBoard(monthStart).slice(0, 5);
         const prize = (appSettings.referralPrizeText || "").trim();
@@ -2118,21 +2396,42 @@ function MargshriApp() {
             <p style={{ color: COLORS.night }} className="text-base font-bold mb-1">{t("onbTitle")}</p>
             <p style={{ color: COLORS.muted }} className="text-xs mb-4 leading-relaxed">{t("onbSub")}</p>
 
+            {needsName && (
+              <>
+                <label style={{ color: COLORS.night }} className="text-xs font-bold block mb-1">{t("onbNameLabel")} *</label>
+                <input
+                  type="text"
+                  autoComplete="name"
+                  value={onbName}
+                  onChange={(e) => setOnbName(e.target.value)}
+                  placeholder={t("onbNamePlaceholder")}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2.5 text-sm outline-none mb-3 bg-white"
+                />
+              </>
+            )}
+
+            {!myPhone && (<>
             <label style={{ color: COLORS.night }} className="text-xs font-bold block mb-1">{t("onbPhoneLabel")} *</label>
             <div style={{ borderColor: COLORS.line, background: "white" }} className="flex items-center border rounded-lg mb-3 overflow-hidden">
               <span style={{ color: COLORS.muted, borderColor: COLORS.line }} className="px-3 py-2.5 text-sm border-r">+91</span>
               <input
                 type="tel"
                 inputMode="numeric"
-                autoFocus
                 value={onbPhone}
                 onChange={(e) => setOnbPhone(e.target.value)}
                 placeholder="98765 43210"
                 className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent"
               />
             </div>
+            </>)}
 
-            {canAddReferral && (
+            {canAddReferral && !onbShowRef && (
+              <button type="button" onClick={() => setOnbShowRef(true)} style={{ color: COLORS.teal }} className="text-xs font-semibold underline mb-3 block">
+                {t("onbHaveCode")}
+              </button>
+            )}
+            {canAddReferral && onbShowRef && (
               <>
                 <label style={{ color: COLORS.night }} className="text-xs font-bold block mb-1">{t("onbRefLabel")}</label>
                 <input
@@ -2144,6 +2443,28 @@ function MargshriApp() {
                   className="w-full border rounded-lg px-3 py-2.5 text-sm outline-none mb-3 bg-white font-mono"
                 />
               </>
+            )}
+
+            {!safetyAcknowledged && (
+              <div className="mb-3">
+                <p style={{ color: COLORS.muted }} className="text-[11px] leading-relaxed">
+                  🛡️ {t("onbAgree")}{" "}
+                <button type="button" onClick={() => setOnbShowRules((v) => !v)} style={{ color: COLORS.teal }} className="font-semibold underline">
+                  {t("onbAgreeRead")}
+                </button>
+                </p>
+                {onbShowRules && (
+                  <ul style={{ color: COLORS.charcoal, background: "white", borderColor: COLORS.line }} className="text-xs list-disc pl-6 pr-3 py-2 mt-2 space-y-1 border rounded-lg max-h-40 overflow-y-auto">
+                    <li>{t("safetyIntro")}</li>
+                    <li>{t("safetyPoint1")}</li>
+                    <li>{t("safetyPoint2")}</li>
+                    <li>{t("safetyPoint3")}</li>
+                    <li>{t("safetyPoint4")}</li>
+                    <li>{t("safetyPoint5")}</li>
+                    <li>{t("safetyAgeNote")}</li>
+                  </ul>
+                )}
+              </div>
             )}
 
             {onbError && <p style={{ color: COLORS.coral }} className="text-xs font-semibold mb-3">{onbError}</p>}
@@ -2234,7 +2555,7 @@ function MargshriApp() {
         </div>
       )}
 
-      {(showSafetyModal || (user && !safetyAcknowledged)) && (
+      {(showSafetyModal || (user && profileLoaded && !safetyAcknowledged && !needsOnboarding)) && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.6)" }}>
           <div style={{ background: COLORS.sand }} className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center gap-2 mb-3">
@@ -2740,9 +3061,14 @@ function MargshriApp() {
                   {t("signOut")}
                 </button>
               ) : (
-                <button onClick={signInWithGoogle} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-xl py-2.5 text-sm font-bold">
-                  {t("login")}
+                <>
+                <button onClick={() => { setShowSidebar(false); signInWithGoogle(); }} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-2">
+                  {t("continueGoogle")}
                 </button>
+                <button onClick={() => { setShowSidebar(false); openLogin(); setLoginStage("email"); }} style={{ color: COLORS.muted }} className="w-full text-xs underline mt-2">
+                  {t("loginEmailInstead")}
+                </button>
+                </>
               )}
             </div>
           </div>
