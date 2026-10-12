@@ -60,6 +60,17 @@ const TRANSLATIONS = {
     shareUseCode: "Use my referral code:",
     onbTitle: "Add your mobile number",
     loginTitle: "Log in to Margshri",
+    loginBusy: "Logging you in…",
+    inappTitle: "Open in Chrome to log in",
+    inappText: "Google login doesn't work inside WhatsApp, Instagram or Facebook's built-in browser. Open Margshri in Chrome — it takes one tap.",
+    inappTextIos: "Google login doesn't work inside this app's built-in browser. Tap ⋯ or the share icon and choose \"Open in Safari\".",
+    inappOpenChrome: "Open in Chrome",
+    inappCopy: "Copy link",
+    inappCopied: "Link copied — paste it in Chrome",
+    errNetwork: "No internet connection. Check your network and try again.",
+    errTooMany: "Too many attempts. Please wait a minute and try again.",
+    errGeneric: "Login didn't complete. Please try again.",
+    errAccountExists: "This email is already linked to a Google login. Use \"Continue with Google\".",
     loginSub: "Choose how you want to continue.",
     loginOr: "or with email",
     loginEmailPlaceholder: "your@email.com",
@@ -368,6 +379,17 @@ const TRANSLATIONS = {
     shareUseCode: "मेरा रेफ़रल कोड डालें:",
     onbTitle: "अपना मोबाइल नंबर जोड़ें",
     loginTitle: "Margshri में लॉगिन करें",
+    loginBusy: "लॉगिन हो रहा है…",
+    inappTitle: "लॉगिन के लिए Chrome में खोलें",
+    inappText: "WhatsApp, Instagram या Facebook के अंदर वाले ब्राउज़र में Google लॉगिन नहीं चलता। Margshri को Chrome में खोलें — बस एक टैप।",
+    inappTextIos: "इस ऐप के अंदर वाले ब्राउज़र में Google लॉगिन नहीं चलता। ⋯ या शेयर आइकन दबाकर \"Open in Safari\" चुनें।",
+    inappOpenChrome: "Chrome में खोलें",
+    inappCopy: "लिंक कॉपी करें",
+    inappCopied: "लिंक कॉपी हो गया — Chrome में पेस्ट करें",
+    errNetwork: "इंटरनेट नहीं चल रहा। नेटवर्क देखकर दोबारा कोशिश करें।",
+    errTooMany: "बहुत बार कोशिश हुई। एक मिनट रुककर दोबारा करें।",
+    errGeneric: "लॉगिन पूरा नहीं हुआ। कृपया दोबारा कोशिश करें।",
+    errAccountExists: "यह ईमेल पहले से Google लॉगिन से जुड़ा है। \"Google से जारी रखें\" चुनें।",
     loginSub: "आगे बढ़ने का तरीका चुनें।",
     loginOr: "या ईमेल से",
     loginEmailPlaceholder: "aapka@email.com",
@@ -1056,6 +1078,16 @@ function MargshriApp() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginStage, setLoginStage] = useState("choose"); // choose | sending | sent | confirm | finishing
   const [loginErr, setLoginErr] = useState("");
+  const [inappCopied, setInappCopied] = useState(false);
+  // True while we are coming back from Google after a redirect login (shows a friendly loader).
+  const [loginBusy, setLoginBusy] = useState(() => {
+    try {
+      const at = Number(localStorage.getItem("margshri-login-pending") || 0);
+      return at > 0 && Date.now() - at < 5 * 60 * 1000;
+    } catch {
+      return false;
+    }
+  });
   const [showReferralPoster, setShowReferralPoster] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -1557,30 +1589,80 @@ function MargshriApp() {
     }
   };
 
-  // Finish a redirect login when the page comes back from Google, and show any error.
+  // Plain-language login errors (no technical codes shown to users).
+  const loginErrorText = (err) => {
+    const code = (err && err.code) || "";
+    if (code === "auth/network-request-failed") return t("errNetwork");
+    if (code === "auth/too-many-requests") return t("errTooMany");
+    if (code === "auth/account-exists-with-different-credential") return t("errAccountExists");
+    return `${t("errGeneric")}${code ? ` (${code.replace("auth/", "")})` : ""}`;
+  };
+  const QUIET_LOGIN_ERRORS = ["auth/no-auth-event", "auth/popup-closed-by-user", "auth/cancelled-popup-request", "auth/user-cancelled", "auth/redirect-cancelled-by-user"];
+
+  // Google blocks its login inside WhatsApp / Instagram / Facebook in-app browsers.
+  const isInAppBrowser = () => {
+    try {
+      const ua = navigator.userAgent || "";
+      return /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\/|Snapchat|LinkedInApp|MicroMessenger|; wv\)/i.test(ua);
+    } catch {
+      return false;
+    }
+  };
+  const isIOSDevice = () => /iphone|ipad|ipod/i.test((typeof navigator !== "undefined" && navigator.userAgent) || "");
+  const chromeIntentUrl = () => {
+    const path = `${window.location.host}${window.location.pathname}${window.location.search}`;
+    return `intent://${path}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(window.location.href)};end`;
+  };
+
+  // Finish a redirect login when the page comes back from Google.
   useEffect(() => {
-    getRedirectResult(auth).catch((err) => {
-      if (err && err.code && err.code !== "auth/no-auth-event") {
-        showError(`Login error: ${err.code}`);
-      }
-    });
+    getRedirectResult(auth)
+      .catch((err) => {
+        if (err && !QUIET_LOGIN_ERRORS.includes(err.code)) showError(loginErrorText(err));
+      })
+      .finally(() => {
+        try { localStorage.removeItem("margshri-login-pending"); } catch {}
+        setLoginBusy(false);
+      });
+    // Safety net: never leave the loader on screen for more than 15 seconds.
+    const timer = setTimeout(() => setLoginBusy(false), 15000);
+    return () => clearTimeout(timer);
   }, []);
 
+  const startRedirectLogin = () => {
+    try { localStorage.setItem("margshri-login-pending", String(Date.now())); } catch {}
+    setLoginBusy(true);
+    signInWithRedirect(auth, googleProvider).catch((err) => {
+      try { localStorage.removeItem("margshri-login-pending"); } catch {}
+      setLoginBusy(false);
+      if (!QUIET_LOGIN_ERRORS.includes(err && err.code)) showError(loginErrorText(err));
+    });
+  };
+
   const signInWithGoogle = () => {
+    if (!navigator.onLine) {
+      showError(t("errNetwork"));
+      return;
+    }
+    if (isInAppBrowser()) {
+      setLoginErr("");
+      setInappCopied(false);
+      setLoginStage("inapp");
+      setShowLoginModal(true);
+      return;
+    }
     if (useRedirectLogin()) {
-      signInWithRedirect(auth, googleProvider).catch((err) => {
-        showError(`Login error: ${err.code || err.message}`);
-      });
+      startRedirectLogin();
       return;
     }
     signInWithPopup(auth, googleProvider).catch((err) => {
-      // Popup blocked or closed early → fall back to redirect.
+      // Popup blocked or not supported → fall back to redirect.
       if (err && (err.code === "auth/popup-blocked" || err.code === "auth/operation-not-supported-in-this-environment")) {
-        signInWithRedirect(auth, googleProvider).catch(() => {});
+        startRedirectLogin();
         return;
       }
-      if (err && err.code === "auth/popup-closed-by-user") return;
-      showError(`Login error: ${err.code || err.message}`);
+      if (QUIET_LOGIN_ERRORS.includes(err && err.code)) return;
+      showError(loginErrorText(err));
     });
   };
 
@@ -1604,8 +1686,8 @@ function MargshriApp() {
       await sendSignInLinkToEmail(auth, email, { url: `${window.location.origin}/`, handleCodeInApp: true });
       try { localStorage.setItem(EMAIL_KEY, email); } catch {}
       setLoginStage("sent");
-    } catch {
-      setLoginErr(t("loginEmailFailed"));
+    } catch (err) {
+      setLoginErr(err && err.code === "auth/network-request-failed" ? t("errNetwork") : t("loginEmailFailed"));
       setLoginStage("email");
     }
   };
@@ -2174,13 +2256,19 @@ function MargshriApp() {
   // Modals that must work on every screen, including the landing page.
   const renderGlobalModals = () => (
     <>
+      {loginBusy && !user && (
+        <div className="fixed inset-0 flex flex-col items-center justify-center gap-3" style={{ background: "rgba(250,246,239,0.92)", zIndex: 70 }}>
+          <Loader2 size={28} className="animate-spin" color={COLORS.night} />
+          <p style={{ color: COLORS.night }} className="text-sm font-bold">{t("loginBusy")}</p>
+        </div>
+      )}
       {showLoginModal && !user && (
         <div className="fixed inset-0 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.6)", zIndex: 65 }} onClick={() => loginStage !== "finishing" && setShowLoginModal(false)}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 shadow-xl">
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
                 <p style={{ color: COLORS.night }} className="text-base font-bold">
-                  {loginStage === "sent" ? t("loginSentTitle") : loginStage === "confirm" ? t("loginConfirmTitle") : t("loginTitle")}
+                  {loginStage === "sent" ? t("loginSentTitle") : loginStage === "confirm" ? t("loginConfirmTitle") : loginStage === "inapp" ? t("inappTitle") : t("loginTitle")}
                 </p>
                 {loginStage === "choose" && <p style={{ color: COLORS.muted }} className="text-xs mt-0.5">{t("loginSub")}</p>}
               </div>
@@ -2188,6 +2276,34 @@ function MargshriApp() {
                 <button onClick={() => setShowLoginModal(false)} style={{ color: COLORS.muted }} aria-label="close"><X size={18} /></button>
               )}
             </div>
+
+            {loginStage === "inapp" && (
+              <>
+                <p style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed mb-4">{isIOSDevice() ? t("inappTextIos") : t("inappText")}</p>
+                {!isIOSDevice() && (
+                  <a
+                    href={chromeIntentUrl()}
+                    style={{ background: COLORS.night, color: "white" }}
+                    className="w-full rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 mb-2"
+                  >
+                    <Globe size={16} /> {t("inappOpenChrome")}
+                  </a>
+                )}
+                <button
+                  onClick={async () => {
+                    try { await navigator.clipboard.writeText(window.location.href); } catch {}
+                    setInappCopied(true);
+                  }}
+                  style={{ borderColor: COLORS.line, color: inappCopied ? COLORS.teal : COLORS.night, background: "white" }}
+                  className="w-full border rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  {inappCopied ? <Check size={15} /> : <Copy size={15} />} {inappCopied ? t("inappCopied") : t("inappCopy")}
+                </button>
+                <button onClick={() => { setLoginStage("email"); setLoginErr(""); }} style={{ color: COLORS.muted }} className="w-full text-xs underline mt-4">
+                  {t("loginEmailInstead")}
+                </button>
+              </>
+            )}
 
             {loginStage === "finishing" && (
               <div className="flex justify-center py-6"><Loader2 size={26} className="animate-spin" color={COLORS.night} /></div>
