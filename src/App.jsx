@@ -966,8 +966,12 @@ function MargshriApp() {
     errorTimerRef.current = setTimeout(() => setErrorMsg(""), 5000);
   };
 
-  const pathToScreen = { "/privacy": "privacy", "/terms": "terms" };
-  const screenToPath = { privacy: "/privacy", terms: "/terms" };
+  // Each main screen has its own address, so the phone's Back button works like a
+  // real app (Back from "Find a ride" goes Home instead of closing the installed app).
+  const pathToScreen = { "/privacy": "privacy", "/terms": "terms", "/ride": "rider", "/drive": "owner", "/admin": "admin" };
+  const screenToPath = { privacy: "/privacy", terms: "/terms", rider: "/ride", owner: "/drive", admin: "/admin" };
+  const overlayOpenRef = React.useRef(false); // a popup/menu is open and owns one Back press
+  const skipPopRef = React.useRef(false); // ignore the popstate we cause ourselves
   const [screen, setScreen] = useState(() => pathToScreen[window.location.pathname] || "landing");
   const [showSidebar, setShowSidebar] = useState(false);
 
@@ -983,6 +987,28 @@ function MargshriApp() {
   // Support the browser's back/forward buttons for these pages
   useEffect(() => {
     const onPopState = () => {
+      if (skipPopRef.current) {
+        skipPopRef.current = false;
+        return;
+      }
+      // Back while a popup or the menu is open → just close it, stay on this screen.
+      if (overlayOpenRef.current) {
+        overlayOpenRef.current = false;
+        setShowSidebar(false);
+        setActiveChat(null);
+        setShowReferralPoster(false);
+        setShowShareModal(false);
+        setShowFilterModal(false);
+        setActiveReview(null);
+        setViewingReviewsFor(null);
+        setShowFeedbackModal(false);
+        setShowPhoneModal(false);
+        setActiveReport(null);
+        setShowIOSHint(false);
+        setShowLoginModal(false);
+        setShowSafetyModal(false);
+        return;
+      }
       setScreen(pathToScreen[window.location.pathname] || "landing");
     };
     window.addEventListener("popstate", onPopState);
@@ -1981,6 +2007,32 @@ function MargshriApp() {
   };
 
   const isAdmin = !!(user && ADMIN_EMAILS.includes(user.email));
+
+  // Someone opening /admin who isn't an admin goes Home instead of a blank page.
+  useEffect(() => {
+    if (!authLoading && screen === "admin" && !isAdmin) setScreen("landing");
+  }, [authLoading, screen, isAdmin]);
+
+  // Give every popup/menu its own Back step (phone Back button closes it first).
+  const anyOverlayOpen = !!(
+    showSidebar || activeChat || showReferralPoster || showShareModal || showFilterModal || activeReview ||
+    viewingReviewsFor || showFeedbackModal || showPhoneModal || activeReport || showIOSHint || showLoginModal || showSafetyModal
+  );
+  useEffect(() => {
+    try {
+      if (anyOverlayOpen && !overlayOpenRef.current) {
+        window.history.pushState({ margshriOverlay: true }, "", window.location.pathname + window.location.search);
+        overlayOpenRef.current = true;
+      } else if (!anyOverlayOpen && overlayOpenRef.current) {
+        overlayOpenRef.current = false;
+        // Closed with ✕ / tap outside → remove the extra Back step we added.
+        if (window.history.state && window.history.state.margshriOverlay) {
+          skipPopRef.current = true;
+          window.history.back();
+        }
+      }
+    } catch {}
+  }, [anyOverlayOpen]);
   const isBlocked = !!(user && blockedUsers.some((b) => b.id === user.email));
 
   const submitReport = () => {
