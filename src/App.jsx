@@ -1015,6 +1015,58 @@ function MargshriApp() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  // SEO: give every screen its own title, description and canonical address, so Google
+  // treats /ride, /drive, /privacy and /terms as separate pages (not copies of Home).
+  useEffect(() => {
+    const SITE = "https://margshri.in";
+    const meta = {
+      landing: {
+        title: "Margshri — Ek raasta, sab saath | Ride & Vehicle Pool Sharing App",
+        desc: "Margshri — bike se bus tak, local aur long-distance vehicle-pool sharing app. Apna route post karo ya seat book karo, cost-sharing par. Free, no commission.",
+      },
+      rider: {
+        title: "Ride dhoondho — carpool & seat booking | Margshri",
+        desc: "Apne raste ki bike, car ya bus ride dhoondho aur seat book karo. Petrol-toll ka kharcha baanto. Local aur long-distance carpool, free, no commission.",
+      },
+      owner: {
+        title: "Gaadi post karo — khaali seat share karo | Margshri",
+        desc: "Bike, car ya bus ki khaali seat Margshri par post karo. Usi raste ke log request bhejenge aur petrol-toll ka kharcha baant jaayega. Free, no commission.",
+      },
+      privacy: { title: "Privacy Policy | Margshri", desc: "Margshri aapki jaankari kaise rakhta aur istemaal karta hai — privacy policy." },
+      terms: { title: "Terms of Service | Margshri", desc: "Margshri vehicle-pool sharing app ke istemaal ki sharten (Terms of Service)." },
+      admin: { title: "Admin | Margshri", desc: "" },
+    };
+    const m = meta[screen] || meta.landing;
+    const path = screenToPath[screen] || "/";
+    try {
+      document.title = m.title;
+      const setMeta = (selector, attr, key, value) => {
+        let el = document.head.querySelector(selector);
+        if (!el) {
+          el = document.createElement("meta");
+          el.setAttribute(attr, key);
+          document.head.appendChild(el);
+        }
+        el.setAttribute("content", value);
+      };
+      if (m.desc) {
+        setMeta('meta[name="description"]', "name", "description", m.desc);
+        setMeta('meta[property="og:description"]', "property", "og:description", m.desc);
+      }
+      setMeta('meta[property="og:title"]', "property", "og:title", m.title);
+      setMeta('meta[property="og:url"]', "property", "og:url", SITE + path);
+      let link = document.head.querySelector('link[rel="canonical"]');
+      if (!link) {
+        link = document.createElement("link");
+        link.setAttribute("rel", "canonical");
+        document.head.appendChild(link);
+      }
+      link.setAttribute("href", SITE + path);
+      // Keep the admin panel out of Google.
+      setMeta('meta[name="robots"]', "name", "robots", screen === "admin" ? "noindex, nofollow" : "index, follow");
+    } catch {}
+  }, [screen]);
+
   // Clear any lingering error banner whenever the person navigates to a different screen
   useEffect(() => {
     if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
