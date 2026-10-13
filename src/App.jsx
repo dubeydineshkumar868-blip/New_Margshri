@@ -1470,9 +1470,31 @@ function MargshriApp() {
     setTimeout(() => setCodeCopied(false), 2000);
   };
 
-  // Real-time listeners start immediately in the background. Landing screen doesn't
-  // wait for this — only the Rider/Owner dashboards need vehicles/requests.
+  // Speed: the Home page needs none of this data, so the big live listeners start
+  // a moment after Home has appeared (or immediately when another screen is opened).
+  const [dataWanted, setDataWanted] = useState(() => screen !== "landing");
   useEffect(() => {
+    if (dataWanted) return;
+    if (screen !== "landing") {
+      setDataWanted(true);
+      return;
+    }
+    const timer = setTimeout(() => setDataWanted(true), 2500);
+    return () => clearTimeout(timer);
+  }, [screen, dataWanted]);
+
+  // App settings (announcement banner, ads) are tiny and needed on Home → load right away.
+  useEffect(() => {
+    const unsubSettings = onSnapshot(
+      doc(db, SETTINGS_COLLECTION, SETTINGS_DOC_ID),
+      (snap) => setAppSettings(snap.exists() ? snap.data() : {}),
+      () => {}
+    );
+    return unsubSettings;
+  }, []);
+
+  useEffect(() => {
+    if (!dataWanted) return;
     const unsubVehicles = onSnapshot(
       collection(db, VEHICLES_COLLECTION),
       async (snap) => {
@@ -1526,11 +1548,6 @@ function MargshriApp() {
       (snap) => setAppFeedback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => {}
     );
-    const unsubSettings = onSnapshot(
-      doc(db, SETTINGS_COLLECTION, SETTINGS_DOC_ID),
-      (snap) => setAppSettings(snap.exists() ? snap.data() : {}),
-      () => {}
-    );
     return () => {
       unsubVehicles();
       unsubRequests();
@@ -1540,9 +1557,8 @@ function MargshriApp() {
       unsubComplaints();
       unsubBlocks();
       unsubFeedback();
-      unsubSettings();
     };
-  }, [user?.uid]);
+  }, [user?.uid, dataWanted]);
 
   // Only admins are allowed (by security rules) to read the full users list
   useEffect(() => {
@@ -2281,7 +2297,7 @@ function MargshriApp() {
     </div>
   );
 
-  if (authLoading) {
+  if (authLoading && screen !== "landing") {
     return (
       <div style={{ background: COLORS.sand, minHeight: "100dvh" }} className="w-full flex items-center justify-center">
         <Loader2 size={24} className="animate-spin" color={COLORS.muted} />
