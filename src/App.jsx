@@ -138,6 +138,14 @@ const TRANSLATIONS = {
     from: "From",
     to: "To",
     noVehiclesFound: "No vehicle is open on this route right now.",
+    guideRideTitle: "How to find a ride on Margshri",
+    guideRideSteps: ["Type where you are starting from and where you want to go, and pick bike, car or bus.", "Pick a ride that suits your time and price. You can offer your own price too.", "Send a request. Once the owner accepts, you can chat and see their phone number.", "Meet at the pickup point, check each other's ID, and share the fuel and toll cost directly."],
+    guideRideNoRide: "No ride on your route yet? Post your route with \"Post my request\" and vehicle owners going your way can offer you a seat.",
+    guideDriveTitle: "How to share your vehicle on Margshri",
+    guideDriveSteps: ["Enter your route, date, time and how many seats are free. Add stops on the way if you like.", "Set a fair cost per seat to share fuel and toll. Margshri takes no commission.", "Riders going your way send requests. Chat first, then accept, or turn on Instant Booking.", "After the ride, mark it done and rate each other."],
+    guideDriveRiders: "You can also see riders who have posted their route below, and offer them a seat.",
+    faqTitle: "Common questions",
+    faq: [["Is Margshri free?", "Yes. Posting and booking rides is free, and Margshri takes no commission."], ["How do we pay?", "Riders and owners agree the cost-share in advance and settle it directly, in cash or UPI. Margshri does not handle payments."], ["Is it local or long-distance?", "Both: daily office trips in the city, and long trips between cities, for example going home for festivals."], ["Is it safe?", "Phone numbers are shown only after a request is accepted. Chat before you meet, check ID when you meet, and use ratings and the report button. Margshri does not verify IDs itself."]],
     postOwnRequestPrompt: "Post your own request — you'll be notified when an owner matches you.",
     dateTimePlaceholder: "Date & time",
     seatsWanted: "Seats needed",
@@ -457,6 +465,14 @@ const TRANSLATIONS = {
     from: "कहाँ से",
     to: "कहाँ तक",
     noVehiclesFound: "इस रूट पर अभी कोई वाहन उपलब्ध नहीं है।",
+    guideRideTitle: "Margshri पर सवारी कैसे ढूँढें",
+    guideRideSteps: ["कहाँ से और कहाँ तक जाना है लिखें, और बाइक, कार या बस चुनें।", "अपने समय और किराए के हिसाब से सवारी चुनें। चाहें तो अपना किराया भी ऑफ़र कर सकते हैं।", "रिक्वेस्ट भेजें। वाहन मालिक के स्वीकार करने पर चैट और फ़ोन नंबर मिल जाएगा।", "पिकअप पॉइंट पर मिलें, एक-दूसरे की ID देखें, और पेट्रोल-टोल का खर्च आपस में बाँटें।"],
+    guideRideNoRide: "आपके रूट पर अभी सवारी नहीं है? \"मेरी रिक्वेस्ट पोस्ट करें\" से अपना रास्ता डालें, उसी रास्ते के वाहन मालिक आपको सीट ऑफ़र कर सकते हैं।",
+    guideDriveTitle: "Margshri पर अपनी गाड़ी कैसे शेयर करें",
+    guideDriveSteps: ["अपना रास्ता, तारीख़, समय और कितनी सीटें खाली हैं, डालें। चाहें तो बीच के स्टॉप भी जोड़ें।", "पेट्रोल-टोल बाँटने के लिए हर सीट का सही खर्च तय करें। Margshri कोई कमीशन नहीं लेता।", "उसी रास्ते के लोग रिक्वेस्ट भेजेंगे। पहले चैट करें, फिर स्वीकार करें, या इंस्टेंट बुकिंग चालू करें।", "सफ़र के बाद राइड पूरी मार्क करें और एक-दूसरे को रेटिंग दें।"],
+    guideDriveRiders: "नीचे उन सवारियों को भी देख सकते हैं जिन्होंने अपना रास्ता पोस्ट किया है, और उन्हें सीट ऑफ़र कर सकते हैं।",
+    faqTitle: "आम सवाल",
+    faq: [["क्या Margshri मुफ़्त है?", "हाँ। सवारी पोस्ट करना और बुक करना मुफ़्त है, और Margshri कोई कमीशन नहीं लेता।"], ["भुगतान कैसे होता है?", "सवारी और वाहन मालिक खर्च पहले से तय करते हैं और सीधे कैश या UPI से चुकाते हैं। Margshri कोई भुगतान नहीं संभालता।"], ["लोकल है या लंबी दूरी?", "दोनों: शहर में रोज़ ऑफ़िस आना-जाना, और शहरों के बीच लंबा सफ़र, जैसे त्योहार पर घर जाना।"], ["क्या यह सुरक्षित है?", "फ़ोन नंबर सिर्फ़ रिक्वेस्ट स्वीकार होने के बाद दिखता है। मिलने से पहले चैट करें, मिलते समय ID देखें, और रेटिंग व रिपोर्ट बटन का उपयोग करें। Margshri खुद ID की जाँच नहीं करता।"]],
     postOwnRequestPrompt: "अपनी खुद की रिक्वेस्ट पोस्ट करें — कोई मालिक मैच होते ही आपको पता चल जाएगा।",
     dateTimePlaceholder: "तारीख़ और समय",
     seatsWanted: "कितनी सीट चाहिए",
@@ -802,6 +818,34 @@ function RouteButton({ from, to, stops, label }) {
     >
       <Navigation size={12} /> {label}
     </a>
+  );
+}
+
+// Plain "how it works" + FAQ block shown under the ride lists. Helps first-time users,
+// and gives search engines real text even when there are no rides on the page.
+function HowItWorksGuide({ title, steps, note, faqTitle, faq }) {
+  return (
+    <section style={{ borderColor: COLORS.line }} className="mt-10 pt-6 border-t">
+      <h2 style={{ color: COLORS.night }} className="text-base font-bold mb-3">{title}</h2>
+      <ol className="space-y-2 mb-3">
+        {steps.map((step, i) => (
+          <li key={i} className="flex items-start gap-3">
+            <span style={{ background: COLORS.amber, color: COLORS.night }} className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+            <span style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed">{step}</span>
+          </li>
+        ))}
+      </ol>
+      {note && <p style={{ color: COLORS.muted }} className="text-sm leading-relaxed mb-5">{note}</p>}
+      <h2 style={{ color: COLORS.night }} className="text-base font-bold mb-2">{faqTitle}</h2>
+      <div className="space-y-2">
+        {faq.map(([q, a], i) => (
+          <details key={i} style={{ borderColor: COLORS.line }} className="bg-white border rounded-xl px-4 py-3">
+            <summary style={{ color: COLORS.night }} className="text-sm font-semibold cursor-pointer">{q}</summary>
+            <p style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed mt-2">{a}</p>
+          </details>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -3673,6 +3717,14 @@ function MargshriApp() {
               </div>
             </>
           )}
+
+          <HowItWorksGuide
+            title={t("guideRideTitle")}
+            steps={t("guideRideSteps")}
+            note={t("guideRideNoRide")}
+            faqTitle={t("faqTitle")}
+            faq={t("faq")}
+          />
         </div>
       )}
 
@@ -4062,6 +4114,14 @@ function MargshriApp() {
               );
             })}
           </div>
+
+          <HowItWorksGuide
+            title={t("guideDriveTitle")}
+            steps={t("guideDriveSteps")}
+            note={t("guideDriveRiders")}
+            faqTitle={t("faqTitle")}
+            faq={t("faq")}
+          />
         </div>
       )}
 
