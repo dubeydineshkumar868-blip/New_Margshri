@@ -1,26 +1,37 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-IN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Margshri — Ek raasta, sab saath | Ride & Vehicle Pool Sharing App</title>
+    <title>Margshri — Ek raasta, sab saath | Ride &amp; Vehicle Pool Sharing App</title>
     <meta name="description" content="Margshri — bike se bus tak, local aur long-distance vehicle-pool sharing app. Apna route post karo ya seat book karo, cost-sharing par. Free, no commission." />
 
     <meta name="google-site-verification" content="s3C4KiRJRRnjdvwzMFDj6sQ_o2eyD-3S0GGdjY5sid4" />
 
+    <!-- Speed: open connections to Firebase early, while the app code downloads -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
+
     <!-- Google AdSense site verification -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5376508336690730" crossorigin="anonymous" data-adsbygoogle-id="true"></script>
 
+    <meta property="og:site_name" content="Margshri" />
+    <meta property="og:locale" content="en_IN" />
     <meta property="og:title" content="Margshri — Ek raasta, sab saath" />
-    <meta property="og:description" content="Bike se bus tak vehicle-pool sharing app — apna route share karo ya seat book karo, cost-sharing par." />
+    <meta property="og:description" content="Bike se bus tak vehicle-pool sharing app — apna route share karo ya seat book karo, cost-sharing par. Free, no commission." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://margshri.in" />
-    <meta property="og:image" content="https://margshri.in/icon-512.png" />
+    <meta property="og:url" content="https://margshri.in/" />
+    <meta property="og:image" content="https://margshri.in/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Margshri — Ek raasta, sab saath. Bike, car or bus. Share the ride, split the cost." />
 
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Margshri — Ek raasta, sab saath" />
     <meta name="twitter:description" content="Bike se bus tak vehicle-pool sharing app — apna route share karo ya seat book karo, cost-sharing par." />
-    <meta name="twitter:image" content="https://margshri.in/icon-512.png" />
+    <meta name="twitter:image" content="https://margshri.in/og-image.png" />
 
     <link rel="canonical" href="https://margshri.in/" />
 
@@ -38,31 +49,79 @@
         max-width: 100%;
         overflow-x: hidden;
       }
+      body { margin: 0; background: #FAF6EF; }
+      /* Shown instantly while the app loads; React replaces it when ready. */
+      .boot { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #26272B; }
+      .boot-card { max-width: 420px; text-align: center; }
+      .boot-logo { width: 64px; height: 64px; border-radius: 18px; background: #F2A340; display: inline-flex; align-items: center; justify-content: center; }
+      .boot h1 { margin: 14px 0 4px; font-size: 30px; color: #1B2A4A; }
+      .boot .tag { margin: 0 0 14px; font-size: 18px; font-weight: 700; color: #B4700C; }
+      .boot p { margin: 0 0 10px; font-size: 15px; line-height: 1.55; color: #4B5563; }
+      .boot nav { margin: 18px 0 10px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      .boot nav a { text-decoration: none; font-weight: 700; font-size: 14px; padding: 10px 16px; border-radius: 12px; }
+      .boot .a1 { background: #F2A340; color: #1B2A4A; }
+      .boot .a2 { background: #1B2A4A; color: #fff; }
+      .boot-load { margin-top: 18px; display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: #8A8F9C; }
+      .boot-spin { width: 16px; height: 16px; border: 2px solid #E4DFD3; border-top-color: #1B2A4A; border-radius: 50%; animation: bootspin 0.8s linear infinite; }
+      @keyframes bootspin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .boot-spin { animation: none; } }
     </style>
 
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Margshri",
-      "url": "https://margshri.in",
-      "description": "Local aur long-distance vehicle-pool sharing app — bike se bus tak, cost-sharing par. Apna route post karo ya seat book karo.",
-      "applicationCategory": "TravelApplication",
-      "operatingSystem": "Web, Android, iOS",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "INR"
-      },
-      "areaServed": {
-        "@type": "Country",
-        "name": "India"
-      }
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://margshri.in/#org",
+          "name": "Margshri",
+          "url": "https://margshri.in/",
+          "logo": "https://margshri.in/icon-512.png",
+          "email": "margshri26@gmail.com"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://margshri.in/#website",
+          "name": "Margshri",
+          "url": "https://margshri.in/",
+          "publisher": { "@id": "https://margshri.in/#org" },
+          "inLanguage": ["en-IN", "hi-IN"]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Margshri",
+          "url": "https://margshri.in/",
+          "description": "Local aur long-distance vehicle-pool sharing app — bike se bus tak, cost-sharing par. Apna route post karo ya seat book karo.",
+          "applicationCategory": "TravelApplication",
+          "operatingSystem": "Web, Android, iOS",
+          "publisher": { "@id": "https://margshri.in/#org" },
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+          "areaServed": { "@type": "Country", "name": "India" }
+        }
+      ]
     }
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="boot">
+        <div class="boot-card">
+          <div class="boot-logo" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1B2A4A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <h1>Margshri</h1>
+          <p class="tag">Ek raasta, sab saath</p>
+          <p>Bike, car ya bus: apne raste ke logon ke saath safar karo aur petrol-toll ka kharcha baanto. Local aur long-distance, dono. Bilkul free, koi commission nahi.</p>
+          <p>Vehicle-pool and carpool sharing app for India. Post your route or book a seat on a cost-sharing basis.</p>
+          <nav>
+            <a class="a1" href="/ride">Ride dhoondho</a>
+            <a class="a2" href="/drive">Gaadi post karo</a>
+          </nav>
+          <div class="boot-load"><span class="boot-spin"></span> Loading…</div>
+        </div>
+      </main>
+    </div>
+    <noscript>Margshri chalane ke liye JavaScript chalu karein. Please enable JavaScript to use Margshri.</noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
