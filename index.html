@@ -50,19 +50,12 @@
         overflow-x: hidden;
       }
       body { margin: 0; background: #FAF6EF; }
-      /* Shown instantly while the app loads; React replaces it when ready. */
-      .boot { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #26272B; }
-      .boot-card { max-width: 420px; text-align: center; }
-      .boot-logo { width: 64px; height: 64px; border-radius: 18px; background: #F2A340; display: inline-flex; align-items: center; justify-content: center; }
-      .boot h1 { margin: 14px 0 4px; font-size: 30px; color: #1B2A4A; }
-      .boot .tag { margin: 0 0 14px; font-size: 18px; font-weight: 700; color: #B4700C; }
-      .boot p { margin: 0 0 10px; font-size: 15px; line-height: 1.55; color: #4B5563; }
-      .boot nav { margin: 18px 0 10px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-      .boot nav a { text-decoration: none; font-weight: 700; font-size: 14px; padding: 10px 16px; border-radius: 12px; }
-      .boot .a1 { background: #F2A340; color: #1B2A4A; }
-      .boot .a2 { background: #1B2A4A; color: #fff; }
-      .boot-load { margin-top: 18px; display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: #8A8F9C; }
-      .boot-spin { width: 16px; height: 16px; border: 2px solid #E4DFD3; border-top-color: #1B2A4A; border-radius: 50%; animation: bootspin 0.8s linear infinite; }
+      /* Simple splash shown for a moment while the app loads; React replaces it. */
+      .boot { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .boot-logo { width: 72px; height: 72px; border-radius: 20px; background: #F2A340; display: flex; align-items: center; justify-content: center; }
+      .boot h1 { margin: 0; font-size: 28px; color: #1B2A4A; }
+      .boot p { margin: -6px 0 0; font-size: 15px; font-weight: 600; color: #B4700C; }
+      .boot-spin { margin-top: 10px; width: 22px; height: 22px; border: 3px solid #E4DFD3; border-top-color: #1B2A4A; border-radius: 50%; animation: bootspin 0.8s linear infinite; }
       @keyframes bootspin { to { transform: rotate(360deg); } }
       @media (prefers-reduced-motion: reduce) { .boot-spin { animation: none; } }
     </style>
@@ -104,21 +97,13 @@
   </head>
   <body>
     <div id="root">
-      <main class="boot">
-        <div class="boot-card">
-          <div class="boot-logo" aria-hidden="true">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1B2A4A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-          </div>
-          <h1>Margshri</h1>
-          <p class="tag">Ek raasta, sab saath</p>
-          <p>Bike, car ya bus: apne raste ke logon ke saath safar karo aur petrol-toll ka kharcha baanto. Local aur long-distance, dono. Bilkul free, koi commission nahi.</p>
-          <p>Vehicle-pool and carpool sharing app for India. Post your route or book a seat on a cost-sharing basis.</p>
-          <nav>
-            <a class="a1" href="/ride">Ride dhoondho</a>
-            <a class="a2" href="/drive">Gaadi post karo</a>
-          </nav>
-          <div class="boot-load"><span class="boot-spin"></span> Loading…</div>
+      <main class="boot" aria-label="Margshri is loading">
+        <div class="boot-logo" aria-hidden="true">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1B2A4A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
+        <h1>Margshri</h1>
+        <p>Ek raasta, sab saath</p>
+        <div class="boot-spin" role="progressbar" aria-label="Loading"></div>
       </main>
     </div>
     <noscript>Margshri chalane ke liye JavaScript chalu karein. Please enable JavaScript to use Margshri.</noscript>
