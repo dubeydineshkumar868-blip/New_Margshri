@@ -932,6 +932,56 @@ function googleOneTap() {
   });
 }
 
+// ---- Direct Google sign-in for the Android home-screen app ----
+// Google's page opens in a Chrome tab on top of the app. When Google sends the person back
+// to margshri.in/oauth-callback, we read the Google ID token there and log in with it.
+// The "state" check is kept in localStorage (shared by the app and Chrome on the phone),
+// not sessionStorage, so it survives the switch between the app and the Chrome tab.
+// Needs https://margshri.in/oauth-callback in Google Cloud → Credentials → Web client →
+// Authorised redirect URIs.
+const OAUTH_STATE_KEY = "margshri-oauth-state";
+function randomString(len = 32) {
+  const bytes = new Uint8Array(len);
+  (window.crypto || window.msCrypto).getRandomValues(bytes);
+  return Array.from(bytes, (b) => ("0" + b.toString(16)).slice(-2)).join("");
+}
+function startGoogleOAuthNavigation() {
+  const state = randomString(16);
+  const nonce = randomString(16);
+  try {
+    localStorage.setItem(OAUTH_STATE_KEY, JSON.stringify({ state, nonce, at: Date.now() }));
+  } catch {}
+  const params = new URLSearchParams({
+    client_id: GOOGLE_WEB_CLIENT_ID,
+    redirect_uri: `${window.location.origin}/oauth-callback`,
+    response_type: "id_token",
+    scope: "openid email profile",
+    nonce,
+    state,
+    prompt: "select_account",
+  });
+  window.location.assign(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+}
+// Read the result as soon as the page loads (before the app changes the address bar).
+const OAUTH_RETURN = (() => {
+  try {
+    if (typeof window === "undefined" || window.location.pathname !== "/oauth-callback") return null;
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    let saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(OAUTH_STATE_KEY) || "null");
+      localStorage.removeItem(OAUTH_STATE_KEY);
+    } catch {}
+    window.history.replaceState(null, "", "/");
+    if (hash.get("error")) return { error: hash.get("error") };
+    const idToken = hash.get("id_token");
+    if (!idToken || !saved || saved.state !== hash.get("state") || Date.now() - saved.at > 15 * 60 * 1000) return { error: "state" };
+    return { idToken };
+  } catch {
+    return { error: "parse" };
+  }
+})();
+
 function LocationInput({ value, onChange, placeholder }) {
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
@@ -1910,11 +1960,10 @@ function MargshriApp() {
         }
         if (result.status === "cancelled") return;
         setOneTapReason(result.reason || "");
-        // 2) Picker not available. Inside the Android home-screen app → log in once in Chrome.
+        // 2) Picker not available. Inside the Android home-screen app → open Google's page
+        //    directly; the result comes back through /oauth-callback.
         if (isAndroidHomeScreenApp()) {
-          setLoginErr("");
-          setLoginStage("applogin");
-          setShowLoginModal(true);
+          startGoogleOAuthNavigation();
           return;
         }
         // 3) Normal phone browser / TWA → same-page redirect works.
@@ -1932,6 +1981,21 @@ function MargshriApp() {
       showError(loginErrorText(err));
     });
   };
+
+  // Coming back from the direct Google sign-in (/oauth-callback).
+  useEffect(() => {
+    if (!OAUTH_RETURN) return;
+    if (OAUTH_RETURN.idToken) {
+      setLoginBusy(true);
+      signInWithCredential(auth, GoogleAuthProvider.credential(OAUTH_RETURN.idToken))
+        .catch((err) => {
+          if (!QUIET_LOGIN_ERRORS.includes(err && err.code)) showError(loginErrorText(err));
+        })
+        .finally(() => setLoginBusy(false));
+    } else if (OAUTH_RETURN.error && OAUTH_RETURN.error !== "access_denied") {
+      showError(t("errGeneric"));
+    }
+  }, []);
 
   // Opened from the home-screen app's "Open Chrome and log in" → start Google login here.
   useEffect(() => {
@@ -2611,6 +2675,14 @@ function MargshriApp() {
           </div>
         );
       })()}
+      {screen === "landing" && errorMsg && (
+        <div className="fixed left-0 right-0 top-0 flex justify-center px-4 pt-3" style={{ zIndex: 80 }}>
+          <div style={{ background: "#FBE9E7", color: COLORS.coral, borderColor: "#F5C6BF" }} className="max-w-md w-full border rounded-xl shadow-md flex items-start gap-2 px-4 py-3 text-sm font-semibold">
+            <span className="flex-1">{errorMsg}</span>
+            <button onClick={() => setErrorMsg("")} style={{ color: COLORS.coral }} aria-label="close"><X size={16} /></button>
+          </div>
+        </div>
+      )}
       {loginBusy && !user && (
         <div className="fixed inset-0 flex flex-col items-center justify-center gap-3" style={{ background: "rgba(250,246,239,0.92)", zIndex: 70 }}>
           <Loader2 size={28} className="animate-spin" color={COLORS.night} />
