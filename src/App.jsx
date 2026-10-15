@@ -1286,7 +1286,7 @@ function MargshriApp() {
   const [loginBusy, setLoginBusy] = useState(() => {
     try {
       const at = Number(localStorage.getItem("margshri-login-pending") || 0);
-      return at > 0 && Date.now() - at < 5 * 60 * 1000;
+      return at > 0 && Date.now() - at < 2 * 60 * 1000;
     } catch {
       return false;
     }
@@ -1672,18 +1672,16 @@ function MargshriApp() {
 
   useEffect(() => {
     if (!dataWanted) return;
+    const loaderTimer = setTimeout(() => setDataLoaded(true), 8000);
     const unsubVehicles = onSnapshot(
       collection(db, VEHICLES_COLLECTION),
-      async (snap) => {
+      { includeMetadataChanges: true }, // also tells us when the server has answered
+      (snap) => {
         setVehicles(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        setDataLoaded(true);
-        // One-time seed, done inline instead of a separate extra network round-trip
-        if (snap.empty && !seededRef.current) {
-          seededRef.current = true;
-          for (const v of seedVehicles) {
-            addDoc(collection(db, VEHICLES_COLLECTION), v).catch(() => {});
-          }
-        }
+        // With the on-phone cache, the very first result can be an empty copy from the
+        // phone. Keep the loader until real data arrives (or the cache already has rides).
+        if (!snap.metadata.fromCache || !snap.empty) setDataLoaded(true);
+        // (Demo "seed" rides removed: they could appear as fake rides on a fresh phone.)
       },
       () => {
         if (user) showError("Firebase se connect nahi ho paya. Config aur Firestore setup check karo.");
@@ -1726,6 +1724,7 @@ function MargshriApp() {
       () => {}
     );
     return () => {
+      clearTimeout(loaderTimer);
       unsubVehicles();
       unsubRequests();
       unsubRiderPosts();
@@ -1864,7 +1863,7 @@ function MargshriApp() {
         setLoginBusy(false);
       });
     // Safety net: never leave the loader on screen for more than 15 seconds.
-    const timer = setTimeout(() => setLoginBusy(false), 15000);
+    const timer = setTimeout(() => setLoginBusy(false), 6000);
     return () => clearTimeout(timer);
   }, []);
 
