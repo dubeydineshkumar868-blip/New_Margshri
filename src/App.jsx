@@ -62,9 +62,10 @@ const TRANSLATIONS = {
     loginTitle: "Log in to Margshri",
     loginBusy: "Logging you in…",
     inappTitle: "Open in Chrome to log in",
-    appLoginTitle: "Log in once in Chrome",
-    appLoginText: "Google login can't open inside the home-screen app on this phone. Log in once in Chrome — after that you stay logged in inside the app too.",
-    appLoginBtn: "Open Chrome and log in",
+    appLoginTitle: "Log in with your email",
+    appLoginText: "Google's login box can't open inside the app on this phone. Enter your email — we'll send a login link. Tap it and you're logged in, right here in the app.",
+    appLoginBtn: "Or open Margshri in Chrome",
+    appLoginOr: "or",
     installHelpTitle: "Add Margshri to your home screen",
     installHelpNote: "Installing is optional. You can log in and use Margshri right here too.",
     installHelpLogin: "Log in now",
@@ -396,9 +397,10 @@ const TRANSLATIONS = {
     loginTitle: "Margshri में लॉगिन करें",
     loginBusy: "लॉगिन हो रहा है…",
     inappTitle: "लॉगिन के लिए Chrome में खोलें",
-    appLoginTitle: "एक बार Chrome में लॉगिन करें",
-    appLoginText: "इस फ़ोन पर होम-स्क्रीन ऐप के अंदर Google लॉगिन नहीं खुल पाता। एक बार Chrome में लॉगिन कर लें — उसके बाद ऐप में भी अपने आप लॉगिन रहेगा।",
-    appLoginBtn: "Chrome खोलकर लॉगिन करें",
+    appLoginTitle: "अपने ईमेल से लॉगिन करें",
+    appLoginText: "इस फ़ोन पर ऐप के अंदर Google का लॉगिन बॉक्स नहीं खुल पा रहा। अपना ईमेल डालें — हम लॉगिन लिंक भेजेंगे। उस पर टैप करते ही आप यहीं ऐप में लॉगिन हो जाएँगे।",
+    appLoginBtn: "या Margshri को Chrome में खोलें",
+    appLoginOr: "या",
     installHelpTitle: "Margshri को होम स्क्रीन पर जोड़ें",
     installHelpNote: "इंस्टॉल करना ज़रूरी नहीं है। आप यहीं लॉगिन करके भी Margshri इस्तेमाल कर सकते हैं।",
     installHelpLogin: "अभी लॉगिन करें",
@@ -913,18 +915,20 @@ function googleOneTap() {
           });
           window.google.accounts.id.prompt((n) => {
             try {
-              if (n.isNotDisplayed && n.isNotDisplayed()) return finish({ status: "not_shown" });
+              if (n.isNotDisplayed && n.isNotDisplayed()) {
+                return finish({ status: "not_shown", reason: (n.getNotDisplayedReason && n.getNotDisplayedReason()) || "not_displayed" });
+              }
               if (n.isSkippedMoment && n.isSkippedMoment()) {
                 const reason = n.getSkippedReason ? n.getSkippedReason() : "";
-                finish({ status: reason === "user_cancel" || reason === "tap_outside" ? "cancelled" : "not_shown" });
+                finish({ status: reason === "user_cancel" || reason === "tap_outside" ? "cancelled" : "not_shown", reason: reason || "skipped" });
               }
             } catch {}
           });
-        } catch {
-          finish({ status: "not_shown" });
+        } catch (e) {
+          finish({ status: "not_shown", reason: "init_error" });
         }
       })
-      .catch(() => finish({ status: "not_shown" }));
+      .catch(() => finish({ status: "not_shown", reason: "script_blocked" }));
   });
 }
 
@@ -1203,6 +1207,7 @@ function MargshriApp() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSHint, setShowIOSHint] = useState(false);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [oneTapReason, setOneTapReason] = useState("");
   const [installTab, setInstallTab] = useState(() => {
     if (typeof navigator === "undefined") return "android";
     const ua = navigator.userAgent || "";
@@ -1904,6 +1909,7 @@ function MargshriApp() {
           return;
         }
         if (result.status === "cancelled") return;
+        setOneTapReason(result.reason || "");
         // 2) Picker not available. Inside the Android home-screen app → log in once in Chrome.
         if (isAndroidHomeScreenApp()) {
           setLoginErr("");
@@ -2628,17 +2634,40 @@ function MargshriApp() {
 
             {loginStage === "applogin" && (
               <>
-                <p style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed mb-4">{t("appLoginText")}</p>
+                <p style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed mb-3">{t("appLoginText")}</p>
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendEmailLoginLink()}
+                  placeholder={t("loginEmailPlaceholder")}
+                  style={{ borderColor: COLORS.line }}
+                  className="w-full border rounded-lg px-3 py-2.5 text-sm outline-none bg-white mb-2"
+                />
+                <button
+                  onClick={sendEmailLoginLink}
+                  style={{ background: COLORS.amber, color: COLORS.night }}
+                  className="w-full rounded-xl py-3 text-sm font-bold"
+                >
+                  {t("loginSendLink")}
+                </button>
+                <div className="flex items-center gap-3 my-3">
+                  <div style={{ background: COLORS.line }} className="h-px flex-1" />
+                  <span style={{ color: COLORS.muted }} className="text-xs">{t("appLoginOr")}</span>
+                  <div style={{ background: COLORS.line }} className="h-px flex-1" />
+                </div>
                 <a
                   href={`intent://${window.location.host}/?login=1#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(window.location.origin + "/?login=1")};end`}
-                  style={{ background: COLORS.night, color: "white" }}
-                  className="w-full rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 mb-2"
+                  style={{ borderColor: COLORS.line, color: COLORS.night, background: "white" }}
+                  className="w-full border rounded-xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
                 >
-                  <Globe size={16} /> {t("appLoginBtn")}
+                  <Globe size={15} /> {t("appLoginBtn")}
                 </a>
-                <button onClick={() => { setLoginStage("email"); setLoginErr(""); }} style={{ color: COLORS.muted }} className="w-full text-xs underline mt-3">
-                  {t("loginEmailInstead")}
-                </button>
+                {oneTapReason && (
+                  <p style={{ color: COLORS.muted }} className="text-[10px] text-center mt-3">Google: {oneTapReason}</p>
+                )}
               </>
             )}
 
