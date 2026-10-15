@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Bike, Car, Bus, MapPin, ArrowRight, Check, X, User, Plus, Clock, Users as UsersIcon, Loader2, MessageCircle, Send, Star, ShieldCheck, Flag, Ban, LayoutDashboard, Home, Search, Inbox, PackageSearch, Filter, Wallet, ClipboardList, Lightbulb, Menu, Navigation, Smartphone, Laptop, MoreVertical, Share, PlusSquare, Download, Globe, Gift, Trophy, Copy } from "lucide-react";
 import { db, auth, googleProvider } from "./firebase.js";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updateProfile } from "firebase/auth";
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updateProfile, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 
 const COLORS = {
   night: "#1B2A4A",
@@ -62,6 +62,13 @@ const TRANSLATIONS = {
     loginTitle: "Log in to Margshri",
     loginBusy: "Logging you in…",
     inappTitle: "Open in Chrome to log in",
+    appLoginTitle: "Log in once in Chrome",
+    appLoginText: "Google login can't open inside the home-screen app on this phone. Log in once in Chrome — after that you stay logged in inside the app too.",
+    appLoginBtn: "Open Chrome and log in",
+    installHelpTitle: "Add Margshri to your home screen",
+    installHelpNote: "Installing is optional. You can log in and use Margshri right here too.",
+    installHelpLogin: "Log in now",
+    installHelpInapp: "You opened this link inside another app. Open margshri.in in Chrome first, then add it to your home screen.",
     inappText: "Google login doesn't work inside WhatsApp, Instagram or Facebook's built-in browser. Open Margshri in Chrome — it takes one tap.",
     inappTextIos: "Google login doesn't work inside this app's built-in browser. Tap ⋯ or the share icon and choose \"Open in Safari\".",
     inappOpenChrome: "Open in Chrome",
@@ -389,6 +396,13 @@ const TRANSLATIONS = {
     loginTitle: "Margshri में लॉगिन करें",
     loginBusy: "लॉगिन हो रहा है…",
     inappTitle: "लॉगिन के लिए Chrome में खोलें",
+    appLoginTitle: "एक बार Chrome में लॉगिन करें",
+    appLoginText: "इस फ़ोन पर होम-स्क्रीन ऐप के अंदर Google लॉगिन नहीं खुल पाता। एक बार Chrome में लॉगिन कर लें — उसके बाद ऐप में भी अपने आप लॉगिन रहेगा।",
+    appLoginBtn: "Chrome खोलकर लॉगिन करें",
+    installHelpTitle: "Margshri को होम स्क्रीन पर जोड़ें",
+    installHelpNote: "इंस्टॉल करना ज़रूरी नहीं है। आप यहीं लॉगिन करके भी Margshri इस्तेमाल कर सकते हैं।",
+    installHelpLogin: "अभी लॉगिन करें",
+    installHelpInapp: "आपने यह लिंक किसी दूसरे ऐप के अंदर खोला है। पहले margshri.in को Chrome में खोलें, फिर होम स्क्रीन पर जोड़ें।",
     inappText: "WhatsApp, Instagram या Facebook के अंदर वाले ब्राउज़र में Google लॉगिन नहीं चलता। Margshri को Chrome में खोलें — बस एक टैप।",
     inappTextIos: "इस ऐप के अंदर वाले ब्राउज़र में Google लॉगिन नहीं चलता। ⋯ या शेयर आइकन दबाकर \"Open in Safari\" चुनें।",
     inappOpenChrome: "Chrome में खोलें",
@@ -849,6 +863,71 @@ function HowItWorksGuide({ title, steps, note, faqTitle, faq }) {
   );
 }
 
+// ---- Google sign-in that works INSIDE the installed app ----
+// In an installed (home-screen) app on Android, Google's normal login page opens in a
+// separate Chrome tab, which loses the login state ("missing initial state" error).
+// Google's own account picker (One Tap / FedCM) opens as a sheet on top of the app
+// instead, so nothing leaves the app. We get a Google ID token and hand it to Firebase.
+// Web client ID: Firebase Console → Authentication → Sign-in method → Google →
+// "Web SDK configuration" → Web client ID (same as Google Cloud → Credentials → Web client).
+const GOOGLE_WEB_CLIENT_ID = "832248851426-r2lcrn091bdv8gr6aqfahmmr468tl5c9.apps.googleusercontent.com";
+let gisLoadPromise = null;
+function loadGoogleIdentity() {
+  if (typeof window !== "undefined" && window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve();
+  if (!gisLoadPromise) {
+    gisLoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => {
+        gisLoadPromise = null;
+        reject(new Error("gis-load"));
+      };
+      document.head.appendChild(script);
+      setTimeout(() => reject(new Error("gis-timeout")), 8000);
+    });
+  }
+  return gisLoadPromise;
+}
+// Resolves { status: "ok", idToken } | { status: "cancelled" } | { status: "not_shown" }
+function googleOneTap() {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (result) => {
+      if (!settled) {
+        settled = true;
+        resolve(result);
+      }
+    };
+    loadGoogleIdentity()
+      .then(() => {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_WEB_CLIENT_ID,
+            callback: (resp) => finish(resp && resp.credential ? { status: "ok", idToken: resp.credential } : { status: "not_shown" }),
+            auto_select: false,
+            cancel_on_tap_outside: true,
+            use_fedcm_for_prompt: true,
+            context: "signin",
+          });
+          window.google.accounts.id.prompt((n) => {
+            try {
+              if (n.isNotDisplayed && n.isNotDisplayed()) return finish({ status: "not_shown" });
+              if (n.isSkippedMoment && n.isSkippedMoment()) {
+                const reason = n.getSkippedReason ? n.getSkippedReason() : "";
+                finish({ status: reason === "user_cancel" || reason === "tap_outside" ? "cancelled" : "not_shown" });
+              }
+            } catch {}
+          });
+        } catch {
+          finish({ status: "not_shown" });
+        }
+      })
+      .catch(() => finish({ status: "not_shown" }));
+  });
+}
+
 function LocationInput({ value, onChange, placeholder }) {
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
@@ -1049,6 +1128,7 @@ function MargshriApp() {
         setShowPhoneModal(false);
         setActiveReport(null);
         setShowIOSHint(false);
+        setShowInstallHelp(false);
         setShowLoginModal(false);
         setShowSafetyModal(false);
         return;
@@ -1122,6 +1202,7 @@ function MargshriApp() {
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSHint, setShowIOSHint] = useState(false);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [installTab, setInstallTab] = useState(() => {
     if (typeof navigator === "undefined") return "android";
     const ua = navigator.userAgent || "";
@@ -1715,6 +1796,26 @@ function MargshriApp() {
   // separate tab, which loses the login state ("missing initial state" error).
   // There we sign in with a same-page redirect instead. Desktop keeps the popup.
   // (Redirect needs authDomain = margshri.in + the /__/auth proxy in vercel.json.)
+  const isTwaApp = () => {
+    try {
+      if ((document.referrer || "").startsWith("android-app://")) sessionStorage.setItem("margshri-twa", "1");
+      return sessionStorage.getItem("margshri-twa") === "1";
+    } catch {
+      return false;
+    }
+  };
+  // Installed from Chrome's "Add to Home screen" on Android: Google's login page would open
+  // in a separate tab there, so the normal redirect login can't finish.
+  const isAndroidHomeScreenApp = () => {
+    try {
+      const standalone = window.matchMedia("(display-mode: standalone)").matches;
+      return standalone && /android/i.test(navigator.userAgent || "") && !isTwaApp();
+    } catch {
+      return false;
+    }
+  };
+  useEffect(() => { isTwaApp(); }, []);
+
   const useRedirectLogin = () => {
     try {
       const ua = navigator.userAgent || "";
@@ -1790,7 +1891,30 @@ function MargshriApp() {
       return;
     }
     if (useRedirectLogin()) {
-      startRedirectLogin();
+      // 1) Google's own account picker on top of the page (works inside the installed app).
+      googleOneTap().then(async (result) => {
+        if (result.status === "ok") {
+          setLoginBusy(true);
+          try {
+            await signInWithCredential(auth, GoogleAuthProvider.credential(result.idToken));
+          } catch (err) {
+            if (!QUIET_LOGIN_ERRORS.includes(err && err.code)) showError(loginErrorText(err));
+          } finally {
+            setLoginBusy(false);
+          }
+          return;
+        }
+        if (result.status === "cancelled") return;
+        // 2) Picker not available. Inside the Android home-screen app → log in once in Chrome.
+        if (isAndroidHomeScreenApp()) {
+          setLoginErr("");
+          setLoginStage("applogin");
+          setShowLoginModal(true);
+          return;
+        }
+        // 3) Normal phone browser / TWA → same-page redirect works.
+        startRedirectLogin();
+      });
       return;
     }
     signInWithPopup(auth, googleProvider).catch((err) => {
@@ -1803,6 +1927,22 @@ function MargshriApp() {
       showError(loginErrorText(err));
     });
   };
+
+  // Opened from the home-screen app's "Open Chrome and log in" → start Google login here.
+  useEffect(() => {
+    if (authLoading) return;
+    let wantsLogin = false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      wantsLogin = params.get("login") === "1";
+      if (wantsLogin) {
+        params.delete("login");
+        const q = params.toString();
+        window.history.replaceState(window.history.state, "", window.location.pathname + (q ? `?${q}` : ""));
+      }
+    } catch {}
+    if (wantsLogin && !user) signInWithGoogle();
+  }, [authLoading]);
 
   // ---- Email link (passwordless) login: free on the Spark plan ----
   const EMAIL_KEY = "margshri-email-for-login";
@@ -2128,7 +2268,7 @@ function MargshriApp() {
   // Give every popup/menu its own Back step (phone Back button closes it first).
   const anyOverlayOpen = !!(
     showSidebar || activeChat || showReferralPoster || showShareModal || showFilterModal || activeReview ||
-    viewingReviewsFor || showFeedbackModal || showPhoneModal || activeReport || showIOSHint || showLoginModal || showSafetyModal
+    viewingReviewsFor || showFeedbackModal || showPhoneModal || activeReport || showIOSHint || showLoginModal || showSafetyModal || showInstallHelp
   );
   useEffect(() => {
     try {
@@ -2420,6 +2560,52 @@ function MargshriApp() {
   // Modals that must work on every screen, including the landing page.
   const renderGlobalModals = () => (
     <>
+      {showInstallHelp && (() => {
+        const ua = navigator.userAgent || "";
+        const inApp = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\/|Snapchat|LinkedInApp|MicroMessenger|; wv\)/i.test(ua);
+        const ios = /iphone|ipad|ipod/i.test(ua);
+        const android = /android/i.test(ua);
+        const steps = ios
+          ? [{ icon: Share, text: t("iosStep2") }, { icon: PlusSquare, text: t("iosStep3") }]
+          : android
+          ? [{ icon: MoreVertical, text: t("andStep2") }, { icon: PlusSquare, text: t("andStep3") }]
+          : [{ icon: Download, text: t("pcStep2") }, { icon: Laptop, text: t("pcStep3") }];
+        return (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(27,42,74,0.5)" }} onClick={() => setShowInstallHelp(false)}>
+            <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.sand }} className="w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 shadow-xl">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <p style={{ color: COLORS.night }} className="text-base font-bold">{t("installHelpTitle")}</p>
+                <button onClick={() => setShowInstallHelp(false)} style={{ color: COLORS.muted }} aria-label="close"><X size={18} /></button>
+              </div>
+              {inApp ? (
+                <p style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed mb-4">{t("installHelpInapp")}</p>
+              ) : (
+                <div className="space-y-3 mb-4">
+                  {steps.map((step, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div style={{ background: COLORS.amber, color: COLORS.night }} className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm shrink-0">{i + 1}</div>
+                      <div style={{ background: "white", borderColor: COLORS.line }} className="w-7 h-7 rounded-lg border flex items-center justify-center shrink-0">
+                        <step.icon size={15} color={COLORS.night} />
+                      </div>
+                      <p style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed pt-0.5">{step.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ color: COLORS.muted }} className="text-xs leading-relaxed mb-3">{t("installHelpNote")}</p>
+              {!user && (
+                <button
+                  onClick={() => { setShowInstallHelp(false); signInWithGoogle(); }}
+                  style={{ background: COLORS.amber, color: COLORS.night }}
+                  className="w-full rounded-xl py-3 text-sm font-bold"
+                >
+                  {t("installHelpLogin")}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       {loginBusy && !user && (
         <div className="fixed inset-0 flex flex-col items-center justify-center gap-3" style={{ background: "rgba(250,246,239,0.92)", zIndex: 70 }}>
           <Loader2 size={28} className="animate-spin" color={COLORS.night} />
@@ -2432,7 +2618,7 @@ function MargshriApp() {
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
                 <p style={{ color: COLORS.night }} className="text-base font-bold">
-                  {loginStage === "sent" ? t("loginSentTitle") : loginStage === "confirm" ? t("loginConfirmTitle") : loginStage === "inapp" ? t("inappTitle") : t("loginTitle")}
+                  {loginStage === "sent" ? t("loginSentTitle") : loginStage === "confirm" ? t("loginConfirmTitle") : loginStage === "inapp" ? t("inappTitle") : loginStage === "applogin" ? t("appLoginTitle") : t("loginTitle")}
                 </p>
                 {loginStage === "choose" && <p style={{ color: COLORS.muted }} className="text-xs mt-0.5">{t("loginSub")}</p>}
               </div>
@@ -2440,6 +2626,22 @@ function MargshriApp() {
                 <button onClick={() => setShowLoginModal(false)} style={{ color: COLORS.muted }} aria-label="close"><X size={18} /></button>
               )}
             </div>
+
+            {loginStage === "applogin" && (
+              <>
+                <p style={{ color: COLORS.charcoal }} className="text-sm leading-relaxed mb-4">{t("appLoginText")}</p>
+                <a
+                  href={`intent://${window.location.host}/?login=1#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(window.location.origin + "/?login=1")};end`}
+                  style={{ background: COLORS.night, color: "white" }}
+                  className="w-full rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 mb-2"
+                >
+                  <Globe size={16} /> {t("appLoginBtn")}
+                </a>
+                <button onClick={() => { setLoginStage("email"); setLoginErr(""); }} style={{ color: COLORS.muted }} className="w-full text-xs underline mt-3">
+                  {t("loginEmailInstead")}
+                </button>
+              </>
+            )}
 
             {loginStage === "inapp" && (
               <>
@@ -2962,7 +3164,7 @@ function MargshriApp() {
               <button
                 onClick={() => {
                   if (installPrompt) handleInstallClick();
-                  else document.getElementById("install-guide")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  else setShowInstallHelp(true);
                 }}
                 style={{ background: COLORS.night, color: "white" }}
                 className="w-full max-w-sm mx-auto lg:mx-0 flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm mb-4 shadow-md lg:block"
