@@ -1303,8 +1303,27 @@ function MargshriApp() {
   };
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phoneInput, setPhoneInput] = useState("");
-  const [vehicles, setVehicles] = useState([]);
+  const [vehiclesRaw, setVehicles] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [requestsLoaded, setRequestsLoaded] = useState(false);
+  // Seats left = seats offered − seats in accepted/completed bookings. Counting the
+  // bookings means a rider's Instant Booking (or cancel) is reflected immediately, even
+  // though only the owner is allowed to edit the vehicle record itself. Visitors who are
+  // not logged in can't read bookings, so for them we fall back to the saved number.
+  const vehicles = React.useMemo(() => {
+    if (!user || !requestsLoaded) return vehiclesRaw;
+    const booked = {};
+    requests.forEach((r) => {
+      if (r.status === "accepted" || r.status === "completed") {
+        booked[r.vehicleId] = (booked[r.vehicleId] || 0) + (Number(r.seats) || 1);
+      }
+    });
+    return vehiclesRaw.map((v) => {
+      const total = Number(v.totalSeats) || 0;
+      if (!total) return v;
+      return { ...v, seats: Math.max(total - (booked[v.id] || 0), 0) };
+    });
+  }, [vehiclesRaw, requests, user, requestsLoaded]);
   const [riderPosts, setRiderPosts] = useState([]);
   const [messages, setMessages] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -1745,7 +1764,11 @@ function MargshriApp() {
     );
     const unsubRequests = onSnapshot(
       collection(db, REQUESTS_COLLECTION),
-      (snap) => setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      { includeMetadataChanges: true },
+      (snap) => {
+        setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        if (!snap.metadata.fromCache) setRequestsLoaded(true); // real bookings from the server
+      },
       () => { if (user) showError("Requests load nahi ho paaye."); }
     );
     const unsubRiderPosts = onSnapshot(
@@ -2151,14 +2174,8 @@ function MargshriApp() {
         showError("Request save nahi ho paya, dubara try karo.");
       });
 
-      // Instant booking: deduct seats right away, same as a normal accept would
-      if (vehicle.instantBooking) {
-        const newSeats = Math.max((vehicle.seats || 0) - seatsRequested, 0);
-        setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? { ...v, seats: newSeats } : v)));
-        updateDoc(doc(db, VEHICLES_COLLECTION, vehicle.id), { seats: newSeats }).catch(() => {
-          showError("Seats update nahi ho paya.");
-        });
-      }
+      // Instant booking: seats left update automatically, because they are counted from
+      // accepted bookings. The owner's app also saves the new number (see sync below).
     });
   };
 
@@ -2181,17 +2198,8 @@ function MargshriApp() {
     });
 
     // On acceptance, deduct the booked seats from the vehicle's available seats
-    if (status === "accepted" && req) {
-      const seatsBooked = req.seats || 1;
-      const vehicle = vehicles.find((v) => v.id === req.vehicleId);
-      if (vehicle) {
-        const newSeats = Math.max((vehicle.seats || 0) - seatsBooked, 0);
-        setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? { ...v, seats: newSeats } : v)));
-        updateDoc(doc(db, VEHICLES_COLLECTION, vehicle.id), { seats: newSeats }).catch(() => {
-          showError("Seats update nahi ho paya.");
-        });
-      }
-    }
+    // Seats left are recalculated from bookings automatically; the owner's app saves the
+    // new number to the vehicle record (see the sync effect).
   };
 
   const postVehicle = () =>
@@ -2301,17 +2309,21 @@ function MargshriApp() {
     updateDoc(doc(db, REQUESTS_COLLECTION, id), { status: "cancelled" }).catch(() => {
       showError("Cancel nahi ho paya, dubara try karo.");
     });
-    // If it was already accepted, give the seats back to the vehicle
-    if (req && req.status === "accepted") {
-      const seatsToRestore = req.seats || 1;
-      const vehicle = vehicles.find((v) => v.id === req.vehicleId);
-      if (vehicle) {
-        const newSeats = (vehicle.seats || 0) + seatsToRestore;
-        setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? { ...v, seats: newSeats } : v)));
-        updateDoc(doc(db, VEHICLES_COLLECTION, vehicle.id), { seats: newSeats }).catch(() => {});
-      }
-    }
+    // Seats come back automatically: a cancelled booking no longer counts as taken.
   };
+
+  // The owner's phone keeps each of their vehicles' saved "seats left" in line with the
+  // bookings (only the owner may edit the vehicle record).
+  useEffect(() => {
+    if (!user || !dataLoaded || !requestsLoaded) return;
+    vehicles.forEach((v) => {
+      if (v.ownerId !== user.uid || !Number(v.totalSeats)) return;
+      const raw = vehiclesRaw.find((x) => x.id === v.id);
+      if (raw && Number(raw.seats) !== v.seats) {
+        updateDoc(doc(db, VEHICLES_COLLECTION, v.id), { seats: v.seats }).catch(() => {});
+      }
+    });
+  }, [vehicles, vehiclesRaw, user, dataLoaded, requestsLoaded]);
 
   const deleteVehicle = (id) => {
     setVehicles((prev) => prev.filter((v) => v.id !== id));
