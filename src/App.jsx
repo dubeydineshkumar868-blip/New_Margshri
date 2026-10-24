@@ -169,6 +169,22 @@ const TRANSLATIONS = {
     seats: "Seats",
     pricePerSeat: "Price per seat (₹)",
     perSeatSuffix: "₹/seat",
+    lblDate: "Date",
+    lblTime: "Time",
+    lblVehicleName: "Vehicle name",
+    lblVehicleNumber: "Vehicle number",
+    lblDuration: "Approx. duration",
+    optional: "optional",
+    requiredNote: "Fields marked * are required.",
+    errFrom: "Enter the starting point",
+    errTo: "Enter the destination",
+    errSameRoute: "From and To can't be the same",
+    errDate: "Choose the date",
+    errTime: "Choose the time",
+    errPast: "This date and time has already passed",
+    errSeats: "Enter seats (1 to {max})",
+    errPrice: "Enter the price per seat (₹1 to ₹10,000)",
+    errFixForm: "Please fill the fields marked in red.",
     yourOffer: "Your offer:",
     expired: "Expired",
     riderOffered: "Rider offered",
@@ -284,6 +300,36 @@ const TRANSLATIONS = {
     reasonNotGiven: "Not given",
     loading: "Loading...",
     activeTab: "Active",
+    tabUpcoming: "Upcoming",
+    tabWaiting: "Waiting",
+    tabPast: "Past",
+    tabCancelled: "Cancelled",
+    emptyUpcoming: "No upcoming rides. Confirmed bookings will appear here.",
+    emptyWaiting: "No requests waiting for a reply.",
+    emptyPast: "No past rides yet.",
+    emptyCancelled: "Nothing cancelled or declined.",
+    stConfirmed: "Confirmed",
+    stWaitingOwner: "Waiting for owner",
+    stNewRequest: "New request",
+    stRidePassed: "Ride time passed",
+    stMarkDone: "Ride time passed: mark it done",
+    stCompleted: "Completed",
+    stNoShow: "No-show",
+    stCancelled: "Cancelled",
+    stDeclinedByOwner: "Declined by owner",
+    stDeclined: "Declined",
+    stExpired: "Expired: no reply",
+    today: "Today",
+    tomorrow: "Tomorrow",
+    yesterday: "Yesterday",
+    dateNotSet: "Date not set",
+    withOwner: "Owner",
+    withRider: "Rider",
+    seatOne: "seat",
+    seatMany: "seats",
+    perSeat: "per seat",
+    btnAccept: "Accept",
+    btnDecline: "Decline",
     historyTab: "History",
     noHistoryYet: "No history yet.",
     noActiveYet: "Nothing active right now.",
@@ -504,6 +550,22 @@ const TRANSLATIONS = {
     seats: "सीटें",
     pricePerSeat: "प्रति सीट किराया (₹)",
     perSeatSuffix: "₹/सीट",
+    lblDate: "तारीख़",
+    lblTime: "समय",
+    lblVehicleName: "वाहन का नाम",
+    lblVehicleNumber: "वाहन नंबर",
+    lblDuration: "अनुमानित समय",
+    optional: "वैकल्पिक",
+    requiredNote: "* वाले खाने भरना ज़रूरी है।",
+    errFrom: "कहाँ से चलेंगे, लिखें",
+    errTo: "कहाँ तक जाएँगे, लिखें",
+    errSameRoute: "कहाँ से और कहाँ तक एक जैसे नहीं हो सकते",
+    errDate: "तारीख़ चुनें",
+    errTime: "समय चुनें",
+    errPast: "यह तारीख़ और समय निकल चुका है",
+    errSeats: "सीटें लिखें (1 से {max})",
+    errPrice: "प्रति सीट किराया लिखें (₹1 से ₹10,000)",
+    errFixForm: "लाल रंग वाले खाने भरें।",
     yourOffer: "आपका ऑफर:",
     expired: "समय समाप्त",
     riderOffered: "यात्री ने ऑफर किया",
@@ -619,6 +681,36 @@ const TRANSLATIONS = {
     reasonNotGiven: "नहीं दिया गया",
     loading: "लोड हो रहा है...",
     activeTab: "सक्रिय",
+    tabUpcoming: "आने वाली",
+    tabWaiting: "जवाब बाकी",
+    tabPast: "पुरानी",
+    tabCancelled: "रद्द",
+    emptyUpcoming: "कोई आने वाली सवारी नहीं। पक्की बुकिंग यहाँ दिखेंगी।",
+    emptyWaiting: "किसी रिक्वेस्ट का जवाब बाकी नहीं है।",
+    emptyPast: "अभी कोई पुरानी सवारी नहीं।",
+    emptyCancelled: "कुछ भी रद्द या अस्वीकार नहीं हुआ।",
+    stConfirmed: "पक्की",
+    stWaitingOwner: "मालिक के जवाब का इंतज़ार",
+    stNewRequest: "नई रिक्वेस्ट",
+    stRidePassed: "सवारी का समय निकल गया",
+    stMarkDone: "समय निकल गया: पूरी मार्क करें",
+    stCompleted: "पूरी हुई",
+    stNoShow: "नहीं आया",
+    stCancelled: "रद्द",
+    stDeclinedByOwner: "मालिक ने अस्वीकार किया",
+    stDeclined: "अस्वीकार",
+    stExpired: "समाप्त: जवाब नहीं आया",
+    today: "आज",
+    tomorrow: "कल",
+    yesterday: "बीता कल",
+    dateNotSet: "तारीख़ तय नहीं",
+    withOwner: "मालिक",
+    withRider: "सवारी",
+    seatOne: "सीट",
+    seatMany: "सीटें",
+    perSeat: "प्रति सीट",
+    btnAccept: "स्वीकार",
+    btnDecline: "मना करें",
     historyTab: "इतिहास",
     noHistoryYet: "अभी कोई इतिहास नहीं है।",
     noActiveYet: "अभी कुछ भी सक्रिय नहीं है।",
@@ -1433,10 +1525,11 @@ function MargshriApp() {
   const [sortBy, setSortBy] = useState("time");
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [timeOfDayFilter, setTimeOfDayFilter] = useState(null);
-  const [riderTab, setRiderTab] = useState("active");
-  const [ownerTab, setOwnerTab] = useState("active");
+  const [riderTab, setRiderTab] = useState(null); // null = pick the first non-empty tab
+  const [ownerTab, setOwnerTab] = useState(null);
   const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
-  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", instantBooking: false, tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+  const [vErrors, setVErrors] = useState({});
+  const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: "", date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", instantBooking: false, tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
   const [rform, setRform] = useState({ from: "", to: "", date: "", clock: "", seatsNeeded: 1 });
   const [seatCounts, setSeatCounts] = useState({});
   const [destSelections, setDestSelections] = useState({});
@@ -2168,6 +2261,9 @@ function MargshriApp() {
         owner: vehicle.owner,
         status: vehicle.instantBooking ? "accepted" : "pending",
         seats: seatsRequested,
+        rideTimestamp: vehicle.timestamp || null,
+        rideTime: vehicle.time || null,
+        createdAt: Date.now(),
       };
       setRequests((prev) => [...prev, { id: "temp-" + Date.now(), ...newReq }]);
       addDoc(collection(db, REQUESTS_COLLECTION), newReq).catch(() => {
@@ -2202,10 +2298,39 @@ function MargshriApp() {
     // new number to the vehicle record (see the sync effect).
   };
 
+  const maxSeatsFor = (type) => (type === "bike" ? 1 : type === "bus" ? 60 : 8);
+  const validateVehicleForm = (f) => {
+    const e = {};
+    if (!f.from.trim()) e.from = t("errFrom");
+    if (!f.to.trim()) e.to = t("errTo");
+    if (f.from.trim() && f.to.trim() && f.from.trim().toLowerCase() === f.to.trim().toLowerCase()) e.to = t("errSameRoute");
+    if (!f.date) e.date = t("errDate");
+    if (!f.clock) e.clock = t("errTime");
+    if (f.date && f.clock) {
+      const ts = new Date(`${f.date}T${f.clock}`).getTime();
+      if (!ts || ts < Date.now() - 5 * 60 * 1000) e.clock = t("errPast");
+    }
+    const max = maxSeatsFor(f.type);
+    const seats = Number(f.seats);
+    if (!f.seats || !Number.isInteger(seats) || seats < 1 || seats > max) e.seats = t("errSeats").replace("{max}", max);
+    const price = Number(f.price);
+    if (f.price === "" || !Number.isFinite(price) || price < 1 || price > 10000) e.price = t("errPrice");
+    return e;
+  };
+  // Update a form field and clear its error as soon as the owner fixes it
+  const setVField = (key, value) => {
+    setVform((prev) => ({ ...prev, [key]: value }));
+    if (vErrors[key] || (key === "date" && vErrors.clock)) setVErrors((prev) => { const n = { ...prev }; delete n[key]; if (key === "date") delete n.clock; return n; });
+  };
+
   const postVehicle = () =>
     withSync(async () => {
-      if (!vform.from.trim() || !vform.to.trim() || !vform.date || !vform.clock) {
-        showError("From, To, Date, aur Time — sab bharna zaroori hai.");
+      const errs = validateVehicleForm(vform);
+      setVErrors(errs);
+      if (Object.keys(errs).length) {
+        showError(t("errFixForm"));
+        const first = ["from", "to", "date", "clock", "seats", "price"].find((k) => errs[k]);
+        setTimeout(() => document.getElementById("vf-" + first)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
         return;
       }
       const newVehicle = {
@@ -2219,12 +2344,12 @@ function MargshriApp() {
         from: vform.from,
         to: vform.to,
         mode,
-        seats: Number(vform.seats) || 1,
-        totalSeats: Number(vform.seats) || 1,
+        seats: Number(vform.seats),
+        totalSeats: Number(vform.seats),
         time: formatDateTime(vform.date, vform.clock),
         timestamp: new Date(`${vform.date}T${vform.clock}`).getTime() || 0,
         duration: vform.duration.trim(),
-        price: Number(vform.price) || 0,
+        price: Number(vform.price),
         instantBooking: vform.instantBooking,
         tags: vform.tags,
         routeType: vform.routeType,
@@ -2232,7 +2357,7 @@ function MargshriApp() {
       };
       // Show it immediately — don't make the user wait for the network round-trip
       setVehicles((prev) => [...prev, { id: "temp-" + Date.now(), ...newVehicle }]);
-      setVform({ type: "car", from: "", to: "", seats: 2, date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", instantBooking: false, tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
+      setVform({ type: "car", from: "", to: "", seats: "", date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", instantBooking: false, tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
       addDoc(collection(db, VEHICLES_COLLECTION), newVehicle).catch(() => {
         showError("Vehicle save nahi ho paya, dubara try karo.");
       });
@@ -2533,6 +2658,152 @@ function MargshriApp() {
   };
 
   const hasReviewed = (requestId) => reviews.some((r) => r.requestId === requestId && r.raterName === name);
+
+  // ---- Booking classification: Upcoming / Waiting / Past / Cancelled ----
+  const BOOKING_TABS = ["upcoming", "waiting", "past", "cancelled"];
+  const rideInfoFor = (r) => {
+    const v = vehicles.find((x) => x.id === r.vehicleId);
+    const ts = Number(r.rideTimestamp || v?.timestamp || 0);
+    return { v, ts, text: r.rideTime || v?.time || "" };
+  };
+  const formatRideTime = (ts, fallbackText) => {
+    if (!ts) return fallbackText || t("dateNotSet");
+    const d = new Date(ts);
+    const locale = lang === "hi" ? "hi-IN" : "en-IN";
+    const time = d.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+    const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const dayDiff = Math.round((startOf(d) - startOf(new Date())) / 86400000);
+    if (dayDiff === 0) return `${t("today")}, ${time}`;
+    if (dayDiff === 1) return `${t("tomorrow")}, ${time}`;
+    if (dayDiff === -1) return `${t("yesterday")}, ${time}`;
+    return `${d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" })}, ${time}`;
+  };
+  const bookingCategory = (r) => {
+    const { ts } = rideInfoFor(r);
+    const passed = ts > 0 && ts < Date.now() - 60 * 60 * 1000; // 1 hour grace after departure
+    if (r.status === "pending") return passed ? "cancelled" : "waiting";
+    if (r.status === "accepted") return passed ? "past" : "upcoming";
+    if (r.status === "completed" || r.status === "noshow") return "past";
+    return "cancelled"; // cancelled, rejected
+  };
+  const STATUS_STYLE = {
+    teal: { bg: "#E4F3EF", fg: "#1F6F63", Icon: Check },
+    amber: { bg: "#FDF1DE", fg: "#8A5A08", Icon: Clock },
+    navy: { bg: "#E6E9F0", fg: COLORS.night, Icon: Clock },
+    coral: { bg: "#FBE9E7", fg: "#B23A2E", Icon: Ban },
+    grey: { bg: "#EFEFEF", fg: "#5F6368", Icon: X },
+  };
+  const bookingStatus = (r, role) => {
+    const cat = bookingCategory(r);
+    if (r.status === "pending" && cat === "cancelled") return { label: t("stExpired"), tone: "grey" };
+    if (r.status === "pending") return role === "owner" ? { label: t("stNewRequest"), tone: "amber" } : { label: t("stWaitingOwner"), tone: "amber" };
+    if (r.status === "accepted" && cat === "past") return role === "owner" ? { label: t("stMarkDone"), tone: "navy" } : { label: t("stRidePassed"), tone: "navy" };
+    if (r.status === "accepted") return { label: t("stConfirmed"), tone: "teal" };
+    if (r.status === "completed") return { label: t("stCompleted"), tone: "teal" };
+    if (r.status === "noshow") return { label: t("stNoShow"), tone: "coral" };
+    if (r.status === "rejected") return role === "owner" ? { label: t("stDeclined"), tone: "grey" } : { label: t("stDeclinedByOwner"), tone: "grey" };
+    return { label: t("stCancelled"), tone: "grey" };
+  };
+  const groupBookings = (list) => {
+    const groups = { upcoming: [], waiting: [], past: [], cancelled: [] };
+    list.forEach((r) => groups[bookingCategory(r)].push(r));
+    const key = (r) => rideInfoFor(r).ts || r.createdAt || 0;
+    groups.upcoming.sort((a, b) => (key(a) || 9e15) - (key(b) || 9e15));
+    groups.waiting.sort((a, b) => (key(a) || 9e15) - (key(b) || 9e15));
+    groups.past.sort((a, b) => key(b) - key(a));
+    groups.cancelled.sort((a, b) => key(b) - key(a));
+    return groups;
+  };
+  const pickTab = (chosen, groups) => chosen || BOOKING_TABS.find((k) => groups[k].length) || "upcoming";
+  const tabLabel = { upcoming: "tabUpcoming", waiting: "tabWaiting", past: "tabPast", cancelled: "tabCancelled" };
+  const emptyLabel = { upcoming: "emptyUpcoming", waiting: "emptyWaiting", past: "emptyPast", cancelled: "emptyCancelled" };
+  const renderBookingTabs = (groups, activeTab, setTab) => (
+    <div className="grid grid-cols-4 gap-1 p-1 mb-3 rounded-xl" style={{ background: "#F3EFE6" }} role="tablist">
+      {BOOKING_TABS.map((k) => {
+        const on = activeTab === k;
+        const count = groups[k].length;
+        return (
+          <button
+            key={k}
+            role="tab"
+            aria-selected={on}
+            onClick={() => setTab(k)}
+            style={on ? { background: "white", color: COLORS.night, boxShadow: "0 1px 3px rgba(27,42,74,0.12)" } : { color: COLORS.muted }}
+            className="rounded-lg py-2 px-1 text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5"
+          >
+            <span>{t(tabLabel[k])}</span>
+            <span
+              style={on ? { background: k === "waiting" && count ? COLORS.amber : COLORS.night, color: k === "waiting" && count ? COLORS.night : "white" } : { background: "#E4DFD3", color: COLORS.muted }}
+              className="min-w-[20px] h-5 px-1.5 rounded-full text-[11px] leading-5 text-center"
+            >
+              {count}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+  // Shared card frame: status + date on top, route in the middle, details and actions below.
+  const renderBookingCard = (r, role, { person, personPhoto, rating, onRating, actions, extra }) => {
+    const st = bookingStatus(r, role);
+    const tone = STATUS_STYLE[st.tone];
+    const { v, ts, text } = rideInfoFor(r);
+    const seats = Number(r.seats) || 1;
+    const VIcon = VEHICLE_META[r.type || v?.type]?.icon || Car;
+    const muted = bookingCategory(r) === "cancelled";
+    return (
+      <div key={r.id} style={{ borderColor: COLORS.line, opacity: muted ? 0.78 : 1 }} className="bg-white border shadow-sm rounded-2xl overflow-hidden">
+        <div style={{ background: tone.bg }} className="flex items-center justify-between gap-2 px-4 py-2">
+          <span style={{ color: tone.fg }} className="flex items-center gap-1.5 text-xs font-bold">
+            <tone.Icon size={13} /> {st.label}
+          </span>
+          <span style={{ color: tone.fg }} className="flex items-center gap-1 text-xs font-semibold">
+            <Clock size={12} /> {formatRideTime(ts, text)}
+          </span>
+        </div>
+        <div className="px-4 pt-3 pb-3">
+          <div className="flex items-start gap-3">
+            <div style={{ background: "#F3EFE6" }} className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
+              <VIcon size={17} color={COLORS.night} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p style={{ color: COLORS.night, textDecoration: muted ? "line-through" : "none" }} className="text-sm font-bold leading-snug break-words">
+                {r.from} <ArrowRight size={13} className="inline -mt-0.5" /> {r.to}
+              </p>
+              <p style={{ color: COLORS.muted }} className="text-xs mt-0.5 flex items-center gap-1 flex-wrap">
+                <span>{role === "owner" ? t("withRider") : t("withOwner")}:</span>
+                <span style={{ color: COLORS.charcoal }} className="font-semibold inline-flex items-center gap-1">
+                  {personPhoto && <img src={personPhoto} alt="" className="w-4 h-4 rounded-full object-cover" />}
+                  {person}
+                </span>
+                {rating && (
+                  <button onClick={onRating} className="inline-flex items-center gap-0.5">
+                    <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {rating}
+                  </button>
+                )}
+              </p>
+            </div>
+          </div>
+          <div style={{ borderColor: COLORS.line }} className="flex items-center justify-between gap-2 mt-3 pt-3 border-t flex-wrap">
+            <div className="text-xs" style={{ color: COLORS.muted }}>
+              <span style={{ color: COLORS.charcoal }} className="font-semibold">{seats} {seats > 1 ? t("seatMany") : t("seatOne")}</span>
+              {r.fare != null && (
+                <>
+                  {" · "}
+                  <span style={{ color: COLORS.charcoal }} className="font-semibold">₹{r.fare}</span> {t("perSeat")}
+                  {r.listedFare != null && r.fare !== r.listedFare && (
+                    <span style={{ color: "#B4700C" }} className="font-semibold"> ({t("listedWas")} ₹{r.listedFare})</span>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap justify-end">{actions}</div>
+          </div>
+          {extra}
+        </div>
+      </div>
+    );
+  };
 
   const myVehicleIds = vehicles.filter((v) => v.owner === name).map((v) => v.id);
   const incoming = requests.filter((r) => myVehicleIds.includes(r.vehicleId));
@@ -3913,67 +4184,73 @@ function MargshriApp() {
           {myRequests.length > 0 && (
             <>
               <SectionHeading icon={Inbox} size="sm">{t("myRequests")}</SectionHeading>
-              <div className="flex gap-2 mb-3">
-                {["active", "history"].map((tabKey) => (
-                  <button
-                    key={tabKey}
-                    onClick={() => setRiderTab(tabKey)}
-                    style={riderTab === tabKey ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                  >
-                    {tabKey === "active" ? t("activeTab") : t("historyTab")}
-                  </button>
-                ))}
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-8">
-                {(riderTab === "active" ? myRequestsActive : myRequestsHistory).length === 0 && (
-                  <p style={{ color: COLORS.muted }} className="text-sm py-2">{riderTab === "active" ? t("noActiveYet") : t("noHistoryYet")}</p>
-                )}
-                {(riderTab === "active" ? myRequestsActive : myRequestsHistory).map((r) => {
-                  const bookedVehicle = vehicles.find((v) => v.id === r.vehicleId);
-                  const showContact = ["accepted", "completed"].includes(r.status) && bookedVehicle?.ownerPhone;
-                  return (
-                  <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
-                    <div className="flex justify-between items-center">
-                      <span style={{ color: COLORS.charcoal }} className="text-sm">{r.from} <ArrowRight size={12} className="inline" /> {r.to} · {r.owner} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</span>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => requireAuth(() => openChat(r.id, r.owner))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
-                          <MessageCircle size={14} />
-                          {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
-                        </button>
-                        {(r.status === "pending" || r.status === "accepted") && (
-                          <button onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                            {t("cancel")}
+              {(() => {
+                const groups = groupBookings(myRequests);
+                const tab = pickTab(riderTab, groups);
+                return (
+                  <>
+                    {renderBookingTabs(groups, tab, setRiderTab)}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-8">
+                      {groups[tab].length === 0 && (
+                        <div className="text-center py-8 lg:col-span-2">
+                          <Inbox size={28} color={COLORS.line} className="mx-auto mb-2" />
+                          <p style={{ color: COLORS.muted }} className="text-sm">{t(emptyLabel[tab])}</p>
+                        </div>
+                      )}
+                      {groups[tab].map((r) => {
+                        const bookedVehicle = vehicles.find((v) => v.id === r.vehicleId);
+                        const cat = bookingCategory(r);
+                        const showContact = ["accepted", "completed"].includes(r.status) && bookedVehicle?.ownerPhone && cat !== "cancelled";
+                        const chatBtn = (
+                          <button key="chat" onClick={() => requireAuth(() => openChat(r.id, r.owner))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5" aria-label="chat">
+                            <MessageCircle size={14} />
+                            {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
                           </button>
-                        )}
-                        {r.status === "completed" && !hasReviewed(r.id) ? (
-                          <button onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.owner }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
-                            {t("rateOwner")}
-                          </button>
-                        ) : (
-                          <Badge status={r.status} lang={lang} />
-                        )}
-                      </div>
+                        );
+                        const actions = [
+                          chatBtn,
+                          (cat === "waiting" || cat === "upcoming") && (
+                            <button key="cancel" onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                              {t("cancel")}
+                            </button>
+                          ),
+                          r.status === "completed" && !hasReviewed(r.id) && (
+                            <button key="rate" onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.owner }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                              {t("rateOwner")}
+                            </button>
+                          ),
+                        ];
+                        const extra = (
+                          <>
+                            {showContact && (
+                              <a href={`tel:${bookedVehicle.ownerPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-3 inline-block">
+                                📞 {t("callOwner")}: {bookedVehicle.ownerPhone}
+                              </a>
+                            )}
+                            {cat === "upcoming" && (
+                              <>
+                                <div className="mt-2">
+                                  <RouteButton from={bookedVehicle?.from || r.from} to={bookedVehicle?.to || r.to} stops={bookedVehicle?.stops} label={t("routeTraffic")} />
+                                </div>
+                                <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
+                                  {t("idCheckReminder")}
+                                </p>
+                              </>
+                            )}
+                          </>
+                        );
+                        return renderBookingCard(r, "rider", {
+                          person: r.owner,
+                          rating: getAvgRating(r.owner)?.avg,
+                          onRating: () => setViewingReviewsFor(r.owner),
+                          actions,
+                          extra,
+                        });
+                      })}
                     </div>
-                    {showContact && (
-                      <a href={`tel:${bookedVehicle.ownerPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
-                        📞 {t("callOwner")}: {bookedVehicle.ownerPhone}
-                      </a>
-                    )}
-                    {r.status === "accepted" && (
-                      <div className="mt-2">
-                        <RouteButton from={bookedVehicle?.from || r.from} to={bookedVehicle?.to || r.to} stops={bookedVehicle?.stops} label={t("routeTraffic")} />
-                      </div>
-                    )}
-                    {["accepted", "completed"].includes(r.status) && (
-                      <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
-                        {t("idCheckReminder")}
-                      </p>
-                    )}
-                  </div>
-                  );
-                })}
-              </div>
+                  </>
+                );
+              })()}
             </>
           )}
 
@@ -4078,23 +4355,45 @@ function MargshriApp() {
                 );
               })}
             </div>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <LocationInput placeholder={t("from")} value={vform.from} onChange={(v) => setVform({ ...vform, from: v })} />
-              <LocationInput placeholder={t("to")} value={vform.to} onChange={(v) => setVform({ ...vform, to: v })} />
-              <input type="text" placeholder={t("vehicleNamePlaceholder")} value={vform.vehicleName} onChange={(e) => setVform({ ...vform, vehicleName: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <input type="text" placeholder={t("vehicleNumberPlaceholder")} value={vform.vehicleNumber} onChange={(e) => setVform({ ...vform, vehicleNumber: e.target.value })} style={{ borderColor: COLORS.line, textTransform: "uppercase" }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <input type="date" value={vform.date} onChange={(e) => setVform({ ...vform, date: e.target.value })} style={{ borderColor: COLORS.line, color: vform.date ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <input type="time" value={vform.clock} onChange={(e) => setVform({ ...vform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: vform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-              <div className="relative">
-                <input type="number" placeholder={t("seats")} value={vform.seats} onChange={(e) => setVform({ ...vform, seats: e.target.value })} style={{ borderColor: COLORS.line }} className="w-full border rounded-lg pl-3 pr-16 py-2 text-sm outline-none" />
-                <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("seats")}</span>
-              </div>
-              <div className="relative">
-                <input type="number" placeholder={t("pricePerSeat")} value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} style={{ borderColor: COLORS.line }} className="w-full border rounded-lg pl-3 pr-16 py-2 text-sm outline-none" />
-                <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("perSeatSuffix")}</span>
-              </div>
-              <input type="text" placeholder={t("durationPlaceholder")} value={vform.duration} onChange={(e) => setVform({ ...vform, duration: e.target.value })} style={{ borderColor: COLORS.line }} className="border rounded-lg px-3 py-2 text-sm outline-none col-span-2" />
-            </div>
+            {(() => {
+              const field = (key, label, required, control, span) => (
+                <div id={"vf-" + key} className={span ? "col-span-2" : ""}>
+                  <label style={{ color: vErrors[key] ? "#B23A2E" : COLORS.charcoal }} className="block text-xs font-semibold mb-1">
+                    {label} {required ? <span style={{ color: COLORS.coral }}>*</span> : <span style={{ color: COLORS.muted }} className="font-normal">({t("optional")})</span>}
+                  </label>
+                  <div style={{ boxShadow: vErrors[key] ? `0 0 0 1.5px ${COLORS.coral}` : "none" }} className="rounded-lg">{control}</div>
+                  {vErrors[key] && <p style={{ color: "#B23A2E" }} className="text-[11px] mt-1 font-medium">{vErrors[key]}</p>}
+                </div>
+              );
+              const inputCls = "w-full border rounded-lg px-3 py-2 text-sm outline-none bg-white";
+              const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+              return (
+                <>
+                  <p style={{ color: COLORS.muted }} className="text-[11px] mb-2">{t("requiredNote")}</p>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    {field("from", t("from"), true, <LocationInput placeholder={t("from")} value={vform.from} onChange={(v) => setVField("from", v)} />)}
+                    {field("to", t("to"), true, <LocationInput placeholder={t("to")} value={vform.to} onChange={(v) => setVField("to", v)} />)}
+                    {field("date", t("lblDate"), true, <input type="date" min={today} value={vform.date} onChange={(e) => setVField("date", e.target.value)} style={{ borderColor: COLORS.line, color: vform.date ? COLORS.charcoal : COLORS.muted }} className={inputCls} />)}
+                    {field("clock", t("lblTime"), true, <input type="time" value={vform.clock} onChange={(e) => setVField("clock", e.target.value)} style={{ borderColor: COLORS.line, color: vform.clock ? COLORS.charcoal : COLORS.muted }} className={inputCls} />)}
+                    {field("seats", t("seats"), true, (
+                      <div className="relative">
+                        <input type="number" inputMode="numeric" min="1" max={maxSeatsFor(vform.type)} placeholder={`1–${maxSeatsFor(vform.type)}`} value={vform.seats} onChange={(e) => setVField("seats", e.target.value)} style={{ borderColor: COLORS.line }} className={inputCls + " pr-16"} />
+                        <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("seats")}</span>
+                      </div>
+                    ))}
+                    {field("price", t("pricePerSeat"), true, (
+                      <div className="relative">
+                        <input type="number" inputMode="numeric" min="1" placeholder="₹" value={vform.price} onChange={(e) => setVField("price", e.target.value)} style={{ borderColor: COLORS.line }} className={inputCls + " pr-16"} />
+                        <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("perSeatSuffix")}</span>
+                      </div>
+                    ))}
+                    {field("vehicleName", t("lblVehicleName"), false, <input type="text" placeholder={t("vehicleNamePlaceholder")} value={vform.vehicleName} onChange={(e) => setVField("vehicleName", e.target.value)} style={{ borderColor: COLORS.line }} className={inputCls} />)}
+                    {field("vehicleNumber", t("lblVehicleNumber"), false, <input type="text" placeholder={t("vehicleNumberPlaceholder")} value={vform.vehicleNumber} onChange={(e) => setVField("vehicleNumber", e.target.value)} style={{ borderColor: COLORS.line, textTransform: "uppercase" }} className={inputCls} />)}
+                    {field("duration", t("lblDuration"), false, <input type="text" placeholder={t("durationPlaceholder")} value={vform.duration} onChange={(e) => setVField("duration", e.target.value)} style={{ borderColor: COLORS.line }} className={inputCls} />, true)}
+                  </div>
+                </>
+              );
+            })()}
             <p style={{ color: COLORS.muted }} className="text-[11px] -mt-2 mb-3">{t("durationHint")}</p>
             <p style={{ color: COLORS.muted }} className="text-xs mb-3">{t("postingFor")} <b style={{ color: COLORS.charcoal }}>{mode === "local" ? t("local") : t("longDistance")}</b> {t("modeChangeNote")}</p>
 
@@ -4287,119 +4586,91 @@ function MargshriApp() {
           })()}
 
           <SectionHeading icon={Inbox} size="sm">{t("incomingRequests")}</SectionHeading>
-          <div className="flex gap-2 mb-3">
-            {["active", "history"].map((tabKey) => (
-              <button
-                key={tabKey}
-                onClick={() => setOwnerTab(tabKey)}
-                style={ownerTab === tabKey ? { background: COLORS.night, color: "white" } : { background: "#F3EFE6", color: COLORS.muted }}
-                className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-              >
-                {tabKey === "active" ? t("activeTab") : t("historyTab")}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-8">
-            {(ownerTab === "active" ? incomingActive : incomingHistory).length === 0 && (
-              <div className="text-center py-6">
-                <Inbox size={28} color={COLORS.line} className="mx-auto mb-2" />
-                <p style={{ color: COLORS.muted }} className="text-sm">{ownerTab === "active" ? t("noActiveYet") : t("noHistoryYet")}</p>
-              </div>
-            )}
-            {(ownerTab === "active" ? incomingActive : incomingHistory).map((r) => (
-              <div key={r.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div style={{ background: COLORS.night }} className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0">
-                      {r.riderPhoto ? <img src={r.riderPhoto} alt="" className="w-full h-full object-cover" /> : <User size={14} color="white" />}
+          {(() => {
+            const groups = groupBookings(incoming);
+            const tab = pickTab(ownerTab, groups);
+            return (
+              <>
+                {renderBookingTabs(groups, tab, setOwnerTab)}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-8">
+                  {groups[tab].length === 0 && (
+                    <div className="text-center py-8 lg:col-span-2">
+                      <Inbox size={28} color={COLORS.line} className="mx-auto mb-2" />
+                      <p style={{ color: COLORS.muted }} className="text-sm">{t(emptyLabel[tab])}</p>
                     </div>
-                    <div>
-                      <p style={{ color: COLORS.charcoal }} className="text-sm font-semibold flex items-center gap-1">
-                        {r.riderName}
-                        {getAvgRating(r.riderName) && (
-                          <button onClick={() => setViewingReviewsFor(r.riderName)} style={{ color: COLORS.muted }} className="text-xs font-normal flex items-center gap-0.5">
-                            <Star size={11} fill={COLORS.amber} color={COLORS.amber} /> {getAvgRating(r.riderName).avg}
+                  )}
+                  {groups[tab].map((r) => {
+                    const cat = bookingCategory(r);
+                    const veh = vehicles.find((v) => v.id === r.vehicleId);
+                    const chatBtn = (
+                      <button key="chat" onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5" aria-label="chat">
+                        <MessageCircle size={14} />
+                        {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
+                      </button>
+                    );
+                    let actions = [chatBtn];
+                    if (cat === "waiting") {
+                      actions = actions.concat([
+                        <button key="acc" onClick={() => requireAuth(() => respond(r.id, "accepted"))} disabled={syncing} style={{ background: COLORS.teal, color: "white" }} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
+                          <Check size={13} /> {t("btnAccept")}
+                        </button>,
+                        <button key="rej" onClick={() => requireAuth(() => respond(r.id, "rejected"))} disabled={syncing} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="flex items-center gap-1 border text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
+                          <X size={13} /> {t("btnDecline")}
+                        </button>,
+                      ]);
+                    } else if (r.status === "accepted") {
+                      actions = actions.concat([
+                        <button key="done" onClick={() => requireAuth(() => respond(r.id, "completed"))} disabled={syncing} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
+                          {t("rideDone")}
+                        </button>,
+                        <button key="ns" onClick={() => requireAuth(() => respond(r.id, "noshow"))} disabled={syncing} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
+                          {t("noShow")}
+                        </button>,
+                        cat === "upcoming" && (
+                          <button key="cx" onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                            {t("cancel")}
                           </button>
+                        ),
+                      ]);
+                    } else if (r.status === "completed" && !hasReviewed(r.id)) {
+                      actions = actions.concat([
+                        <button key="rate" onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.riderName }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
+                          {t("rateRider")}
+                        </button>,
+                      ]);
+                    }
+                    const extra = (
+                      <>
+                        {["accepted", "completed"].includes(r.status) && r.riderPhone && cat !== "cancelled" && (
+                          <a href={`tel:${r.riderPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-3 inline-block">
+                            📞 {t("callRider")}: {r.riderPhone}
+                          </a>
                         )}
-                      </p>
-                      <p style={{ color: COLORS.muted }} className="text-xs">{r.from} <ArrowRight size={11} className="inline" /> {r.to} · {r.seats || 1} seat{(r.seats || 1) > 1 ? "s" : ""}</p>
-                      {r.fare != null && (
-                        r.listedFare != null && r.fare !== r.listedFare ? (
-                          <p style={{ color: "#B4700C" }} className="text-xs font-bold mt-0.5">
-                            {t("riderOffered")}: ₹{r.fare} <span style={{ color: COLORS.muted, fontWeight: 400 }}>({t("listedWas")} ₹{r.listedFare})</span>
-                          </p>
-                        ) : (
-                          <p style={{ color: COLORS.charcoal }} className="text-xs font-semibold mt-0.5">₹{r.fare}</p>
-                        )
-                      )}
-                    </div>
-                  </div>
-                {r.status === "pending" ? (
-                  <div className="flex gap-2">
-                    <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
-                      <MessageCircle size={14} />
-                      {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
-                    </button>
-                    <button onClick={() => requireAuth(() => respond(r.id, "accepted"))} disabled={syncing} style={{ background: COLORS.teal }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><Check size={15} color="white" /></button>
-                    <button onClick={() => requireAuth(() => respond(r.id, "rejected"))} disabled={syncing} style={{ background: COLORS.coral }} className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"><X size={15} color="white" /></button>
-                  </div>
-                ) : r.status === "accepted" ? (
-                  <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
-                      <MessageCircle size={14} />
-                      {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
-                    </button>
-                    <button onClick={() => requireAuth(() => respond(r.id, "completed"))} disabled={syncing} style={{ background: COLORS.teal, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
-                      {t("rideDone")}
-                    </button>
-                    <button onClick={() => requireAuth(() => respond(r.id, "noshow"))} disabled={syncing} style={{ background: COLORS.coral, color: "white" }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg disabled:opacity-50">
-                      {t("noShow")}
-                    </button>
-                    <button onClick={() => requireAuth(() => cancelRequest(r.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                      {t("cancel")}
-                    </button>
-                  </div>
-                ) : r.status === "completed" && !hasReviewed(r.id) ? (
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
-                      <MessageCircle size={14} />
-                      {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
-                    </button>
-                    <button onClick={() => requireAuth(() => setActiveReview({ requestId: r.id, revieweeName: r.riderName }))} style={{ background: COLORS.amber, color: COLORS.night }} className="text-xs font-bold px-2.5 py-1.5 rounded-lg">
-                      {t("rateRider")}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => requireAuth(() => openChat(r.id, r.riderName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
-                      <MessageCircle size={14} />
-                      {hasUnreadMessages(r.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
-                    </button>
-                    <Badge status={r.status} lang={lang} />
-                  </div>
-                )}
+                        {cat === "upcoming" && (
+                          <>
+                            <div className="mt-2">
+                              <RouteButton from={veh?.from || r.from} to={veh?.to || r.to} stops={veh?.stops} label={t("routeTraffic")} />
+                            </div>
+                            <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
+                              {t("idCheckReminder")}
+                            </p>
+                          </>
+                        )}
+                      </>
+                    );
+                    return renderBookingCard(r, "owner", {
+                      person: r.riderName,
+                      personPhoto: r.riderPhoto,
+                      rating: getAvgRating(r.riderName)?.avg,
+                      onRating: () => setViewingReviewsFor(r.riderName),
+                      actions,
+                      extra,
+                    });
+                  })}
                 </div>
-                {["accepted", "completed"].includes(r.status) && r.riderPhone && (
-                  <a href={`tel:${r.riderPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
-                    📞 {t("callRider")}: {r.riderPhone}
-                  </a>
-                )}
-                {r.status === "accepted" && (() => {
-                  const veh = vehicles.find((v) => v.id === r.vehicleId);
-                  return (
-                    <div className="mt-2">
-                      <RouteButton from={veh?.from || r.from} to={veh?.to || r.to} stops={veh?.stops} label={t("routeTraffic")} />
-                    </div>
-                  );
-                })()}
-                {["accepted", "completed"].includes(r.status) && (
-                  <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
-                    {t("idCheckReminder")}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
+              </>
+            );
+          })()}
 
           <SectionHeading icon={Car} size="sm">{t("myPostedVehicles")}</SectionHeading>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
