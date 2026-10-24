@@ -185,6 +185,18 @@ const TRANSLATIONS = {
     errSeats: "Enter seats (1 to {max})",
     errPrice: "Enter the price per seat (₹1 to ₹10,000)",
     errFixForm: "Please fill the fields marked in red.",
+    tabDriverFound: "Driver found",
+    tabSearching: "Searching",
+    tabExpired: "Expired",
+    emptyDriverFound: "No driver has accepted yet. Accepted requests will appear here.",
+    emptySearching: "No open requests right now.",
+    emptyPastPosts: "No past rides yet.",
+    emptyExpired: "No expired requests.",
+    stDriverFound: "Driver found",
+    stSearching: "Searching for a driver",
+    stExpiredNoDriver: "Expired: no driver found",
+    notYet: "not yet",
+    remove: "Remove",
     yourOffer: "Your offer:",
     expired: "Expired",
     riderOffered: "Rider offered",
@@ -566,6 +578,18 @@ const TRANSLATIONS = {
     errSeats: "सीटें लिखें (1 से {max})",
     errPrice: "प्रति सीट किराया लिखें (₹1 से ₹10,000)",
     errFixForm: "लाल रंग वाले खाने भरें।",
+    tabDriverFound: "ड्राइवर मिला",
+    tabSearching: "खोज जारी",
+    tabExpired: "समाप्त",
+    emptyDriverFound: "अभी किसी ड्राइवर ने स्वीकार नहीं किया। स्वीकार होने पर यहाँ दिखेगा।",
+    emptySearching: "अभी कोई खुली रिक्वेस्ट नहीं।",
+    emptyPastPosts: "अभी कोई पुरानी सवारी नहीं।",
+    emptyExpired: "कोई समाप्त रिक्वेस्ट नहीं।",
+    stDriverFound: "ड्राइवर मिल गया",
+    stSearching: "ड्राइवर की खोज जारी",
+    stExpiredNoDriver: "समाप्त: कोई ड्राइवर नहीं मिला",
+    notYet: "अभी नहीं",
+    remove: "हटाएँ",
     yourOffer: "आपका ऑफर:",
     expired: "समय समाप्त",
     riderOffered: "यात्री ने ऑफर किया",
@@ -1527,6 +1551,8 @@ function MargshriApp() {
   const [timeOfDayFilter, setTimeOfDayFilter] = useState(null);
   const [riderTab, setRiderTab] = useState(null); // null = pick the first non-empty tab
   const [ownerTab, setOwnerTab] = useState(null);
+  const [postTab, setPostTab] = useState(null);
+  const [rErrors, setRErrors] = useState({});
   const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
   const [vErrors, setVErrors] = useState({});
   const [vform, setVform] = useState({ type: "car", from: "", to: "", seats: "", date: "", clock: "", price: "", duration: "", vehicleName: "", vehicleNumber: "", instantBooking: false, tags: { womenOnly: false, nonSmoker: false, ac: false, luggage: false }, routeType: "direct", stops: [] });
@@ -2363,10 +2389,25 @@ function MargshriApp() {
       });
     });
 
+  const validateRiderForm = (f) => {
+    const e = validateVehicleForm({ ...f, type: search.type, seats: String(f.seatsNeeded ?? ""), price: "1" });
+    if (e.seats) { e.seatsNeeded = e.seats; delete e.seats; }
+    delete e.price;
+    return e;
+  };
+  const setRField = (key, value) => {
+    setRform((prev) => ({ ...prev, [key]: value }));
+    if (rErrors[key] || (key === "date" && rErrors.clock)) setRErrors((prev) => { const n = { ...prev }; delete n[key]; if (key === "date") delete n.clock; return n; });
+  };
+
   const postRiderRequest = () =>
     withSync(async () => {
-      if (!rform.from.trim() || !rform.to.trim() || !rform.date || !rform.clock) {
-        showError("From, To, Date, aur Time — sab bharna zaroori hai.");
+      const errs = validateRiderForm(rform);
+      setRErrors(errs);
+      if (Object.keys(errs).length) {
+        showError(t("errFixForm"));
+        const first = ["from", "to", "date", "clock", "seatsNeeded"].find((k) => errs[k]);
+        setTimeout(() => document.getElementById("rf-" + first)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
         return;
       }
       const newPost = {
@@ -2717,7 +2758,7 @@ function MargshriApp() {
   const pickTab = (chosen, groups) => chosen || BOOKING_TABS.find((k) => groups[k].length) || "upcoming";
   const tabLabel = { upcoming: "tabUpcoming", waiting: "tabWaiting", past: "tabPast", cancelled: "tabCancelled" };
   const emptyLabel = { upcoming: "emptyUpcoming", waiting: "emptyWaiting", past: "emptyPast", cancelled: "emptyCancelled" };
-  const renderBookingTabs = (groups, activeTab, setTab) => (
+  const renderBookingTabs = (groups, activeTab, setTab, labels = tabLabel) => (
     <div className="grid grid-cols-4 gap-1 p-1 mb-3 rounded-xl" style={{ background: "#F3EFE6" }} role="tablist">
       {BOOKING_TABS.map((k) => {
         const on = activeTab === k;
@@ -2731,7 +2772,7 @@ function MargshriApp() {
             style={on ? { background: "white", color: COLORS.night, boxShadow: "0 1px 3px rgba(27,42,74,0.12)" } : { color: COLORS.muted }}
             className="rounded-lg py-2 px-1 text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5"
           >
-            <span>{t(tabLabel[k])}</span>
+            <span>{t(labels[k])}</span>
             <span
               style={on ? { background: k === "waiting" && count ? COLORS.amber : COLORS.night, color: k === "waiting" && count ? COLORS.night : "white" } : { background: "#E4DFD3", color: COLORS.muted }}
               className="min-w-[20px] h-5 px-1.5 rounded-full text-[11px] leading-5 text-center"
@@ -2744,13 +2785,14 @@ function MargshriApp() {
     </div>
   );
   // Shared card frame: status + date on top, route in the middle, details and actions below.
-  const renderBookingCard = (r, role, { person, personPhoto, rating, onRating, actions, extra }) => {
-    const st = bookingStatus(r, role);
+  const renderBookingCard = (r, role, { person, personPhoto, rating, onRating, actions, extra, status, rideTs, rideText, isMuted }) => {
+    const st = status || bookingStatus(r, role);
     const tone = STATUS_STYLE[st.tone];
-    const { v, ts, text } = rideInfoFor(r);
+    const info = rideTs !== undefined ? { v: null, ts: rideTs, text: rideText } : rideInfoFor(r);
+    const { v, ts, text } = info;
     const seats = Number(r.seats) || 1;
     const VIcon = VEHICLE_META[r.type || v?.type]?.icon || Car;
-    const muted = bookingCategory(r) === "cancelled";
+    const muted = isMuted !== undefined ? isMuted : bookingCategory(r) === "cancelled";
     return (
       <div key={r.id} style={{ borderColor: COLORS.line, opacity: muted ? 0.78 : 1 }} className="bg-white border shadow-sm rounded-2xl overflow-hidden">
         <div style={{ background: tone.bg }} className="flex items-center justify-between gap-2 px-4 py-2">
@@ -2774,7 +2816,7 @@ function MargshriApp() {
                 <span>{role === "owner" ? t("withRider") : t("withOwner")}:</span>
                 <span style={{ color: COLORS.charcoal }} className="font-semibold inline-flex items-center gap-1">
                   {personPhoto && <img src={personPhoto} alt="" className="w-4 h-4 rounded-full object-cover" />}
-                  {person}
+                  {person || <span style={{ color: COLORS.muted }} className="font-normal italic">{t("notYet")}</span>}
                 </span>
                 {rating && (
                   <button onClick={onRating} className="inline-flex items-center gap-0.5">
@@ -4010,18 +4052,34 @@ function MargshriApp() {
                 <PackageSearch size={28} color={COLORS.line} className="mx-auto mb-2" />
                 <p style={{ color: COLORS.muted }} className="text-sm mb-3">{t("noVehiclesFound")}</p>
                 <p style={{ color: COLORS.charcoal }} className="text-sm font-bold mb-3">{t("postOwnRequestPrompt")}</p>
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <LocationInput placeholder={t("from")} value={rform.from} onChange={(v) => setRform({ ...rform, from: v })} />
-                  <LocationInput placeholder={t("to")} value={rform.to} onChange={(v) => setRform({ ...rform, to: v })} />
-                </div>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <input type="date" value={rform.date} onChange={(e) => setRform({ ...rform, date: e.target.value })} style={{ borderColor: COLORS.line, color: rform.date ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-                  <input type="time" value={rform.clock} onChange={(e) => setRform({ ...rform, clock: e.target.value })} style={{ borderColor: COLORS.line, color: rform.clock ? COLORS.charcoal : COLORS.muted }} className="border rounded-lg px-3 py-2 text-sm outline-none" />
-                  <div className="relative col-span-2">
-                    <input type="number" min="1" placeholder={t("seatsWanted")} value={rform.seatsNeeded} onChange={(e) => setRform({ ...rform, seatsNeeded: e.target.value })} style={{ borderColor: COLORS.line }} className="w-full border rounded-lg pl-3 pr-16 py-2 text-sm outline-none" />
-                    <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("seats")}</span>
-                  </div>
-                </div>
+                {(() => {
+                  const field = (key, label, control, span) => (
+                    <div id={"rf-" + key} className={"text-left " + (span ? "col-span-2" : "")}>
+                      <label style={{ color: rErrors[key] ? "#B23A2E" : COLORS.charcoal }} className="block text-xs font-semibold mb-1">
+                        {label} <span style={{ color: COLORS.coral }}>*</span>
+                      </label>
+                      <div style={{ boxShadow: rErrors[key] ? `0 0 0 1.5px ${COLORS.coral}` : "none" }} className="rounded-lg">{control}</div>
+                      {rErrors[key] && <p style={{ color: "#B23A2E" }} className="text-[11px] mt-1 font-medium">{rErrors[key]}</p>}
+                    </div>
+                  );
+                  const inputCls = "w-full border rounded-lg px-3 py-2 text-sm outline-none bg-white";
+                  const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+                  const max = maxSeatsFor(search.type);
+                  return (
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      {field("from", t("from"), <LocationInput placeholder={t("from")} value={rform.from} onChange={(v) => setRField("from", v)} />)}
+                      {field("to", t("to"), <LocationInput placeholder={t("to")} value={rform.to} onChange={(v) => setRField("to", v)} />)}
+                      {field("date", t("lblDate"), <input type="date" min={today} value={rform.date} onChange={(e) => setRField("date", e.target.value)} style={{ borderColor: COLORS.line, color: rform.date ? COLORS.charcoal : COLORS.muted }} className={inputCls} />)}
+                      {field("clock", t("lblTime"), <input type="time" value={rform.clock} onChange={(e) => setRField("clock", e.target.value)} style={{ borderColor: COLORS.line, color: rform.clock ? COLORS.charcoal : COLORS.muted }} className={inputCls} />)}
+                      {field("seatsNeeded", t("seatsWanted"), (
+                        <div className="relative">
+                          <input type="number" inputMode="numeric" min="1" max={max} placeholder={`1–${max}`} value={rform.seatsNeeded} onChange={(e) => setRField("seatsNeeded", e.target.value)} style={{ borderColor: COLORS.line }} className={inputCls + " pr-16"} />
+                          <span style={{ color: COLORS.muted }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none">{t("seats")}</span>
+                        </div>
+                      ), true)}
+                    </div>
+                  );
+                })()}
                 <p style={{ color: COLORS.muted }} className="text-[11px] text-center mb-2">{t("costSharingNotice")}</p>
                 <button onClick={() => requireAuth(postRiderRequest)} disabled={syncing} style={{ background: COLORS.night, color: "white" }} className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50 shadow-md">
                   {t("postMyRequest")}
@@ -4257,55 +4315,93 @@ function MargshriApp() {
           {myRiderPosts.length > 0 && (
             <>
               <SectionHeading icon={PackageSearch} size="sm">{t("myPostedRequests")}</SectionHeading>
-              <div className="space-y-2">
-                {myRiderPosts.map((p) => {
-                  const isExpired = p.status === "open" && p.timestamp && p.timestamp < Date.now();
-                  return (
-                  <div key={p.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3">
-                    <div className="flex justify-between items-center">
-                      <span style={{ color: COLORS.charcoal }} className="text-sm">
-                        {p.from} <ArrowRight size={12} className="inline" /> {p.to} · {p.seatsNeeded || 1} seat{(p.seatsNeeded || 1) > 1 ? "s" : ""}
-                        {p.status === "matched" && p.ownerName ? ` · ${p.ownerName} ${t("isReady")}` : ""}
-                        {isExpired && (
-                          <span style={{ background: "#FBE9E7", color: COLORS.coral }} className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ml-2 align-middle">
-                            {t("expired")}
-                          </span>
-                        )}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {p.status === "open" && (
-                          <button onClick={() => requireAuth(() => cancelRiderPost(p.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
-                            {t("cancel")}
-                          </button>
-                        )}
-                        {p.status === "matched" && (
-                          <button onClick={() => requireAuth(() => openChat(p.id, p.ownerName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5">
-                            <MessageCircle size={14} />
-                            {hasUnreadMessages(p.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
-                          </button>
-                        )}
-                        <Badge status={p.status} lang={lang} />
-                      </div>
-                    </div>
-                    {p.status === "matched" && (
-                      <>
-                        {p.ownerPhone && (
-                          <a href={`tel:${p.ownerPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-2 inline-block">
-                            📞 {t("callOwner")}: {p.ownerPhone}
-                          </a>
-                        )}
-                        <div className="mt-2">
-                          <RouteButton from={p.from} to={p.to} label={t("routeTraffic")} />
+              {(() => {
+                const grace = 60 * 60 * 1000;
+                const passed = (p) => p.timestamp && p.timestamp < Date.now() - grace;
+                const groups = { upcoming: [], waiting: [], past: [], cancelled: [] };
+                myRiderPosts.forEach((p) => {
+                  if (p.status === "matched") groups[passed(p) ? "past" : "upcoming"].push(p);
+                  else groups[passed(p) ? "cancelled" : "waiting"].push(p);
+                });
+                const k = (p) => p.timestamp || 0;
+                groups.upcoming.sort((a, b) => (k(a) || 9e15) - (k(b) || 9e15));
+                groups.waiting.sort((a, b) => (k(a) || 9e15) - (k(b) || 9e15));
+                groups.past.sort((a, b) => k(b) - k(a));
+                groups.cancelled.sort((a, b) => k(b) - k(a));
+                const tab = pickTab(postTab, groups);
+                const labels = { upcoming: "tabDriverFound", waiting: "tabSearching", past: "tabPast", cancelled: "tabExpired" };
+                const empties = { upcoming: "emptyDriverFound", waiting: "emptySearching", past: "emptyPastPosts", cancelled: "emptyExpired" };
+                const statusFor = (cat) =>
+                  cat === "upcoming" ? { label: t("stDriverFound"), tone: "teal" }
+                  : cat === "waiting" ? { label: t("stSearching"), tone: "amber" }
+                  : cat === "past" ? { label: t("stRidePassed"), tone: "navy" }
+                  : { label: t("stExpiredNoDriver"), tone: "grey" };
+                return (
+                  <>
+                    {renderBookingTabs(groups, tab, setPostTab, labels)}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-8">
+                      {groups[tab].length === 0 && (
+                        <div className="text-center py-8 lg:col-span-2">
+                          <PackageSearch size={28} color={COLORS.line} className="mx-auto mb-2" />
+                          <p style={{ color: COLORS.muted }} className="text-sm">{t(empties[tab])}</p>
                         </div>
-                        <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
-                          {t("idCheckReminder")}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  );
-                })}
-              </div>
+                      )}
+                      {groups[tab].map((p) => {
+                        const cat = tab;
+                        const actions = [
+                          p.status === "matched" && (
+                            <button key="chat" onClick={() => requireAuth(() => openChat(p.id, p.ownerName))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="relative border rounded-full p-1.5" aria-label="chat">
+                              <MessageCircle size={14} />
+                              {hasUnreadMessages(p.id) && <span style={{ background: COLORS.coral }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white" />}
+                            </button>
+                          ),
+                          cat === "waiting" && (
+                            <button key="cx" onClick={() => requireAuth(() => cancelRiderPost(p.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                              {t("cancel")}
+                            </button>
+                          ),
+                          cat === "cancelled" && (
+                            <button key="rm" onClick={() => requireAuth(() => cancelRiderPost(p.id))} style={{ color: COLORS.muted, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                              {t("remove")}
+                            </button>
+                          ),
+                        ];
+                        const extra = (
+                          <>
+                            {p.status === "matched" && p.ownerPhone && (
+                              <a href={`tel:${p.ownerPhone}`} style={{ color: COLORS.teal }} className="text-xs font-bold mt-3 inline-block">
+                                📞 {t("callOwner")}: {p.ownerPhone}
+                              </a>
+                            )}
+                            {cat === "upcoming" && (
+                              <>
+                                <div className="mt-2">
+                                  <RouteButton from={p.from} to={p.to} label={t("routeTraffic")} />
+                                </div>
+                                <p style={{ background: "#FDF1DE", color: "#8A5A08" }} className="text-xs rounded-lg px-3 py-2 mt-2">
+                                  {t("idCheckReminder")}
+                                </p>
+                              </>
+                            )}
+                          </>
+                        );
+                        return renderBookingCard({ ...p, seats: p.seatsNeeded || 1, fare: null }, "rider", {
+                          person: p.status === "matched" ? p.ownerName : null,
+                          personPhoto: p.status === "matched" ? p.ownerPhoto : null,
+                          rating: p.status === "matched" && p.ownerName ? getAvgRating(p.ownerName)?.avg : null,
+                          onRating: () => setViewingReviewsFor(p.ownerName),
+                          status: statusFor(cat),
+                          rideTs: p.timestamp || 0,
+                          rideText: p.time || "",
+                          isMuted: cat === "cancelled",
+                          actions,
+                          extra,
+                        });
+                      })}
+                    </div>
+                  </>
+                );
+              })()}
             </>
           )}
 
