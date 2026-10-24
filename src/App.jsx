@@ -196,7 +196,16 @@ const TRANSLATIONS = {
     stSearching: "Searching for a driver",
     stExpiredNoDriver: "Expired: no driver found",
     notYet: "not yet",
-    remove: "Remove",
+    tabOpenSeats: "Open",
+    tabFull: "Full",
+    emptyOpenSeats: "No upcoming rides with free seats.",
+    emptyFull: "No fully booked rides.",
+    emptyPastVehicles: "No past rides yet.",
+    stSeatsLeft: "{n} of {t} seats left",
+    stFull: "Full: all seats booked",
+    stRideOver: "Ride time passed",
+    bookedCount: "{n} booked",
+    newRequestsCount: "{n} new request(s)",
     yourOffer: "Your offer:",
     expired: "Expired",
     riderOffered: "Rider offered",
@@ -589,7 +598,16 @@ const TRANSLATIONS = {
     stSearching: "ड्राइवर की खोज जारी",
     stExpiredNoDriver: "समाप्त: कोई ड्राइवर नहीं मिला",
     notYet: "अभी नहीं",
-    remove: "हटाएँ",
+    tabOpenSeats: "सीट खाली",
+    tabFull: "फ़ुल",
+    emptyOpenSeats: "खाली सीट वाली कोई आने वाली सवारी नहीं।",
+    emptyFull: "कोई पूरी भरी सवारी नहीं।",
+    emptyPastVehicles: "अभी कोई पुरानी सवारी नहीं।",
+    stSeatsLeft: "{t} में से {n} सीट खाली",
+    stFull: "फ़ुल: सारी सीटें बुक",
+    stRideOver: "सवारी का समय निकल गया",
+    bookedCount: "{n} बुक",
+    newRequestsCount: "{n} नई रिक्वेस्ट",
     yourOffer: "आपका ऑफर:",
     expired: "समय समाप्त",
     riderOffered: "यात्री ने ऑफर किया",
@@ -1552,6 +1570,7 @@ function MargshriApp() {
   const [riderTab, setRiderTab] = useState(null); // null = pick the first non-empty tab
   const [ownerTab, setOwnerTab] = useState(null);
   const [postTab, setPostTab] = useState(null);
+  const [vehTab, setVehTab] = useState(null);
   const [rErrors, setRErrors] = useState({});
   const [filterTags, setFilterTags] = useState({ womenOnly: false, nonSmoker: false, ac: false, luggage: false });
   const [vErrors, setVErrors] = useState({});
@@ -2758,9 +2777,9 @@ function MargshriApp() {
   const pickTab = (chosen, groups) => chosen || BOOKING_TABS.find((k) => groups[k].length) || "upcoming";
   const tabLabel = { upcoming: "tabUpcoming", waiting: "tabWaiting", past: "tabPast", cancelled: "tabCancelled" };
   const emptyLabel = { upcoming: "emptyUpcoming", waiting: "emptyWaiting", past: "emptyPast", cancelled: "emptyCancelled" };
-  const renderBookingTabs = (groups, activeTab, setTab, labels = tabLabel) => (
-    <div className="grid grid-cols-4 gap-1 p-1 mb-3 rounded-xl" style={{ background: "#F3EFE6" }} role="tablist">
-      {BOOKING_TABS.map((k) => {
+  const renderBookingTabs = (groups, activeTab, setTab, labels = tabLabel, keys = BOOKING_TABS) => (
+    <div className={`grid ${keys.length === 3 ? "grid-cols-3" : "grid-cols-4"} gap-1 p-1 mb-3 rounded-xl`} style={{ background: "#F3EFE6" }} role="tablist">
+      {keys.map((k) => {
         const on = activeTab === k;
         const count = groups[k].length;
         return (
@@ -2774,7 +2793,7 @@ function MargshriApp() {
           >
             <span>{t(labels[k])}</span>
             <span
-              style={on ? { background: k === "waiting" && count ? COLORS.amber : COLORS.night, color: k === "waiting" && count ? COLORS.night : "white" } : { background: "#E4DFD3", color: COLORS.muted }}
+              style={on ? { background: k === "waiting" && count && keys === BOOKING_TABS ? COLORS.amber : COLORS.night, color: k === "waiting" && count && keys === BOOKING_TABS ? COLORS.night : "white" } : { background: "#E4DFD3", color: COLORS.muted }}
               className="min-w-[20px] h-5 px-1.5 rounded-full text-[11px] leading-5 text-center"
             >
               {count}
@@ -4769,32 +4788,96 @@ function MargshriApp() {
           })()}
 
           <SectionHeading icon={Car} size="sm">{t("myPostedVehicles")}</SectionHeading>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-            {vehicles.filter((v) => v.owner === name).map((v) => {
-              const isExpired = v.timestamp && v.timestamp < Date.now();
-              return (
-              <div key={v.id} style={{ borderColor: COLORS.line }} className="bg-white border shadow-sm rounded-xl px-4 py-3 text-sm flex justify-between items-center">
-                <span style={{ color: COLORS.charcoal }}>
-                  {v.from} → {v.to} · {v.time}
-                  {isExpired && (
-                    <span style={{ background: "#FBE9E7", color: COLORS.coral }} className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ml-2 align-middle">
-                      {t("expired")}
-                    </span>
+          {(() => {
+            const VKEYS = ["open", "full", "past"];
+            const grace = 60 * 60 * 1000;
+            const groups = { open: [], full: [], past: [] };
+            vehicles.filter((v) => v.owner === name).forEach((v) => {
+              if (v.timestamp && v.timestamp < Date.now() - grace) groups.past.push(v);
+              else if (Number(v.seats) <= 0) groups.full.push(v);
+              else groups.open.push(v);
+            });
+            const k = (v) => v.timestamp || 0;
+            groups.open.sort((a, b) => (k(a) || 9e15) - (k(b) || 9e15));
+            groups.full.sort((a, b) => (k(a) || 9e15) - (k(b) || 9e15));
+            groups.past.sort((a, b) => k(b) - k(a));
+            const tab = vehTab && groups[vehTab] ? vehTab : VKEYS.find((x) => groups[x].length) || "open";
+            const labels = { open: "tabOpenSeats", full: "tabFull", past: "tabPast" };
+            const empties = { open: "emptyOpenSeats", full: "emptyFull", past: "emptyPastVehicles" };
+            return (
+              <>
+                {renderBookingTabs(groups, tab, setVehTab, labels, VKEYS)}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-8">
+                  {groups[tab].length === 0 && (
+                    <div className="text-center py-8 lg:col-span-2">
+                      <Car size={28} color={COLORS.line} className="mx-auto mb-2" />
+                      <p style={{ color: COLORS.muted }} className="text-sm">{t(empties[tab])}</p>
+                    </div>
                   )}
-                </span>
-                <div className="flex items-center gap-3 flex-wrap justify-end">
-                  {!isExpired && <RouteButton from={v.from} to={v.to} stops={v.stops} label={t("routeTraffic")} />}
-                  <span style={{ color: v.seats === 0 ? COLORS.coral : COLORS.muted }} className="font-semibold">
-                    {v.seats} of {v.totalSeats || v.seats} {t("seatsLeft")} · ₹{v.price}
-                  </span>
-                  <button onClick={() => requireAuth(() => deleteVehicle(v.id))} style={{ color: COLORS.coral }} className="text-xs font-semibold">
-                    {t("remove")}
-                  </button>
+                  {groups[tab].map((v) => {
+                    const total = Number(v.totalSeats || v.seats) || 0;
+                    const left = Math.max(0, Number(v.seats) || 0);
+                    const st = tab === "past" ? { label: t("stRideOver"), tone: "grey" }
+                      : tab === "full" ? { label: t("stFull"), tone: "navy" }
+                      : { label: t("stSeatsLeft").replace("{n}", left).replace("{t}", total), tone: "teal" };
+                    const tone = STATUS_STYLE[st.tone];
+                    const VIcon = VEHICLE_META[v.type]?.icon || Car;
+                    const vReqs = requests.filter((r) => r.vehicleId === v.id);
+                    const booked = vReqs.filter((r) => ["accepted", "completed"].includes(r.status)).reduce((a, r) => a + (Number(r.seats) || 1), 0);
+                    const pending = tab === "past" ? 0 : vReqs.filter((r) => r.status === "pending").length;
+                    return (
+                      <div key={v.id} style={{ borderColor: COLORS.line, opacity: tab === "past" ? 0.8 : 1 }} className="bg-white border shadow-sm rounded-2xl overflow-hidden">
+                        <div style={{ background: tone.bg }} className="flex items-center justify-between gap-2 px-4 py-2">
+                          <span style={{ color: tone.fg }} className="flex items-center gap-1.5 text-xs font-bold">
+                            {tab === "open" ? <UsersIcon size={13} /> : <tone.Icon size={13} />} {st.label}
+                          </span>
+                          <span style={{ color: tone.fg }} className="flex items-center gap-1 text-xs font-semibold">
+                            <Clock size={12} /> {formatRideTime(v.timestamp, v.time)}
+                          </span>
+                        </div>
+                        <div className="px-4 pt-3 pb-3">
+                          <div className="flex items-start gap-3">
+                            <div style={{ background: "#F3EFE6" }} className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
+                              <VIcon size={17} color={COLORS.night} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p style={{ color: COLORS.night }} className="text-sm font-bold leading-snug break-words">
+                                {v.from} <ArrowRight size={13} className="inline -mt-0.5" /> {v.to}
+                              </p>
+                              {(v.vehicleName || v.vehicleNumber) && (
+                                <p style={{ color: COLORS.muted }} className="text-xs mt-0.5">
+                                  {[v.vehicleName, v.vehicleNumber].filter(Boolean).join(" · ")}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ borderColor: COLORS.line }} className="flex items-center justify-between gap-2 mt-3 pt-3 border-t flex-wrap">
+                            <div className="text-xs flex items-center gap-1.5 flex-wrap" style={{ color: COLORS.muted }}>
+                              <span style={{ color: COLORS.charcoal }} className="font-semibold">₹{v.price}</span> {t("perSeat")}
+                              {booked > 0 && <span>· {t("bookedCount").replace("{n}", booked)}</span>}
+                              {pending > 0 && (
+                                <span style={{ background: "#FDF1DE", color: "#8A5A08" }} className="font-bold px-2 py-0.5 rounded-full">
+                                  {t("newRequestsCount").replace("{n}", pending)}
+                                </span>
+                              )}
+                            </div>
+                            <button onClick={() => requireAuth(() => deleteVehicle(v.id))} style={{ color: COLORS.coral, borderColor: COLORS.line }} className="border rounded-lg px-2.5 py-1.5 text-xs font-semibold">
+                              {t("remove")}
+                            </button>
+                          </div>
+                          {tab !== "past" && (
+                            <div className="mt-2">
+                              <RouteButton from={v.from} to={v.to} stops={v.stops} label={t("routeTraffic")} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-              );
-            })}
-          </div>
+              </>
+            );
+          })()}
 
           <HowItWorksGuide
             title={t("guideDriveTitle")}
