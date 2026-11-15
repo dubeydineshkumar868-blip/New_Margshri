@@ -1,8 +1,11 @@
 {
-  "cleanUrls": true,
   "rewrites": [
     { "source": "/__/auth/:path*", "destination": "https://margshri-ef82b.firebaseapp.com/__/auth/:path*" },
     { "source": "/__/firebase/:path*", "destination": "https://margshri-ef82b.firebaseapp.com/__/firebase/:path*" },
+    { "source": "/greater-noida-to-noida-carpool", "destination": "/greater-noida-to-noida-carpool.html" },
+    { "source": "/noida-to-delhi-carpool", "destination": "/noida-to-delhi-carpool.html" },
+    { "source": "/noida-to-gurugram-carpool", "destination": "/noida-to-gurugram-carpool.html" },
+    { "source": "/noida-office-carpool", "destination": "/noida-office-carpool.html" },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ]
 }
