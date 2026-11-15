@@ -197,6 +197,8 @@ const TRANSLATIONS = {
     stExpiredNoDriver: "Expired: no driver found",
     notYet: "not yet",
     tabOpenSeats: "Open",
+    popularRoutes: "Popular carpool routes",
+    officeCarpool: "Noida office carpool",
     tabFull: "Full",
     emptyOpenSeats: "No upcoming rides with free seats.",
     emptyFull: "No fully booked rides.",
@@ -599,6 +601,8 @@ const TRANSLATIONS = {
     stExpiredNoDriver: "समाप्त: कोई ड्राइवर नहीं मिला",
     notYet: "अभी नहीं",
     tabOpenSeats: "सीट खाली",
+    popularRoutes: "लोकप्रिय कारपूल रूट",
+    officeCarpool: "नोएडा ऑफ़िस कारपूल",
     tabFull: "फ़ुल",
     emptyOpenSeats: "खाली सीट वाली कोई आने वाली सवारी नहीं।",
     emptyFull: "कोई पूरी भरी सवारी नहीं।",
@@ -3821,6 +3825,22 @@ function MargshriApp() {
 
         {/* Footer */}
         <div className="max-w-6xl mx-auto px-6 py-8 relative z-10">
+          {/* Popular routes: plain links so Google can follow them to the route pages */}
+          <nav aria-label={t("popularRoutes")} className="mb-6">
+            <p style={{ color: COLORS.night }} className="text-sm font-bold text-center mb-3">{t("popularRoutes")}</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {[
+                ["/greater-noida-to-noida-carpool", "Greater Noida → Noida"],
+                ["/noida-to-delhi-carpool", "Noida → Delhi"],
+                ["/noida-to-gurugram-carpool", "Noida → Gurugram"],
+                ["/noida-office-carpool", t("officeCarpool")],
+              ].map(([href, label]) => (
+                <a key={href} href={href} style={{ color: COLORS.night, borderColor: COLORS.line }} className="bg-white border rounded-full px-3 py-1.5 text-xs font-semibold">
+                  {label}
+                </a>
+              ))}
+            </div>
+          </nav>
           <button onClick={() => setShowSafetyModal(true)} style={{ color: COLORS.muted }} className="text-xs underline text-center block mx-auto mb-2">
             {t("safetyLink")}
           </button>
